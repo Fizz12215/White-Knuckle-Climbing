@@ -207,6 +207,10 @@ Everything ported is commented with its source class/field. Sources:
    the test. Also, how it feels to play, beyond a few testers.
 5. **Known trust issue:** the server takes the client's "hanging" flag on trust (no fall damage or
    fly kick while set). Documented for server owners in the README.
-6. **Housekeeping:**
-   - Licence: `fabric.mod.json` says MIT. Ask the owner before adding a LICENSE file.
-   - The project isn't a git repository yet.
+6. **Publishing:**
+   - The repository is https://github.com/Fizz12215/White-Knuckle-Climbing (MIT, public).
+   - Releases are normal GitHub releases (marked Latest, so they show in the repo sidebar; not
+     pre-releases, even for betas) with the `betaZip` file attached. 0.3.0-beta was the first.
+   - Commits use the owner's no-reply address (set in the repo's local git config).
+   - Always ask the owner before pushing or publishing.
+   - The knowledge-base note is in rehan-remade/universal-modder PR #302.
