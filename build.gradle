@@ -1,0 +1,103 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+loom {
+	splitEnvironmentSourceSets()
+	mods {
+		"wkclimb" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "wkclimb-gametest"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+processResources {
+	inputs.property "version", project.version
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Copy the built jar into a local Minecraft instance (path from local.properties: modsDir=...).
+def localProps = new Properties()
+def localFile = file("local.properties")
+if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+def modsDir = localProps.getProperty("modsDir")
+
+tasks.register("installMod", Copy) {
+	onlyIf { modsDir != null && file(modsDir).isDirectory() }
+	dependsOn tasks.named("remapJar")
+	from tasks.named("remapJar")
+	into modsDir ?: "build/no-mods-dir"
+	// remove older versions of this mod so only one copy is ever in the mods folder
+	doFirst {
+		fileTree(modsDir).matching { include "${base.archivesName.get()}-*.jar" }.each { it.delete() }
+	}
+	doLast { println "Installed ${base.archivesName.get()}-${version}.jar into ${modsDir}" }
+}
+tasks.named("build") { finalizedBy "installMod" }
+
+// Beta package for testers: the mod jar, the asset extractor (+ one-click scripts) and a guide.
+// No White Knuckle files are included: each tester builds the pack from their own copy of the game.
+tasks.register("betaZip", Zip) {
+	dependsOn tasks.named("remapJar")
+	archiveFileName = "White-Knuckle-Climbing-${version}.zip"
+	destinationDirectory = layout.buildDirectory.dir("beta")
+	into("White-Knuckle-Climbing-${version}") {
+		from("beta/README.txt")
+		from("LICENSE")
+		from("CHANGELOG.md")
+		into("mods") { from tasks.named("remapJar") }
+		into("asset-extractor") {
+			from("tools/extract_wk_assets.py")
+			from("tools/requirements.txt")
+			from("beta/Get White Knuckle Assets (Windows).bat")
+			from("beta/get-white-knuckle-assets.sh") { filePermissions { unix("rwxr-xr-x") } }
+		}
+	}
+}
+
+jar {
+	from("LICENSE") { rename { "LICENSE_wkclimb" } }
+}

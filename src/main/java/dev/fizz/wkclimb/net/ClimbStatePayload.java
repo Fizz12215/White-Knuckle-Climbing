@@ -1,0 +1,26 @@
+package dev.fizz.wkclimb.net;
+
+import dev.fizz.wkclimb.WKClimb;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+
+/**
+ * Client -> server: whether the player is hanging from a hold this tick, and whether rod-like blocks
+ * (#wkclimb:bars) should let them through (swinging from a bar), and whether White Knuckle mode
+ * (its health, falls, breath and regen) is on.
+ */
+public record ClimbStatePayload(boolean hanging, boolean throughBars, boolean wkMode) implements CustomPacketPayload {
+	public static final Type<ClimbStatePayload> TYPE = new Type<>(WKClimb.id("climb_state"));
+	public static final StreamCodec<ByteBuf, ClimbStatePayload> CODEC = StreamCodec.composite(
+			ByteBufCodecs.BOOL, ClimbStatePayload::hanging,
+			ByteBufCodecs.BOOL, ClimbStatePayload::throughBars,
+			ByteBufCodecs.BOOL, ClimbStatePayload::wkMode,
+			ClimbStatePayload::new);
+
+	@Override
+	public Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
+}

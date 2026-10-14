@@ -1,0 +1,7 @@
+{
+	"required": true,
+	"package": "dev.fizz.wkclimb.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": ["ServerGamePacketListenerImplAccessor", "BarCollisionMixin", "WKHealthMixins", "FoodDataMixin", "ServerPlayerHurtMixin"],
+	"injectors": { "defaultRequire": 1 }
+}

@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "wkclimb",
+	"version": "${version}",
+	"name": "White Knuckle Climbing",
+	"description": "White Knuckle's climbing in Minecraft: grab ledges with each hand, manage per-hand grip, swing from bars, with the game's movement, health rules and damage look. Unofficial fan mod; no game files included.",
+	"authors": ["Fizz"],
+	"contact": {
+		"homepage": "https://github.com/Fizz12215/White-Knuckle-Climbing",
+		"sources": "https://github.com/Fizz12215/White-Knuckle-Climbing",
+		"issues": "https://github.com/Fizz12215/White-Knuckle-Climbing/issues"
+	},
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["dev.fizz.wkclimb.WKClimb"],
+		"client": ["dev.fizz.wkclimb.client.WKClimbClient"]
+	},
+	"mixins": [
+		"wkclimb.mixins.json",
+		{ "config": "wkclimb.client.mixins.json", "environment": "client" }
+	],
+	"depends": {
+		"fabricloader": ">=0.17.0",
+		"minecraft": "~1.21.9",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

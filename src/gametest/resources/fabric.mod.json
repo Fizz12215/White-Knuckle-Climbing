@@ -1,0 +1,11 @@
+{
+	"schemaVersion": 1,
+	"id": "wkclimb-gametest",
+	"version": "1.0.0",
+	"name": "White Knuckle Climbing gametests",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": ["dev.fizz.wkclimb.gametest.ClimbClientGameTest"]
+	},
+	"depends": { "wkclimb": "*" }
+}

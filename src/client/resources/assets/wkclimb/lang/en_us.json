@@ -1,0 +1,9 @@
+{
+	"key.wkclimb.toggle": "Toggle climbing hands",
+	"key.wkclimb.focus": "Focus (crosshair)",
+	"key.category.wkclimb.climbing": "White Knuckle Climbing",
+	"wkclimb.hands.on": "Climbing hands ON: hold left/right mouse to grab",
+	"wkclimb.hands.off": "Climbing hands OFF",
+	"wkclimb.server_missing": "This server doesn't have White Knuckle Climbing installed, so climbing is switched off here (otherwise the server would kick you for flying).",
+	"wkclimb.server_missing.short": "Climbing is off: this server doesn't have the mod"
+}
