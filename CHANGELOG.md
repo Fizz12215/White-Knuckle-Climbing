@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.1 beta: closer to the game
+A full review of the climbing against White Knuckle's own code. To get the new sounds, run the
+asset tool again.
+
+Fixes, each making it behave like the game:
+- **Diagonal climbing (W+A, W+D)** is full strength. White Knuckle doesn't scale diagonal input down;
+  the mod did, which made diagonal climbing about 30% weaker.
+- **Ground jumps** kick the hands once, not twice.
+- **Crouching no longer stops you at ledges.** That was Minecraft's sneak guard; White Knuckle has none.
+- **Shift alone** no longer makes you slide down walls faster. The game only counts it as sprinting
+  with movement keys held.
+- **The "wall in front of you" check** has the game's reach (it was 50% too long). It changes which
+  way W/S pushes you near walls.
+- **Bracing (crouch) while hanging** no longer shifts your body.
+- **Walking off an edge** starts the fall from rest, as in the game.
+- **Held hands** are drawn at the game's 95% size.
+
+New, from the game:
+- **The game's camera height:** 1.44 blocks standing and 0.84 crouched (Minecraft's are 1.62 and
+  1.27), so ledges sit in view where they do in White Knuckle.
+- **Falling wind** that grows with fall speed, and **camera shake** on falls past the safe distance.
+- **The near-death heartbeat and mortal-wound loops**, which fade in as health drops.
+- **The fungus grab sound** on moss, fungus and froglight blocks.
+- **New setting `exact_step_height`:** White Knuckle's 0.18-block step instead of Minecraft's 0.6, so
+  slabs and stairs must be jumped onto. Off by default.
+
+Also: without the asset pack, blood splats and hit indicators no longer pile up unseen.
+
+
 ## 0.3.0 beta, the climbing beta (first public release)
 White Knuckle's climbing, movement and health in Minecraft 1.21.9 (Fabric). Items, the inventory
 and perks are not in this version.

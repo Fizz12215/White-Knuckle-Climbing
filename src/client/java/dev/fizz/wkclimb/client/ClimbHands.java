@@ -44,6 +44,10 @@ public final class ClimbHands {
 	private static final int TEX = 128;
 
 	private static final HandSway[] sway = { new HandSway(true), new HandSway(false) };
+	/** Hand.ScaleUpdate: each hand model's own scale (1 at rest; set while holding, eased back after). */
+	private static final double[] modelScale = { 1, 1 };
+	/** ENT_Player.invCamFovHandScaleAdjust (player prefab). */
+	private static final double INV_CAM_FOV_HAND_SCALE_ADJUST = -0.015;
 	private static final Random shake = new Random();
 	private static long lastNanos;
 	private static boolean texturesChecked, haveTextures;
@@ -51,6 +55,9 @@ public final class ClimbHands {
 
 	// Body motion, sampled each tick (WK units).
 	private static double speed, verticalSpeed, timeSinceGrounded, timeSinceSprinting, airTime, lastVerticalSpeed;
+	/** FallingDamage(): the current fall, in WK units (curFallDistance); 0 when not falling. */
+	private static boolean falling;
+	private static double fallStartY, fallDistance;
 	private static boolean wasGrounded = true;
 	private static Vec3 lastPos;
 
@@ -75,7 +82,21 @@ public final class ClimbHands {
 			timeSinceSprinting = 0;
 		}
 
-		if (wasGrounded && !grounded && verticalSpeed > 0.5 && !hanging) onJump();
+		// Jumps the simulation makes send their own JUMP event (ClimbController.playEvents); this catches
+		// the vanilla ones (when the simulation isn't driving), so a jump never kicks the hands twice.
+		if (wasGrounded && !grounded && verticalSpeed > 0.5 && !hanging && !ClimbController.INSTANCE.isDriving()) onJump();
+		// FallingDamage(): a fall runs while dropping faster than 3 units/s, not hanging or swimming.
+		if (verticalSpeed < -3 && !hanging && !player.isInWater() && !player.isInLava() && !player.isDeadOrDying()) {
+			double y = pos.y / k;
+			if (!falling) {
+				falling = true;
+				fallStartY = y;
+			}
+			fallDistance = Math.max(fallStartY - y, 0);
+		} else {
+			falling = false;
+			fallDistance = 0;
+		}
 		if (!wasGrounded && grounded && ClimbController.INSTANCE.isEnabled()) {
 			// LandingAudio(): touching down while holding on is a mantle; otherwise lastVel.y is
 			// compared with softLandCutoff 2, mediumLandCutoff 13 and heavyLandCutoff 23.
@@ -99,6 +120,17 @@ public final class ClimbHands {
 		}
 		airTime = grounded ? 0 : airTime + 0.05;
 		wasGrounded = grounded;
+		boolean enabled = ClimbController.INSTANCE.isEnabled();
+		// Minecraft only recomputes the eye height when the pose changes, so a player that joins, respawns
+		// or changes dimension standing keeps the vanilla 1.62 until then: refresh when it's stale.
+		if (Math.abs(player.getEyeHeight() - player.getDimensions(player.getPose()).eyeHeight()) > 1e-4f) player.refreshDimensions();
+		ClimbSounds.updateWind(player, verticalSpeed, grounded, ClimbController.INSTANCE.sim.isSliding(), enabled);
+		ClimbSounds.updateHealthLoops(player, enabled);
+	}
+
+	/** FallingDamage's curFallDistance: how far the current fall has gone, in WK units (0 if not falling). */
+	public static double fallDistance() {
+		return fallDistance;
 	}
 
 	/** Body speed in WK units/s (cCon.velocity.magnitude), sampled per tick. */
@@ -123,7 +155,7 @@ public final class ClimbHands {
 	/** HandAnimation's choice of ViewSway parameters for a free hand. */
 	private static HandSway.Params params(LocalPlayer player, boolean buttonHeld) {
 		if (timeSinceGrounded >= WK.COYOTE_TIME && verticalSpeed < 0) {
-			return player.fallDistance / ClimbConfig.blocksPerUnit > 15 ? HandSway.LONG_FALL : HandSway.AIRBORNE;
+			return fallDistance > 15 ? HandSway.LONG_FALL : HandSway.AIRBORNE;
 		}
 		if (player.isSprinting() && timeSinceSprinting > 0.1 && timeSinceGrounded < 0.1 && !buttonHeld) return HandSway.SPRINT;
 		return HandSway.BASE;
@@ -204,7 +236,14 @@ public final class ClimbHands {
 			if (cz < 0.05) continue;
 			float x = (float) (w / 2.0 * (1 + cx / (cz * tanFov * aspect)));
 			float y = (float) (h / 2.0 * (1 - cy / (cz * tanFov)));
-			float size = (float) (rigScale * HAND_SIZE_CAMERA / (cz * tanFov) * h / 2);
+			// Hand.ScaleUpdate: holding, the model is set to clamp(1 + (fov - 90) * -0.015, 0.6, 1.2) * 0.95;
+			// otherwise it eases back to 1 at 5/s.
+			if (hand.isHanging()) {
+				modelScale[i] = Math.max(0.6, Math.min(1.2, 1 + (fov - 90) * INV_CAM_FOV_HAND_SCALE_ADJUST)) * 0.95;
+			} else {
+				modelScale[i] += (1 - modelScale[i]) * Math.min(1, dt * 5);
+			}
+			float size = (float) (rigScale * modelScale[i] * HAND_SIZE_CAMERA / (cz * tanFov) * h / 2);
 			float rot = (float) sway[i].rot;
 
 			String pose = pose(player, hand, held);

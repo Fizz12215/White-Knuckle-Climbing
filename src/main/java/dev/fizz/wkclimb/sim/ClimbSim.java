@@ -102,6 +102,11 @@ public final class ClimbSim {
 	private boolean hasHit;
 	private double hitTime;
 	private boolean isGrounded;
+	/**
+	 * ENT_Player.isGrounded as it stood at the previous move: the grounded state from the start of that
+	 * step (cleared by a jump). Movement() compares it with cCon.isGrounded to spot walking off an edge.
+	 */
+	private boolean groundedAtLastMove;
 	private boolean isSliding;
 	private double timeSinceGrounded;
 	private boolean hasJumped;
@@ -223,6 +228,8 @@ public final class ClimbSim {
 		V3 up = V3.UP;
 
 		Footstep floor = in.footstep() != null ? in.footstep() : Footstep.GENERIC;
+		// Walking off an edge: grounded at the last move, not any more, falling -> the fall starts from rest.
+		if (groundedAtLastMove && !isGrounded && vel.y() < 0 && !isSliding) vel = vel.withY(0);
 		crouching = in.crouchHeld();
 		// IsSprintHeld(): sprint key with the stick/keys pushed (inputAxis.magnitude > 0.8) and not crouching
 		sprinting = in.sprintHeld() && Math.hypot(in.inputX(), in.inputY()) > 0.8 && !crouching;
@@ -257,7 +264,8 @@ public final class ClimbSim {
 		} else {
 			curSpeed *= WK.AIR_CONTROL;
 			if (hanging && hitTime > 0) {
-				if (in.sprintHeld()) {
+				// "sprinting" is IsSprintHeld(): the sprint key with the movement keys pushed, not crouching
+				if (sprinting) {
 					curDrag *= WK.WALL_FRICTION_MULT;
 				} else if (in.crouchHeld()) {
 					curDrag *= WK.WALL_FRICTION_MULT * 30;
@@ -297,6 +305,8 @@ public final class ClimbSim {
 			verticalSlide = true;
 		}
 
+		boolean groundedBeforeMove = isGrounded; // Jump() may have cleared it this step
+		groundedAtLastMove = groundedBeforeMove;
 		MoveResult r = body.move(vel.mul(dt * WK.MOVE_SCALE));
 		if (r.hitNormal() != null) {
 			// OnControllerColliderHit
@@ -309,7 +319,8 @@ public final class ClimbSim {
 			}
 		}
 		isGrounded = r.grounded();
-		if (!verticalSlide && isGrounded) {
+		// Movement() clamps with isGrounded as it was before cCon.Move (it isn't refreshed until next step)
+		if (!verticalSlide && groundedBeforeMove) {
 			V3 a = r.actual();
 			vel = new V3(
 					clamp(vel.x(), -Math.abs(a.x()), Math.abs(a.x())),

@@ -5,7 +5,7 @@ out, swing from bars and chains, and move, sound and get hurt the way the game d
 climbing, movement and health rules are rebuilt from White Knuckle's own code and data, and checked
 against the game.
 
-Minecraft Java Edition **1.21.9**, **Fabric**. Version **0.3.0 beta**: climbing only. Items, the
+Minecraft Java Edition **1.21.9**, **Fabric**. Version **0.3.1 beta**: climbing only. Items, the
 inventory and perks may come later.
 
 > An unofficial fan mod, not made or endorsed by Dark Machine, White Knuckle's developers. The mod
@@ -21,13 +21,15 @@ inventory and perks may come later.
 - **Bars, chains and rods** (chains, iron-bar posts, end and lightning rods, bamboo): grab anywhere
   and swing. Ladders, vines and buttons can be grabbed anywhere too.
 - **Ice:** icy ledges slip out of your hand after 2 seconds, and icy floors are slippery.
-- **White Knuckle's movement:** walking, sprinting, crouching, jumping, air control, head-bob and
-  sprint camera roll.
+- **White Knuckle's movement and camera:** walking, sprinting, crouching (with no "sneak" guard at
+  ledges), jumping, air control, head-bob, sprint camera roll, and the game's lower camera height,
+  so ledges sit in view where they do in White Knuckle.
 - **White Knuckle's health:** no hunger, healing 5 seconds after the last hit, falls that only hurt
   past about 40 blocks, and the game's damage look (the screen washes out, greys and reddens as you
   get hurt, with blood and hit-direction glows).
 - **With the asset pack:** the game's first-person hands, crosshair, hand icons, blood, and climbing,
-  footstep, landing and voice sounds.
+  footstep, landing and voice sounds, the rushing wind of a long fall, and the heartbeat that fades in
+  as you get close to death.
 
 ## Install
 The download zip contains `README.txt` with the same steps in more detail, for **Windows** and
@@ -36,7 +38,7 @@ The download zip contains `README.txt` with the same steps in more detail, for *
 1. **Fabric:** install [Fabric Loader](https://fabricmc.net/use/installer/) for 1.21.9 (or, in Prism
    Launcher, make a 1.21.9 instance and add Fabric under Edit > Version > Install Loader).
 2. **Mods:** put [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.9 and
-   `white-knuckle-climbing-0.3.0-beta.jar` in your `mods` folder:
+   `white-knuckle-climbing-0.3.1-beta.jar` in your `mods` folder:
    - Windows: `%APPDATA%\.minecraft\mods` (press Win+R and paste it)
    - Linux: `~/.minecraft/mods`
    - Prism: right-click the instance > Folder > `mods`
@@ -90,6 +92,7 @@ The download zip contains `README.txt` with the same steps in more detail, for *
 | `enabled_on_start` | `true` | climbing mode on when the game starts |
 | `hide_vanilla_hand` | `true` | hide Minecraft's arm and held item while the climbing hands show |
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
+| `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
 | `wk_keybinds_applied` | `false` → `true` | set back to `false` to apply White Knuckle's keys again |
 
 Datapacks can change what is climbable through the block tags `wkclimb:handholds`,

@@ -1,4 +1,4 @@
-WHITE KNUCKLE CLIMBING  -  0.3.0 beta  -  for Minecraft Java Edition 1.21.9 (Fabric)
+WHITE KNUCKLE CLIMBING  -  0.3.1 beta  -  for Minecraft Java Edition 1.21.9 (Fabric)
 =====================================================================================
 Climb Minecraft like the White Knuckle climber: grab ledges with each hand, watch your grip run
 out, swing from bars and chains, and move, sound and get hurt the way the game does.
@@ -11,7 +11,7 @@ and it contains none of the game's files.
 
 WHAT'S IN THIS ZIP
 ------------------
-  mods/white-knuckle-climbing-0.3.0-beta.jar   the mod
+  mods/white-knuckle-climbing-0.3.1-beta.jar   the mod
   asset-extractor/                             optional: builds White Knuckle's hands and sounds
                                                from YOUR copy of the game (step 3)
   README.txt                                   this guide
@@ -47,7 +47,7 @@ STEP 2 - PUT THE MODS IN
 =====================================================================================
 Copy TWO files into your mods folder:
   - the Fabric API .jar you downloaded
-  - mods/white-knuckle-climbing-0.3.0-beta.jar from this zip
+  - mods/white-knuckle-climbing-0.3.1-beta.jar from this zip
 
 Where the mods folder is:
   Windows, official launcher:  press Win+R, type  %APPDATA%\.minecraft\mods  and press Enter
@@ -130,8 +130,11 @@ PLAYING
       Sprint = Left Shift,  Crouch = Left Ctrl,  Inventory = Tab  (and the player list loses Tab).
   You can change them back in Options > Controls > Key Binds.
 
-  Settings file: .minecraft/config/wkclimb.properties (field of view, reach, ledges only, and
-  more; see the mod's page for what each one does).
+  Settings file: .minecraft/config/wkclimb.properties (field of view, reach, ledges only, White
+  Knuckle's exact step height, and more; see the mod's page for what each one does).
+
+  Updating from an older version? Run the asset tool again (step 3): it now also builds the
+  falling wind, the near-death heartbeat and the fungus grab sounds.
 
 
 =====================================================================================

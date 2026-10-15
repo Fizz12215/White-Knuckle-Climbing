@@ -11,7 +11,7 @@ sounds and health rules. Gameplay is reimplemented from the game's decompiled co
 data. **No game files ship with the mod.** Art and audio come from a resource pack each player
 builds from their own install (`tools/extract_wk_assets.py`).
 
-Status: 0.3.0-beta, the first public release (climbing only). See *Open issues* at the end.
+Status: 0.3.1-beta (climbing only; 0.3.0 was the first public release). See *Open issues* at the end.
 
 ## Setup
 
@@ -118,6 +118,8 @@ Everything ported is commented with its source class/field. Sources:
 ## Gotchas (each cost real time)
 
 - **Assets:**
+  - Unity 6 `AudioSource`: the clip is in `m_Resource`; `m_audioClip` is still there but an empty
+    reference (m_PathID 0). Take whichever is set.
   - UnityPy's FMOD fails in the main process (first on the FSB5 IMA ADPCM clips, then on the rest),
     but a fresh process decodes every clip. `ClipDecoder` sends all clips to one `--decode-clips`
     subprocess per game file (~13 s for the whole pack). The old one-subprocess-per-clip approach
@@ -163,6 +165,17 @@ Everything ported is commented with its source class/field. Sources:
   - Keep uniform blocks to plain floats: Minecraft's `Std140Builder` pads `vec3` to 16 bytes, but
     GLSL std140 packs a following float at offset 12, so the shader read padding.
 - **Minecraft and Fabric hooks:**
+  - Minecraft's move vector is normalised (W+D = 0.71, 0.71); White Knuckle's two axes aren't (1, 1).
+    `ClimbController.input` builds the axes from the four keys (analog input keeps the vector).
+  - `Player.maybeBackOffFromEdge` (the sneak edge guard) runs for `MoverType.SELF` *and* on the
+    server's replay of client moves, so `NoSneakEdgeMixin` is common code keyed on `isWkMode`:
+    client-only would get the player pulled back to the edge by the server.
+  - Eye height: the player's sizes are in `Avatar.getDefaultDimensions(Pose)` (1.21.9). The
+    `eyeHeight` field is only refreshed on a pose change, so after joining, respawning or changing
+    dimension a standing player keeps 1.62 until something calls `refreshDimensions()`
+    (`ClimbHands.tick` does when it's stale).
+  - Step height is `LivingEntity.maxUpStep()` (the STEP_HEIGHT attribute). Lowering it client-side
+    only is safe: the server's taller step can replay any move the client makes.
   - Hook `Player.getHurtSound` / `getDeathSound`; `LivingEntity`'s versions are overridden.
   - Peaceful regen is `ServerPlayer.tickRegeneration`; `Player`'s is empty.
   - Minecraft calls `bobView` only with view bobbing on; the camera replacement hooks `bobHurt`,
@@ -170,6 +183,11 @@ Everything ported is commented with its source class/field. Sources:
   - Folder resource packs must be complete when Minecraft scans them, so the extractor builds in
     `*.partial` and renames.
 - **In-game tests:**
+  - Fixed-angle aims (`tp ... 180 -55`) depend on the eye height: from the 1.44 eye a ledge 1 block
+    ahead and 2 up is 57.3 degrees up, and the 0.12-block catch radius allows about 2 degrees below
+    it. `grabAt` aims with `lookAt` instead and adapts.
+  - Rarely (1 run in 7) the framework's NetworkSynchronizer reports "interfacing with packets at a
+    lower level" and the server crashes. It's the harness's packet accounting, not the mod; rerun.
   - The gametest framework restores default options at test start (re-apply keybinds in tests).
   - `/tick rate` makes the integrated server fall behind the client; don't use it in gametests.
 - **Windows extractor:**
@@ -194,6 +212,15 @@ Everything ported is commented with its source class/field. Sources:
    - damage look: the vignette image is a fitted curve (within 0.02 opacity); blood splats and
      hit-direction glows are blended the GUI way, not in linear light like the game;
      damageFX.worldTint (red light on lit surfaces in the game's world shader) is left out.
+   - Timing: Minecraft runs movement at 20 ticks/s, the game at 50 steps/s. The simulation runs 2-3
+     steps per tick, so physics match, but input and aim are sampled per tick: a fast mouse flick
+     can skip a ledge the game would catch. Possible fix (not done; the owner chose to wait):
+     sample the aim every frame and feed the 0.2 s grab memory.
+   - Looking up: the game allows 15 degrees past vertical (camMinY -105); Minecraft stops at 90.
+   - The capsule is a box in Minecraft (rounded bottom in Unity), so edges catch the body slightly
+     differently; Minecraft's 0.6 step height (the default) also helps you over ledge lips.
+   - Icy holds: the game moves the grip to a fixed height on the hold when grabbed
+     (holdPosition.y = 0.2, in the hold's own space); the mod keeps the ledge edge.
 3. **Not ported:** perks/buffs, items in hands, the game's inventory (the hotbar is hidden but
    number keys still switch slots), grappling, swimming, moving handholds, the ground-jump sound
    on vanilla jumps, the Focus mechanic (key is unbound; only the crosshair ring is shown).

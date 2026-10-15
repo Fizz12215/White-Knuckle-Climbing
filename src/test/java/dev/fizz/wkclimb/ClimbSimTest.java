@@ -36,6 +36,30 @@ class ClimbSimTest {
 		}
 	}
 
+	/** A floor (top at y = 0) that ends at x = 0: walking towards +X steps off its edge. */
+	static final class LedgeWorld implements ClimbSim.Collider {
+		V3 pos;
+		boolean grounded = true;
+
+		LedgeWorld(V3 pos) { this.pos = pos; }
+
+		@Override public V3 center() { return pos; }
+
+		@Override public ClimbSim.MoveResult move(V3 d) {
+			V3 target = pos.add(d);
+			V3 normal = null;
+			grounded = false;
+			if (target.x() < 0 && target.y() <= 0) {
+				target = new V3(target.x(), 0, target.z());
+				grounded = true;
+				normal = new V3(0, 1, 0);
+			}
+			V3 actual = target.sub(pos);
+			pos = target;
+			return new ClimbSim.MoveResult(actual, grounded, normal);
+		}
+	}
+
 	static ClimbSim.Input input(double x, double y, V3 cam, boolean jump, boolean wallAhead) {
 		return new ClimbSim.Input(x, y, cam, new V3(1, 0, 0), new V3(0, 0, -1), jump, false, false, wallAhead, null);
 	}
@@ -226,5 +250,71 @@ class ClimbSimTest {
 		// Handhold-Bar drag 4*8 = 32 against the usual 10*8 = 80: the swing lasts much longer
 		double bar = swingAmplitude(Handhold.BAR), normal = swingAmplitude(Handhold.DEFAULT);
 		assertTrue(bar > 1.5 * normal, "bar swing " + bar + " vs normal " + normal);
+	}
+
+	/**
+	 * Hanging against a wall, the friction branch reads the sprint *state* (IsSprintHeld: sprint key with
+	 * the movement keys pushed past 0.8). The sprint key alone, with no movement keys, is not sprinting,
+	 * so the body slides exactly as with no keys at all.
+	 */
+	@Test
+	void sprintKeyAloneDoesNotLoosenWallFriction() {
+		double[] y = new double[2];
+		int[] hits = new int[2];
+		for (int run = 0; run < 2; run++) {
+			ClimbSim sim = new ClimbSim();
+			double wallX = 1.0;
+			TestWorld world = new TestWorld(new V3(wallX - TestWorld.R, 0, 0), wallX);
+			ClimbSim.Collider counting = new ClimbSim.Collider() {
+				@Override public V3 center() { return world.center(); }
+
+				@Override public ClimbSim.MoveResult move(V3 d) {
+					ClimbSim.MoveResult r = world.move(d);
+					if (r.hitNormal() != null) hits[0]++;
+					return r;
+				}
+			};
+			// a hold on the wall face, high enough above to pull the body into the wall
+			sim.grab(ClimbSim.LEFT, new V3(wallX, 1.6, 0), Handhold.DEFAULT);
+			boolean sprintKey = run == 1;
+			ClimbSim.Input in = new ClimbSim.Input(0, 0, new V3(1, 0, 0), new V3(1, 0, 0), new V3(0, 0, -1),
+					false, false, sprintKey, true, null);
+			hits[0] = 0;
+			for (int i = 0; i < 60; i++) {
+				sim.updateHands(false, WK.FIXED_DT);
+				sim.movement(in, counting);
+			}
+			y[run] = world.pos.y();
+			hits[run] = hits[0];
+		}
+		assertTrue(hits[0] > 0 && hits[1] > 0, "the body was against the wall");
+		assertEquals(y[0], y[1], 1e-12, "sprint key without movement keys changed the wall friction");
+	}
+
+	/**
+	 * Movement(): grounded at the last move, not grounded now, and falling -> vel.y = 0. So a walk off an
+	 * edge starts the fall from rest, instead of keeping the -0.05 "stick to the ground" speed.
+	 */
+	@Test
+	void walkingOffAnEdgeStartsTheFallFromRest() {
+		ClimbSim sim = new ClimbSim();
+		LedgeWorld w = new LedgeWorld(new V3(-0.3, 0, 0));
+		ClimbSim.Input walk = input(0, 1, new V3(1, 0, 0), false, false);
+		double firstAirborneVy = Double.NaN;
+		boolean wasGrounded = true;
+		for (int i = 0; i < 200 && Double.isNaN(firstAirborneVy); i++) {
+			sim.updateHands(w.grounded, WK.FIXED_DT);
+			sim.movement(walk, w);
+			if (wasGrounded && !w.grounded) {
+				// this step moved past the edge; the next step is the first one that starts airborne
+				sim.updateHands(w.grounded, WK.FIXED_DT);
+				sim.movement(walk, w);
+				firstAirborneVy = sim.velocity().y();
+			}
+			wasGrounded = w.grounded;
+		}
+		assertFalse(Double.isNaN(firstAirborneVy), "walked off the edge");
+		// from rest, one step of gravity: -0.2 * 0.02 = -0.004 (drag is negligible at this speed)
+		assertEquals(-0.004, firstAirborneVy, 0.001);
 	}
 }

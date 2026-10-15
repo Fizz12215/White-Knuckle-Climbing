@@ -18,7 +18,8 @@ import java.util.Random;
  *  - FixedUpdate's FOV: playerFOV (White Knuckle's default 90, config "fov"), +15 while sprinting on the
  *    ground, smoothed at 5 per step-second;
  *  - CL_CameraControl shake: every 0.025 s a random offset (insideUnitSphere * shake, max 0.5) and tilt
- *    (insideUnitSphere * shake * 30 degrees, max 20.5), with shake decaying at 6/s.
+ *    (insideUnitSphere * shake * 30 degrees, max 20.5), with shake decaying at 6/s. Sources: the end of
+ *    a hand's grip, icy holds, hits, landings, and falls past the 50-unit safe distance (0.1 per second).
  * Offsets are in WK camera units (scaled by the 1.5 player scale, then to blocks).
  */
 public final class ClimbCamera {
@@ -89,6 +90,9 @@ public final class ClimbCamera {
 		}
 		shake(fatigue);
 
+		// FallingDamage(): past the safe distance the camera shakes for as long as the fall lasts
+		if (ClimbController.INSTANCE.isEnabled() && ClimbHands.fallDistance() > WK.MAX_FALL_DISTANCE) shake(0.1 * dt);
+
 		// CL_CameraControl.LateUpdate
 		shake += (0 - shake) * Math.min(1, dt * 6);
 		shakeTime -= dt * 0.4;
@@ -106,6 +110,11 @@ public final class ClimbCamera {
 			shakePitch = shakeYaw = shakeRoll = 0;
 			if (shake <= 0.001) shakeX = shakeY = shakeZ = 0;
 		}
+	}
+
+	/** Test support: the current camera shake amount. */
+	public static double shakeForTest() {
+		return shake;
 	}
 
 	/** The current smoothed White Knuckle FOV, or -1 before the first frame. */

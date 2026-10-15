@@ -10,6 +10,7 @@ What it reads (all found through the ENT_Player component in the level3 scene):
   * hands[0].handPoses      -> the five first-person hand sprites (normal/open/grab/crouch/sprint)
   * interactionSprites      -> the crosshair hand icons (hand-open / hand-grabbed)
   * clipHandler (UT_AudioClipHandler) -> the climbing, fatigue and jump sound sets
+  * windAudio / damageAudio / dyingAudio (AudioSources) -> the falling wind and the near-death loops
 """
 import argparse
 import struct
@@ -47,6 +48,7 @@ PACK_FORMAT = 69  # Minecraft 1.21.9
 SOUND_SETS = {
     ("climbing", "handhold"): "climbing.handhold",
     ("climbing", "handhold-chain"): "climbing.handhold_chain",
+    ("climbing", "handhold-metafungus"): "climbing.handhold_metafungus",
     ("climbing", "drop"): "climbing.drop",
     ("fatigue", "drop"): "fatigue.drop",
     ("fatigue", "level"): "fatigue.level",
@@ -59,6 +61,13 @@ SOUND_SETS = {
     ("player", "hurt-falling"): "player.hurt_falling",
     ("player", "hurt-heat"): "player.hurt_heat",
     ("player", "death"): "player.death",
+}
+# Looping AudioSources on ENT_Player: field -> sound event. The game sets their volume itself every frame
+# (wind: fall speed; heartbeat / mortal wound: damageFXCurve / dyingAudioCurve of health), so the mod does too.
+LOOP_SOURCES = {
+    "windAudio": "movement.wind",
+    "damageAudio": "player.heartbeat",
+    "dyingAudio": "player.mortal_wound",
 }
 HAND_POSES = ["normal", "open", "grab", "crouch", "sprint"]
 UI_ICONS = {"hand-open": "icon_open", "hand-grabbed": "icon_grabbed"}
@@ -561,6 +570,22 @@ def main():
         add_clips(f"footstep.{key}", fs["audio"], fs["volume"])
         meta[f"footstep.{key}"] = {"minPitch": fs["minPitch"], "maxPitch": fs["maxPitch"], "friction": fs["friction"],
                                    "moveLerp": fs["moveLerp"], "moveSpeed": fs["moveSpeed"]}
+
+    # Loops: the clip on each AudioSource. Unity 6 stores it in m_Resource (an AudioResource); the older
+    # m_audioClip field is still there but empty, so take whichever reference is set.
+    for field, event in LOOP_SOURCES.items():
+        ptr = player.get(field)
+        if not ptr or not ptr["m_PathID"]:
+            print(f"  ! {field} not found")
+            continue
+        src_file, src_obj = files.resolve(scene, ptr)
+        src = src_obj.read_typetree()
+        clip_ptr = next((c for c in (src.get("m_Resource"), src.get("m_audioClip")) if c and c["m_PathID"]), None)
+        if clip_ptr is None:
+            print(f"  ! {field} has no clip")
+            continue
+        add_clips(event, [clip_ptr], 1.0, src_file)
+        meta[event] = {"loop": True}
 
     # Icy handholds (Chimney): slipSound / shakeStartSound on CL_Handhold_Icy
     icy = find_icy_handhold(files, data_dir)

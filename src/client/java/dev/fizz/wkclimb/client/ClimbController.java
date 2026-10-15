@@ -59,6 +59,9 @@ public final class ClimbController {
 	public void setEnabled(boolean on) {
 		enabled = on;
 		if (!on) releaseAll();
+		// the eye height depends on climbing mode (EyeHeightMixin): apply it now, not at the next pose change
+		var player = Minecraft.getInstance().player;
+		if (player != null) player.refreshDimensions();
 	}
 
 	private void releaseAll() {
@@ -133,20 +136,33 @@ public final class ClimbController {
 	public boolean isDriving() { return driving; }
 
 	private ClimbSim.Input input(LocalPlayer player) {
-		Vec2 move = player.input.getMoveVector();
+		var keys = player.input.keyPresses;
+		// White Knuckle reads its two move axes separately and doesn't normalise them, so W+D is (1, 1):
+		// a full-strength climb plus strafe. Minecraft's move vector is normalised (0.71, 0.71), so build
+		// the axes from the keys; analog input (a controller mod) keeps Minecraft's vector.
+		double inputX, inputY;
+		if (keys.forward() || keys.backward() || keys.left() || keys.right()) {
+			inputX = (keys.right() ? 1 : 0) - (keys.left() ? 1 : 0);
+			inputY = (keys.forward() ? 1 : 0) - (keys.backward() ? 1 : 0);
+		} else {
+			Vec2 move = player.input.getMoveVector();
+			inputX = -move.x;
+			inputY = move.y;
+		}
 		double yaw = Math.toRadians(player.getYRot());
 		V3 bodyForward = new V3(-Math.sin(yaw), 0, Math.cos(yaw));
 		V3 bodyRight = new V3(-Math.cos(yaw), 0, -Math.sin(yaw));
 		Vec3 look = player.getLookAngle();
 
+		// Hang(): Physics.Raycast(cam, transform.forward, cCon.radius * 2.5). cCon.radius is the controller's
+		// own (unscaled) 0.3, so the probe is 0.75 units long, not scaled by the 1.5 player scale.
 		Vec3 eye = player.getEyePosition();
-		double wallProbe = WK.CCON_RADIUS * WK.PLAYER_SCALE * 2.5 * k();
+		double wallProbe = WK.CCON_RADIUS * 2.5 * k();
 		Vec3 probeEnd = eye.add(bodyForward.x() * wallProbe, 0, bodyForward.z() * wallProbe);
 		boolean wallAhead = player.level().clip(new ClipContext(eye, probeEnd, ClipContext.Block.COLLIDER,
 				ClipContext.Fluid.NONE, player)).getType() == HitResult.Type.BLOCK;
 
-		var keys = player.input.keyPresses;
-		return new ClimbSim.Input(-move.x, move.y, new V3(look.x, look.y, look.z), bodyForward, bodyRight,
+		return new ClimbSim.Input(inputX, inputY, new V3(look.x, look.y, look.z), bodyForward, bodyRight,
 				keys.jump(), keys.shift(), keys.sprint(), wallAhead, ClimbFootsteps.under(player));
 	}
 
@@ -373,9 +389,13 @@ public final class ClimbController {
 			BlockPos held = h >= 0 ? holdBlocks[h] : null;
 			switch (e.type()) {
 				case GRAB -> {
+					// PlayHandholdSound(material): "handhold-<material>" if the game has that set, else "handhold"
 					BlockPos pos = held != null ? held : BlockPos.containing(toMc(sim.hands[h].holdPoint()));
-					boolean chain = player.level().getBlockState(pos).is(WKClimb.CHAIN_SOUND);
-					ClimbSounds.play(player, chain ? ClimbSounds.HANDHOLD_CHAIN : ClimbSounds.HANDHOLD);
+					BlockState state = player.level().getBlockState(pos);
+					ClimbSounds.Sound sound = ClimbSounds.HANDHOLD;
+					if (state.is(WKClimb.CHAIN_SOUND)) sound = ClimbSounds.HANDHOLD_CHAIN;
+					else if (ClimbFootsteps.isMetafungus(state) && ClimbSounds.available(ClimbSounds.HANDHOLD_METAFUNGUS)) sound = ClimbSounds.HANDHOLD_METAFUNGUS;
+					ClimbSounds.play(player, sound);
 				}
 				case RELEASE, PULLED_OFF -> ClimbSounds.play(player, ClimbSounds.DROP);
 				case ICY_SLIP -> {
@@ -464,9 +484,14 @@ public final class ClimbController {
 
 	/** The WK CharacterController, backed by Minecraft's entity collision. */
 	private record Body(LocalPlayer player) implements ClimbSim.Collider {
+		/**
+		 * ENT_Player's transform.position: the middle of the standing capsule (its CharacterController
+		 * centre is 0). Crouching shrinks the capsule but doesn't move the transform, so this stays at
+		 * half the standing height even while Minecraft's crouching box is shorter.
+		 */
 		@Override
 		public V3 center() {
-			return toWk(player.position().add(0, player.getBbHeight() / 2.0, 0));
+			return toWk(player.position().add(0, WK.PLAYER_HEIGHT / 2.0 * k(), 0));
 		}
 
 		@Override

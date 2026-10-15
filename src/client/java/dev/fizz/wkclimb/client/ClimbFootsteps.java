@@ -47,9 +47,15 @@ public final class ClimbFootsteps {
 		if (sound == SoundType.MUD || sound == SoundType.SOUL_SAND || sound == SoundType.SOUL_SOIL
 				|| sound == SoundType.HONEY_BLOCK) return SLUDGE;
 		if (sound == SoundType.SLIME_BLOCK || sound == SoundType.SCULK || sound == SoundType.WART_BLOCK) return FLESH;
-		if (sound == SoundType.FUNGUS || sound == SoundType.SHROOMLIGHT || sound == SoundType.NYLIUM
-				|| sound == SoundType.MOSS || sound == SoundType.FROGLIGHT) return METAFUNGUS;
+		if (isMetafungus(state)) return METAFUNGUS;
 		return GENERIC;
+	}
+
+	/** Blocks that stand in for White Knuckle's metafungus: their footsteps and grab sound use its sets. */
+	public static boolean isMetafungus(BlockState state) {
+		SoundType sound = state.getSoundType();
+		return sound == SoundType.FUNGUS || sound == SoundType.SHROOMLIGHT || sound == SoundType.NYLIUM
+				|| sound == SoundType.MOSS || sound == SoundType.FROGLIGHT;
 	}
 
 	/** The material under the player, with Minecraft's block speed factor folded into moveSpeed. */

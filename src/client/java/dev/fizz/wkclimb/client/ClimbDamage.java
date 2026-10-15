@@ -132,6 +132,10 @@ public final class ClimbDamage {
 		hurtTarget = player.isDeadOrDying() ? hurtTarget : 1 - healthFrac;
 		hurtAmount += (hurtTarget - hurtAmount) * Math.min(1, 0.8 * dt);
 		updateColorGrade(mc, damageFxCurve(healthFrac), hurtAmount > 0.003 ? Math.min(1, hurtAmount) : 0);
+		// Blood splats expire and the hit indicators fade even when they aren't drawn (no asset pack, or
+		// the HUD hidden), so neither piles up.
+		splats.removeIf(s -> (now - s.born()) / s.lifetime() >= 1);
+		for (int i = 0; i < 4; i++) direction[i] = Math.max(0, direction[i] - dt * 1.25);
 		if (!available() || mc.options.hideGui) return;
 
 		// screen blood
@@ -140,10 +144,6 @@ public final class ClimbDamage {
 		for (int i = splats.size() - 1; i >= 0; i--) {
 			Splat s = splats.get(i);
 			double age = (now - s.born()) / s.lifetime();
-			if (age >= 1) {
-				splats.remove(i);
-				continue;
-			}
 			double alpha = age < 0.0147 ? age / 0.0147 : age < 0.5735 ? 1 : 1 - (age - 0.5735) / (1 - 0.5735);
 			double y = -0.138 + s.y() - s.drift() * (now - s.born());
 			float cx = (float) (w / 2.0 * (1 + s.x() / (depth * tanHalf * aspect)));
@@ -164,7 +164,6 @@ public final class ClimbDamage {
 		double unit = ClimbCrosshair.uiUnit();
 		float sideW = (float) (620.68 * unit), topH = (float) (407.05 * unit);
 		for (int i = 0; i < 4; i++) {
-			direction[i] = Math.max(0, direction[i] - dt * 1.25);
 			if (direction[i] <= 0) continue;
 			int color = ((int) (direction[i] * 255) << 24) | 0xFF0000;
 			switch (i) {
@@ -182,16 +181,29 @@ public final class ClimbDamage {
 			{ 0.674, -0.002, -0.809, -0.035 }, { 1.001, -0.013, -0.035, -0.035 } };
 
 	static double damageFxCurve(double t) {
-		if (t <= FX_KEYS[0][0]) return clamp01(FX_KEYS[0][1]);
-		for (int i = 0; i < FX_KEYS.length - 1; i++) {
-			double[] a = FX_KEYS[i], b = FX_KEYS[i + 1];
+		return clamp01(evaluateCurve(FX_KEYS, t));
+	}
+
+	/** ENT_Player.dyingAudioCurve (time, value, inSlope, outSlope): the mortal-wound loop, from 25% health down. */
+	private static final double[][] DYING_KEYS = {
+			{ -0.0079, 0.9981, -0.0731, -0.0731 }, { 0.0342, 0.995, -0.0731, -4.5363 },
+			{ 0.252, 0.007, -4.5363, -0.0236 }, { 1.0118, -0.0109, -0.0236, -0.0236 } };
+
+	static double dyingAudioCurve(double t) {
+		return clamp01(evaluateCurve(DYING_KEYS, t));
+	}
+
+	/** A Unity AnimationCurve of non-weighted keys: cubic Hermite between keys, clamped outside them. */
+	private static double evaluateCurve(double[][] keys, double t) {
+		if (t <= keys[0][0]) return keys[0][1];
+		for (int i = 0; i < keys.length - 1; i++) {
+			double[] a = keys[i], b = keys[i + 1];
 			if (t > b[0]) continue;
 			double dt = b[0] - a[0], u = (t - a[0]) / dt, u2 = u * u, u3 = u2 * u;
-			double v = (2 * u3 - 3 * u2 + 1) * a[1] + (u3 - 2 * u2 + u) * dt * a[3]
+			return (2 * u3 - 3 * u2 + 1) * a[1] + (u3 - 2 * u2 + u) * dt * a[3]
 					+ (-2 * u3 + 3 * u2) * b[1] + (u3 - u2) * dt * b[2];
-			return clamp01(v);
 		}
-		return clamp01(FX_KEYS[FX_KEYS.length - 1][1]);
+		return keys[keys.length - 1][1];
 	}
 
 	/**

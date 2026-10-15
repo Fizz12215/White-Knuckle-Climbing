@@ -379,3 +379,72 @@
   "about 69%" as the docs said: I had checked a = 0.6875 instead of the first value that reaches 1.
 - The shader and the game test always used the formula itself; only the prose was wrong.
   Corrected in CHANGELOG, DEVELOPING and the hand.fsh comment.
+
+## 2026-10-15: 0.3.1-beta, full review against the game (same build 25612096)
+Reviewed: Movement, Hang, Jump, HandStamina, InteractCheck/EnqueueInteractCast, StopInteraction,
+HandAnimation, ViewSway, MouseLook, FallingDamage, LandingAudio, CL_Handhold(_Icy), Rewired input,
+CharacterController, against ClimbSim and the adapter. Grip, hang pull, climb accel, jumps, ice, falls,
+landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1) and camera all matched.
+
+**Fixed, each now behaving like the game:**
+1. **Ground jumps kicked the hands twice:** the sim's JUMP event and ClimbHands' "left the ground"
+   check both called onJump(). The check now runs only when the sim isn't driving.
+2. **Diagonal climbing was ~30% weak:**
+   - Rewired: two independent axes, not normalised, and `_digitalAxisSimulation` 0, so keys are
+     instant;
+   - Minecraft normalises W+D to (0.71, 0.71);
+   - fix: build the axes from the keys.
+3. **The wall probe was 1.125 units:** the game uses `cCon.radius * 2.5`, with the unscaled 0.3,
+   so 0.75 units.
+4. **Wall friction used the raw sprint key:** the game uses the sprint state (key + input above 0.8
+   + not crouching).
+5. **Minecraft's sneak edge guard applied in WK mode:** fixed by a common mixin keyed on isWkMode,
+   so the server's replay agrees.
+6. **The hang anchor followed Minecraft's crouch box:** it is now the standing capsule centre
+   (WK transform.position, CharacterController centre 0).
+7. **Grounded-state timing around the move:**
+   - the post-move clamp now uses the pre-move flag;
+   - walking off an edge zeroes falling speed (`isGrounded && !cCon.isGrounded && vel.y < 0`).
+
+   Unit tests for 4 and 7 fail on the old code and pass on the new.
+
+**Added from the game:**
+- **Eye height:**
+  - Main Cam Target sits at local y 0.45 under CL_Player (scale 1.5): 1.44 blocks standing, and
+    0.84 crouched (ChangeHeight: 0.45 + crouchHeight 1 - standingHeight 1.5);
+  - EyeHeightMixin on Avatar.getDefaultDimensions, client only, refreshed when stale.
+- **Falling wind:** windAudio = "PlayerFalling", 20.6 s, pitch 1.2. Volume max((-vy - 2) * 0.03, 0),
+  lerped at fixedDt * 5; it restarts on each new fall.
+- **Long-fall shake:** past 50 units, ShakeCamera(0.1 * dt), with a client-side copy of
+  FallingDamage's distance (also used for the LONG_FALL hand sway).
+- **Near-death loops:**
+  - damageAudio "player_neardeath_heartbeat_layer1" to damageFXCurve * 0.8;
+  - dyingAudio "player_neardeath_mortalwound_layer2" to dyingAudioCurve * 0.8, curve keys dumped;
+  - both lerped at dt * 2, and they start and stop together because they're layers of one piece.
+- **"handhold-metafungus" grab:** 4 clips, maxVolume 0.204, for SoundType FUNGUS / SHROOMLIGHT /
+  NYLIUM / MOSS / FROGLIGHT.
+- **Held hands at 95%:** Hand.ScaleUpdate, clamp(1 + (fov - 90) * -0.015, 0.6, 1.2) * 0.95 while
+  holding, easing back at 5/s.
+- **Config `exact_step_height`:** CharacterController stepOffset 0.15 x 1.5 = 0.225 units = 0.18
+  blocks. Off by default (Minecraft's 0.6), as the owner chose.
+
+**Extractor:**
+- LOOP_SOURCES reads the clip from AudioSource.m_Resource (Unity 6; m_audioClip is empty).
+- 85 clips, ~13 s, also checked at a 1 MB stack.
+
+**Also fixed:** without the pack, blood splats never expired and the hit indicators never faded
+(render returned before both), so the list grew all session.
+
+**Tests:**
+- 12 unit tests;
+- the game test, with and without the pack, now also checks:
+  - eye height 1.44 / 0.84 / 1.62 with climbing off;
+  - crouch-walking off a 1-block ledge drops you, without the server pulling you back;
+  - step height 0.6 / 0.18;
+  - a moss grab plays handhold_metafungus;
+  - the near-death loops at 2% health: 0.422 / 0.794 (game 0.423 / 0.797);
+  - the 60-block fall: wind peaks at 0.77, and the camera shakes;
+- six fixed ledge aims moved from -52 to -55 degrees for the lower eye (the margin to the edge is
+  0.076 blocks, against 0.062 before).
+
+**Not done, by the owner's choice:** sampling the aim every frame (Minecraft samples at 20 Hz).

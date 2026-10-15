@@ -78,7 +78,9 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 
 			// --- A ledge: both hands catch its top edge ---
-			server.runCommand("tp @a 0.5 -60 0.0 180 -52");
+			// (aim 55 degrees up: the ledge edge is 1 block ahead and 1.56 above White Knuckle's 1.44 eye, 57.3
+			// degrees up, so the aim line passes 0.076 blocks from it, inside the 0.12-block catch radius)
+			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.takeScreenshot("wkclimb-02-hands-at-rest");
 			double y0 = playerY(ctx);
@@ -153,7 +155,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.waitTicks(30);
 
 			// --- Climbing jump: both hands let go, then catch the ledge again ---
-			server.runCommand("tp @a 0.5 -60 0.0 180 -52");
+			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(30);
 			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
 			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
@@ -181,7 +183,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 
 			// --- One hand until fatigue; screenshots as the hand reddens ---
 			// (the full 10 s one-hand drain is in ClimbSimTest; here: 3 grip at 1/s drops at 2.9 s = 58 ticks)
-			server.runCommand("tp @a 0.5 -60 0.0 180 -52");
+			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(3.0));
 			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
@@ -200,7 +202,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			if (hand(0).grabWait() < 0.8) throw new AssertionError("no fatigue cooldown");
 
 			// --- Icy ledge: CL_Handhold_Icy slips after 2 s ---
-			server.runCommand("tp @a 0.5 -60 9.0 0 -52");
+			server.runCommand("tp @a 0.5 -60 9.0 0 -55");
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
 			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
@@ -375,6 +377,14 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 					LOG.info("[wkclimb] damage look {} at health {} (client {}): saturation {} brightness {} vignette {}; mean error vs model {}/255",
 							walls[wi][0], health, clientHealth, look[0], look[1], look[2], String.format("%.2f", err));
 					if (err > 3) throw new AssertionError("damage look differs from the model: " + err + "/255 on " + walls[wi][0] + " at " + health);
+					if (withPack && wi == walls.length - 1 && health < 1) {
+						// near-death loops: damageFXCurve(2%) x 0.8 = 0.423, dyingAudioCurve(2%) x 0.8 = 0.797
+						float[] loops = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest());
+						LOG.info("[wkclimb] near-death loops at 2% health: heartbeat {}, mortal wound {} (WK 0.423, 0.797)", loops[1], loops[2]);
+						if (Math.abs(loops[1] - 0.423f) > 0.05f || Math.abs(loops[2] - 0.797f) > 0.05f) {
+							throw new AssertionError("near-death loop volumes off: " + loops[1] + ", " + loops[2]);
+						}
+					}
 				}
 			}
 			server.runCommand("effect give @p minecraft:instant_health 1 10");
@@ -427,7 +437,18 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			if (afterShort < 19.9f) throw new AssertionError("30-block fall hurt: " + afterShort);
 
 			server.runCommand("tp @a 30.5 0 30.5 0 0");
-			ctx.waitFor(mc -> mc.player.onGround() && mc.player.getY() < -59.5, 600);
+			// WindSound(): the falling wind loop follows fall speed; past 50 units the camera shakes
+			float maxWind = -1;
+			double maxShake = 0;
+			for (int t = 0; t < 600; t++) {
+				ctx.waitTick();
+				maxWind = Math.max(maxWind, ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest()[0]));
+				maxShake = Math.max(maxShake, ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbCamera.shakeForTest()));
+				if (ctx.computeOnClient(mc -> mc.player.onGround() && mc.player.getY() < -59.5)) break;
+			}
+			LOG.info("[wkclimb] 60-block fall: loudest wind {} (WK: (fall speed - 2) x 0.03), most camera shake {}", maxWind, maxShake);
+			if (withPack && maxWind < 0.2f) throw new AssertionError("no falling wind: " + maxWind);
+			if (maxShake < 0.005) throw new AssertionError("no camera shake past the safe fall distance: " + maxShake);
 			ctx.waitTicks(5);
 			float afterLong = serverHealth(server);
 			LOG.info("[wkclimb] 60-block fall: health {} (WK: ceil((75 - 60) / 15) + 1 = 2 -> 8, plus 0.4 per second past 40 blocks)", afterLong);
@@ -503,6 +524,61 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			LOG.info("[wkclimb] slide after letting go of W: ice {} blocks, grass {} blocks", iceSlide, grassSlide);
 			if (!(iceSlide > 1.0 && iceSlide > 5 * grassSlide)) throw new AssertionError("ice did not slide");
 
+			// --- Body: White Knuckle's eye height, crouching off a ledge, the step-height option ---
+			server.runCommand("tp @a 60.5 -60 50.5 0 0");
+			ctx.waitTicks(10);
+			float eyeStand = ctx.computeOnClient(mc -> mc.player.getEyeHeight());
+			ctx.getInput().holdKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.waitTicks(10);
+			float eyeCrouch = ctx.computeOnClient(mc -> mc.player.getEyeHeight());
+			ctx.getInput().releaseKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.waitTicks(10);
+			ctx.runOnClient(mc -> ClimbController.INSTANCE.setEnabled(false));
+			ctx.waitTicks(2);
+			float eyeVanilla = ctx.computeOnClient(mc -> mc.player.getEyeHeight());
+			ctx.runOnClient(mc -> ClimbController.INSTANCE.setEnabled(true));
+			ctx.waitTicks(2);
+			LOG.info("[wkclimb] eye height {} standing, {} crouched (WK 1.44 / 0.84), {} with climbing off (Minecraft 1.62)",
+					eyeStand, eyeCrouch, eyeVanilla);
+			if (Math.abs(eyeStand - 1.44f) > 0.01f || Math.abs(eyeCrouch - 0.84f) > 0.01f || Math.abs(eyeVanilla - 1.62f) > 0.01f) {
+				throw new AssertionError("eye heights off: " + eyeStand + " / " + eyeCrouch + " / " + eyeVanilla);
+			}
+			// crouching doesn't hold you at a ledge (that's Minecraft's sneak guard; White Knuckle has none)
+			server.runCommand("fill 59 -60 59 61 -60 61 minecraft:stone");
+			server.runCommand("tp @a 60.5 -59 61.4 0 0");
+			ctx.waitTicks(10);
+			ctx.getInput().holdKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.getInput().holdKey(GLFW.GLFW_KEY_W);
+			ctx.waitTicks(60);
+			ctx.getInput().releaseKey(GLFW.GLFW_KEY_W);
+			ctx.getInput().releaseKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			double edgeY = ctx.computeOnClient(mc -> mc.player.getY());
+			LOG.info("[wkclimb] crouch-walking off a 1-block ledge: y {} (started at -59)", edgeY);
+			if (edgeY > -59.5) throw new AssertionError("crouching held the player at the ledge: y " + edgeY);
+			// step height: Minecraft's 0.6 unless exact_step_height (White Knuckle's 0.15 x 1.5 x 0.8 = 0.18)
+			float stepDefault = ctx.computeOnClient(mc -> mc.player.maxUpStep());
+			dev.fizz.wkclimb.ClimbConfig.exactStepHeight = true;
+			float stepExact = ctx.computeOnClient(mc -> mc.player.maxUpStep());
+			dev.fizz.wkclimb.ClimbConfig.exactStepHeight = false;
+			LOG.info("[wkclimb] step height {} by default, {} with exact_step_height", stepDefault, stepExact);
+			if (Math.abs(stepDefault - 0.6f) > 1e-4f || Math.abs(stepExact - 0.18f) > 1e-4f) {
+				throw new AssertionError("step heights off: " + stepDefault + " / " + stepExact);
+			}
+			// grabbing a fungus-like block (moss) plays White Knuckle's metafungus grab
+			server.runCommand("fill 76 -60 -3 84 -58 -2 minecraft:moss_block");
+			server.runCommand("tp @a 80.5 -60 0.0 180 -55");
+			ctx.waitTicks(10);
+			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
+			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.waitTicks(5);
+			boolean mossHeld = ctx.computeOnClient(mc -> hand(0).isHanging());
+			String grabSound = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.lastPlayedForTest());
+			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.waitTicks(10);
+			LOG.info("[wkclimb] grabbed a moss ledge: {}, sound {}", mossHeld, grabSound);
+			if (!mossHeld) throw new AssertionError("couldn't grab the moss ledge");
+			if (withPack && !grabSound.equals("wkclimb:climbing.handhold_metafungus")) throw new AssertionError("moss grab sound: " + grabSound);
+
 			// --- Sprinting: the sprint pose and ViewSway bob/tilt (screenshots a few frames apart) ---
 			server.runCommand("tp @a 0.5 -60 30.5 0 0");
 			ctx.waitTicks(20);
@@ -576,7 +652,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ds.runCommand("gamemode survival @a");
 			ds.runCommand("difficulty peaceful");
 			ds.runCommand("fill -4 -60 -3 4 -58 -2 minecraft:stone");
-			ds.runCommand("tp @a 0.5 -60 0.0 180 -52");
+			ds.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(20);
 			check(ctx, "climbing stays on with a modded dedicated server", mc -> ClimbController.INSTANCE.isEnabled());
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));

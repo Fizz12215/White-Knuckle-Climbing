@@ -29,6 +29,8 @@ public final class ClimbConfig {
 	public static boolean hideVanillaHand = true;
 	/** Field of view while the hands are on: White Knuckle's default playerFOV (vertical, like Minecraft's). 0 = use Minecraft's setting. */
 	public static double fov = 90;
+	/** White Knuckle's 0.18-block step height in climbing mode (slabs and stairs must be jumped); else Minecraft's 0.6. */
+	public static boolean exactStepHeight = false;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
 	public static boolean wkKeybindsApplied = false;
 
@@ -51,6 +53,7 @@ public final class ClimbConfig {
 		ledgesOnly = Boolean.parseBoolean(p.getProperty("ledges_only", Boolean.toString(ledgesOnly)));
 		hideVanillaHand = Boolean.parseBoolean(p.getProperty("hide_vanilla_hand", Boolean.toString(hideVanillaHand)));
 		fov = parse(p, "fov", fov);
+		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
 		wkKeybindsApplied = Boolean.parseBoolean(p.getProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied)));
 		save();
 	}
@@ -66,6 +69,7 @@ public final class ClimbConfig {
 		p.setProperty("ledges_only", Boolean.toString(ledgesOnly));
 		p.setProperty("hide_vanilla_hand", Boolean.toString(hideVanillaHand));
 		p.setProperty("fov", Double.toString(fov));
+		p.setProperty("exact_step_height", Boolean.toString(exactStepHeight));
 		p.setProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied));
 		try (Writer w = Files.newBufferedWriter(path)) {
 			p.store(w, "White Knuckle Climbing");

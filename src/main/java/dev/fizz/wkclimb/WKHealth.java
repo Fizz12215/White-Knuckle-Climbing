@@ -28,7 +28,7 @@ public final class WKHealth {
 	private WKHealth() {}
 
 	public static final double SCALE = 20.0 / 5.0;
-	private static final double MAX_FALL = 50.0;
+	private static final double MAX_FALL = dev.fizz.wkclimb.sim.WK.MAX_FALL_DISTANCE;
 	private static final double BLOCKS_PER_UNIT = 0.8;
 	private static final double DT = 0.05;
 

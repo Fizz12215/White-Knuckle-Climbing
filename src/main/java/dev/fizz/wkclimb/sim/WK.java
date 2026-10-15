@@ -41,6 +41,14 @@ public final class WK {
 	public static final double PLAYER_SCALE = 1.5;
 	public static final double STANDING_HEIGHT = 1.5;
 	public static final double CCON_RADIUS = 0.3;           // set every FixedUpdate in code
+	/** ChangeHeight's target while crouched (prefab crouchHeight). */
+	public static final double CROUCH_HEIGHT = 1.0;
+	/** "Main Cam Target" local y under the player (prefab), above the capsule centre. */
+	public static final double CAMERA_HEIGHT = 0.45;
+	/** CharacterController.stepOffset (level3), local: 0.225 units at the 1.5 player scale. */
+	public static final double STEP_OFFSET = 0.15;
+	/** maxFallDistance: falls past this many units hurt (FallingDamage). */
+	public static final double MAX_FALL_DISTANCE = 50.0;
 
 	// code
 	public static final double HANG_SLACK = 1.2;            // Hang(): num2
@@ -61,4 +69,13 @@ public final class WK {
 
 	/** World-space height of the WK player capsule: standingHeight * playerScale. */
 	public static final double PLAYER_HEIGHT = STANDING_HEIGHT * PLAYER_SCALE;
+
+	/**
+	 * Camera height above the feet in units: the capsule centre (half the standing height) plus Main Cam
+	 * Target, which ChangeHeight lowers by (crouchHeight - standingHeight) when crouched. 1.8 / 1.05 units.
+	 */
+	public static double eyeHeight(boolean crouching) {
+		double local = STANDING_HEIGHT / 2 + CAMERA_HEIGHT + (crouching ? CROUCH_HEIGHT - STANDING_HEIGHT : 0);
+		return local * PLAYER_SCALE;
+	}
 }
