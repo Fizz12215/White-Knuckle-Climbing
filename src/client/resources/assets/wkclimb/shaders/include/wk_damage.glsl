@@ -25,19 +25,28 @@ float wk_vignette_alpha(float r) {
     return 0.0864 + 0.9136 * (1.0 - exp(-pow(r / 0.2872, 2.751)));
 }
 
-// color: sRGB. uv: 0..1 across the screen. size: screen size in pixels.
+// The hurt vignette over a linear colour (step 3). uv: 0..1 across the screen; size: screen size in pixels.
+vec3 wk_vignette_linear(vec3 c, vec2 uv, vec2 size, float vignette) {
+    if (vignette <= 0.0) return c;
+    // UI units per pixel, as ClimbCrosshair.uiUnit (the game's canvas scaler)
+    float unit = min(1.0, size.x / 6000.0) * 3.375;
+    if (floor(size.x / size.y) > 2.5) unit *= 0.6;
+    vec2 t = (uv - 0.5) / (1.0 + vec2(400.0, 200.0) * unit / size);
+    float a = 0.81569 * vignette * wk_vignette_alpha(length(t));
+    vec3 tint = wk_to_linear(vec3(154.0, 7.0, 7.0) / 255.0 * vignette);
+    return c * (1.0 - a) + tint * a;
+}
+
+// The hurt vignette alone, for what the game draws after its post-processing but under its UI
+// (the screen blood on the Overlay Camera). color: sRGB.
+vec3 wk_vignette(vec3 color, vec2 uv, vec2 size, float vignette) {
+    return wk_to_srgb(wk_vignette_linear(wk_to_linear(color), uv, size, vignette));
+}
+
+// The whole look: grade, brightness, then the vignette. color: sRGB.
 vec3 wk_damage(vec3 color, vec2 uv, vec2 size, float saturation, float bright, float vignette) {
     vec3 c = wk_to_linear(color);
     float value = max(c.r, max(c.g, c.b));
     c = clamp(mix(vec3(value), c, saturation) * bright, 0.0, 1.0);
-    if (vignette > 0.0) {
-        // UI units per pixel, as ClimbCrosshair.uiUnit (the game's canvas scaler)
-        float unit = min(1.0, size.x / 6000.0) * 3.375;
-        if (floor(size.x / size.y) > 2.5) unit *= 0.6;
-        vec2 t = (uv - 0.5) / (1.0 + vec2(400.0, 200.0) * unit / size);
-        float a = 0.81569 * vignette * wk_vignette_alpha(length(t));
-        vec3 tint = wk_to_linear(vec3(154.0, 7.0, 7.0) / 255.0 * vignette);
-        c = c * (1.0 - a) + tint * a;
-    }
-    return wk_to_srgb(c);
+    return wk_to_srgb(wk_vignette_linear(c, uv, size, vignette));
 }

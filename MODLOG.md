@@ -484,3 +484,20 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   exact end.
 - **After:** floor corner and seam both grab nothing; all other ledge checks are unchanged (the wall-top
   grab moves by the nudge, x 1.0 -> 1.001); full suite passes.
+
+## 2026-10-15: screen blood vs the field of view (player report)
+- **Report:** "the blood splash effect seems to conflict with fov effect".
+- **Game data:** FX_Player_BloodSplatter_Screen is a child of "Overlay Camera" on layer 29, and that
+  camera renders only layer 29 (cullingMask 1 << 29) at depth 5, the last camera. Its FOV is a fixed
+  90: SetCameraFov changes only cam and inventoryCam, and code only ever touches the overlay
+  camera's scale. So the game's blood never follows the sprint FOV (+15) or the FOV setting.
+- **The mod** projected the splats with the current WK FOV, so they shrank about 23% and slid inward
+  while sprinting. Now a fixed 90 (OVERLAY_CAMERA_FOV).
+- **Order:** the UI canvas holding the hurt vignette is Screen Space - Overlay (renderMode 0), drawn
+  after every camera, so the vignette covers the blood. The mod drew the blood (GUI) over its
+  vignette (post pass). Now the blood goes through core/blood.fsh, which applies the vignette to each
+  splat pixel (wk_vignette, split out of wk_damage). The vignette is a per-pixel affine blend, so
+  that equals drawing it over the splat. The damage grade isn't applied, since the overlay camera
+  renders after post-processing.
+- **Checked:** the full suite passes (damage look still 0.25/255 from the model), the hit screenshot
+  shows the splats with the vignette tint toward the edges, and blood splats are still 2 per hit.

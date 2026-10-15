@@ -39,6 +39,19 @@ public final class ClimbDamage {
 	private static final ResourceLocation SIDE = WKClimb.id("textures/gui/damage/direction_side.png");
 	private static final ResourceLocation TOP = WKClimb.id("textures/gui/damage/direction_top.png");
 	private static final int BLOOD_TEX = 1024, BLOOD_TILE = 256;
+	/**
+	 * The game draws the screen blood with its Overlay Camera, whose field of view stays at 90 (only the
+	 * main and hand cameras follow the FOV setting and the sprint widening), so the splats don't move or
+	 * shrink when the FOV changes.
+	 */
+	private static final double OVERLAY_CAMERA_FOV = 90;
+	/** The blood, drawn with the hurt vignette over it (shaders/core/blood.fsh). */
+	private static final com.mojang.blaze3d.pipeline.RenderPipeline BLOOD_PIPELINE = RenderPipelines.register(
+			com.mojang.blaze3d.pipeline.RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+					.withLocation(WKClimb.id("pipeline/blood"))
+					.withFragmentShader(WKClimb.id("core/blood"))
+					.withUniform("Globals", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
+					.build());
 
 	private record Splat(double x, double y, double size, int tile, double lifetime, double drift, double born) {}
 
@@ -139,7 +152,8 @@ public final class ClimbDamage {
 		if (!available() || mc.options.hideGui) return;
 
 		// screen blood
-		double fov = ClimbCamera.currentFov() > 0 ? ClimbCamera.currentFov() : 90;
+		double fov = OVERLAY_CAMERA_FOV;
+		int vignetteByte = Math.round(Mth.clamp(handVignette, 0, 1) * 255);
 		double tanHalf = Math.tan(Math.toRadians(fov / 2)), aspect = (double) w / h, depth = 0.548;
 		for (int i = splats.size() - 1; i >= 0; i--) {
 			Splat s = splats.get(i);
@@ -149,14 +163,15 @@ public final class ClimbDamage {
 			float cx = (float) (w / 2.0 * (1 + s.x() / (depth * tanHalf * aspect)));
 			float cy = (float) (h / 2.0 * (1 - y / (depth * tanHalf)));
 			float size = (float) Math.min(s.size() / (depth * tanHalf) * h / 2, 2.0 * h);
-			int color = ((int) (alpha * 0.988 * 255) << 24) | (135 << 16) | (11 << 8) | 19;
+			// alpha: the splat's opacity (x 0.988, the particle colour's alpha); red: the vignette amount
+			int color = ((int) (alpha * 0.988 * 255) << 24) | (vignetteByte << 16);
 			var pose = g.pose();
 			pose.pushMatrix();
 			pose.translate(cx, cy);
 			float scale = size / BLOOD_TILE;
 			pose.scale(scale, scale);
 			int u = (s.tile() % 4) * BLOOD_TILE, v = (s.tile() / 4) * BLOOD_TILE;
-			g.blit(RenderPipelines.GUI_TEXTURED, BLOOD, -BLOOD_TILE / 2, -BLOOD_TILE / 2, u, v, BLOOD_TILE, BLOOD_TILE, BLOOD_TEX, BLOOD_TEX, color);
+			g.blit(BLOOD_PIPELINE, BLOOD, -BLOOD_TILE / 2, -BLOOD_TILE / 2, u, v, BLOOD_TILE, BLOOD_TILE, BLOOD_TEX, BLOOD_TEX, color);
 			pose.popMatrix();
 		}
 
