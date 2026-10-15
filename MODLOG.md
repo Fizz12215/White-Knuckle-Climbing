@@ -323,7 +323,8 @@
   outlines jumping to bright red.
 - **Game:**
   - the hand body is multiplied toward red by s = round(8a)/8 + ceil(8a)/16, stepped and
-    reaching full red at ~69% used (before, that was ~1.5x later);
+    reaching full red just over 62.5% used (first written here as ~69%; corrected
+    2026-10-15, see below);
   - outline-mask pixels (0.49) fade grey to red linearly;
   - then x 0.81 grey, in linear light.
 - **1 vs 2 hands:**
@@ -371,3 +372,10 @@
   - new CHANGELOG.md.
 - **Publish lint:** the release zip and jar contents pass `um publish check` (no game files,
   keys or home paths).
+
+## 2026-10-15: correction, hand red threshold
+- The knowledge-base maintainer, merging PR #302, caught that s = round(8a)/8 + ceil(8a)/16 is
+  already 1 once 8a passes 5 (5/8 + 6/16). So hands are fully red just over **62.5%** used, not
+  "about 69%" as the docs said: I had checked a = 0.6875 instead of the first value that reaches 1.
+- The shader and the game test always used the formula itself; only the prose was wrong.
+  Corrected in CHANGELOG, DEVELOPING and the hand.fsh comment.

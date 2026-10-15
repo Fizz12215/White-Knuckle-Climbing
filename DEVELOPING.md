@@ -151,7 +151,7 @@ Everything ported is commented with its source class/field. Sources:
   - The default cosmetic's `outlineMaskColor` (0.49 grey) turns on the outline branch: sprite
     pixels of value 0.49 (125) fade grey to red linearly. Everything else is multiplied toward red
     by s = round(8a)/8 + ceil(8a)/16 (`_StaminaMaskRepeat` 8 with the default black mask), so it
-    is fully red from about 69% grip used.
+    is fully red once just over 62.5% of the grip is used (5/8 + 6/16 = 1).
   - The Cosmetic_HandItem type tree doesn't read with TypeTreeGenerator (EOF). The fields were
     read raw, by position, from the class layout.
   - Driving the game: each new XTEST client on KDE Wayland triggers a "Remote Control" permission

@@ -8,8 +8,8 @@ Changes since the private test builds:
 - **Damage look matched to the game:** the screen washes out and loses colour while keeping its
   brightness, and the red edge vignette grows the way the game's does, on the hands too. It was
   measured against screenshots of White Knuckle and its shader.
-- **Hand redness matched to the game:** each hand reddens in the game's steps (fully red at about
-  69% grip used), and its outline fades to red smoothly.
+- **Hand redness matched to the game:** each hand reddens in the game's steps (fully red once just
+  over 62.5% of the grip is used), and its outline fades to red smoothly.
 - **Servers without the mod:** climbing now switches itself off there, instead of getting you
   kicked for flying.
 - **Dedicated servers:** tested; the mod runs on a Fabric server and hanging doesn't get players

@@ -13,7 +13,7 @@
 //  - outline-mask pixels (value 0.4902, the cosmetic's outlineMaskColor) go from _OutlineColor grey
 //    to _StaminaOutlineColor red, linearly with the amount;
 //  - everything else is multiplied toward red by s = round(8a)/8 + ceil(8a) x 0.5/8 (stepped, full
-//    red from about 69% used);
+//    red once just over 62.5% is used: 5/8 + 6/16 = 1);
 //  - then x _Color (0.8113 grey).
 
 #moj_import <minecraft:dynamictransforms.glsl>
