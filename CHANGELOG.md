@@ -16,6 +16,10 @@ Fixes, each making it behave like the game:
 - **Bracing (crouch) while hanging** no longer shifts your body.
 - **Walking off an edge** starts the fall from rest, as in the game.
 - **Held hands** are drawn at the game's 95% size.
+- **Snow:** ledges covered by a layer of snow can be grabbed again (one layer has no collision, but it
+  used to hide the ledge). Thicker snow is held by its own edge.
+- **Inner corners:** you can no longer grab a concave corner. That covers the back edge of a block
+  under an overhang, and the end of a ledge pressed against a taller block (a hand needs room).
 
 New, from the game:
 - **The game's camera height:** 1.44 blocks standing and 0.84 crouched (Minecraft's are 1.62 and

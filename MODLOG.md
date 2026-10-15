@@ -448,3 +448,27 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   0.076 blocks, against 0.062 before).
 
 **Not done, by the owner's choice:** sampling the aim every frame (Minecraft samples at 20 Hz).
+
+## 2026-10-15: snow and inner corners (player report)
+- **Report:** "there is an issue with snow layers", and "you can grab on the inner corner of 2
+  blocks". Reproduced in a new game-test scene before changing anything:
+  - a ledge under one snow layer: not grabbable;
+  - the inner corner under an overhang: grabbed at the corner;
+  - the end of a ledge against a taller block: grabbed at x 150.97, 0.03 from the neighbour;
+  - the middle of that ledge: grabbed (control).
+- **Causes:**
+  - Snow: one layer has no collision box but a 2-pixel visual shape, and the ledge probes used visual
+    shapes, so it "covered" the edge. The snow itself isn't a handhold (no collision), so snowy biomes
+    had almost no ledges.
+  - Corners: `isLedgePoint` only checked above-inward and below-outward, so a block's back edge under
+    a block one up and one back passed, as did a ledge end pressed into a taller neighbour.
+- **Fix (isLedgePoint / insideShape):**
+  - blocks without a collision box don't cover ledges (also leaf litter, petals, rails, plants);
+  - new "over" probe (outward, above the top) must be open: that's where the hand comes over;
+  - the top must stay open 0.1 blocks either way along the edge (a hand's room).
+- **After:**
+  - 1 layer: grabs the block edge (-58.0); 3 layers: grabs the snow's own edge (-57.625);
+  - both inner corners: nothing to grab; the ledge's middle still grabs;
+  - fence rails, wall tops, stairs and lanterns still catch where they did, and the full suite passes.
+- **Test helper:** `tryGrab` waits 6 ticks after aiming, so the 0.2 s grab memory of the previous
+  view can't satisfy a check (the first run grabbed x 150.8 from memory).

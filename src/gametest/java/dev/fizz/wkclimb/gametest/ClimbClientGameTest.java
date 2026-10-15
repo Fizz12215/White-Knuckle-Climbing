@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerCon
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -524,6 +525,33 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			LOG.info("[wkclimb] slide after letting go of W: ice {} blocks, grass {} blocks", iceSlide, grassSlide);
 			if (!(iceSlide > 1.0 && iceSlide > 5 * grassSlide)) throw new AssertionError("ice did not slide");
 
+			// --- Snow on ledges, and inner corners (both reported by a player) ---
+			// one snow layer has no collision box: the block edge under it must still be a ledge
+			server.runCommand("fill 116 -60 -3 124 -59 -2 minecraft:stone");
+			server.runCommand("fill 116 -58 -3 124 -58 -2 minecraft:snow[layers=1]");
+			Vec3 snow1 = tryGrab(ctx, server, 120.5, 0.0, 120.5, -58.0, -1.0);
+			// three layers have a collision box: the snow's own edge (6/16 up) is the ledge
+			server.runCommand("fill 126 -60 -3 134 -59 -2 minecraft:stone");
+			server.runCommand("fill 126 -58 -3 134 -58 -2 minecraft:snow[layers=3]");
+			Vec3 snow3 = tryGrab(ctx, server, 130.5, 0.0, 130.5, -57.625, -1.0);
+			// inner corner under an overhang: block A, and block B one up and one back with air under it.
+			// A's back edge meets B's front face; from the front there's nothing to hold there.
+			server.runCommand("fill 136 -60 -2 144 -60 -2 minecraft:stone");
+			server.runCommand("fill 136 -59 -3 144 -59 -3 minecraft:stone");
+			Vec3 overhang = tryGrab(ctx, server, 140.5, -0.65, 140.5, -59.0, -2.0);
+			// inner corner against a taller block: the end of a ledge pressed into the neighbour's side
+			server.runCommand("setblock 150 -60 -2 minecraft:stone");
+			server.runCommand("fill 151 -60 -2 151 -59 -2 minecraft:stone");
+			Vec3 sideCorner = tryGrab(ctx, server, 150.8, 0.2, 150.97, -59.0, -1.0);
+			Vec3 sideMiddle = tryGrab(ctx, server, 150.5, 0.2, 150.5, -59.0, -1.0);
+			LOG.info("[wkclimb] snow 1 layer: {}; snow 3 layers: {}; overhang inner corner: {}; side inner corner: {}; middle of that ledge: {}",
+					snow1, snow3, overhang, sideCorner, sideMiddle);
+			if (snow1 == null || Math.abs(snow1.y - -58.0) > 1e-3) throw new AssertionError("ledge under one snow layer: " + snow1);
+			if (snow3 == null || Math.abs(snow3.y - -57.625) > 1e-3) throw new AssertionError("edge of three snow layers: " + snow3);
+			if (overhang != null && Math.abs(overhang.z - -2.0) < 1e-3) throw new AssertionError("grabbed the inner corner under the overhang: " + overhang);
+			if (sideCorner != null) throw new AssertionError("grabbed the inner corner against the taller block: " + sideCorner);
+			if (sideMiddle == null || Math.abs(sideMiddle.y - -59.0) > 1e-3) throw new AssertionError("middle of the ledge beside the taller block: " + sideMiddle);
+
 			// --- Body: White Knuckle's eye height, crouching off a ledge, the step-height option ---
 			server.runCommand("tp @a 60.5 -60 50.5 0 0");
 			ctx.waitTicks(10);
@@ -712,6 +740,23 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 	}
 
 	/** Stand at (sx, -60, sz), look at the target point, grab, and check the grip height range. */
+	/** Stand at (sx, -60, sz), look at the target, hold the left button: the grip point, or null if nothing was caught. */
+	private static Vec3 tryGrab(ClientGameTestContext ctx, net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext server,
+			double sx, double sz, double tx, double ty, double tz) {
+		server.runCommand("tp @a " + sx + " -60 " + sz);
+		ctx.waitTicks(30);
+		ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
+		ctx.runOnClient(mc -> mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, new Vec3(tx, ty, tz)));
+		// wait out the 0.2 s grab memory of wherever the view pointed before, so only this aim counts
+		ctx.waitTicks(6);
+		ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.waitTicks(3);
+		Vec3 grip = ctx.computeOnClient(mc -> hand(0).isHanging() ? ClimbController.toMcPublic(hand(0).holdPoint()) : null);
+		ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.waitTicks(30);
+		return grip;
+	}
+
 	private static void grabAt(ClientGameTestContext ctx, net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext server,
 			String what, double tx, double ty, double tz, double sx, double sz, double minY, double maxY) {
 		server.runCommand("tp @a " + sx + " -60 " + sz);

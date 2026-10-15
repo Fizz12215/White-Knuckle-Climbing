@@ -334,25 +334,41 @@ public final class ClimbController {
 
 	/** How far the open-space probes sit from an edge (blocks). */
 	private static final double PROBE = 0.04;
+	/** Room a hand needs along a ledge either side of the grip (blocks). */
+	private static final double HAND_CLEARANCE = 0.1;
 
 	/**
-	 * Whether a point on a top edge is a real ledge: the space just above it (a hair inward) is open,
-	 * and so is the space just outside it (a hair below the top), judged against the visible shapes of
-	 * whatever blocks are there. This rejects edges covered by another part of the same block (the
-	 * stair's lower half under its upper step), by the block above, or by a neighbour joined to it
-	 * (the meeting point of two fence rails).
+	 * Whether a point on a top edge is a real ledge you can hold from its open side, judged against the
+	 * visible shapes of whatever blocks are there:
+	 *  - just above it, a hair inward, is open: room for the fingers on top. This rejects edges covered
+	 *    by another part of the same block (the stair's lower half under its upper step) or the block above;
+	 *  - just outside it, a hair below the top, is open: there is a drop. This rejects the meeting point
+	 *    of two joined blocks (two fence rails);
+	 *  - just outside it, a hair above the top, is open: the hand reaches over from there. This rejects
+	 *    an inner corner where a block overhangs the edge (a block's back edge under the front of one
+	 *    standing one up and one back);
+	 *  - the top stays open for a hand's half-width either way along the edge. This rejects the end of a
+	 *    ledge pressed into the side of a taller neighbour (the other kind of inner corner).
 	 */
 	static boolean isLedgePoint(Level level, Vec3 edge, Direction outward) {
 		Vec3 out = new Vec3(outward.getStepX(), 0, outward.getStepZ());
+		Vec3 along = new Vec3(-out.z, 0, out.x);
 		Vec3 above = edge.add(out.scale(-PROBE)).add(0, PROBE, 0);
 		Vec3 beside = edge.add(out.scale(PROBE)).add(0, -PROBE, 0);
-		return !insideShape(level, above) && !insideShape(level, beside);
+		Vec3 over = edge.add(out.scale(PROBE)).add(0, PROBE, 0);
+		return !insideShape(level, above) && !insideShape(level, beside) && !insideShape(level, over)
+				&& !insideShape(level, above.add(along.scale(HAND_CLEARANCE)))
+				&& !insideShape(level, above.add(along.scale(-HAND_CLEARANCE)));
 	}
 
+	/**
+	 * Whether a point is inside the visible shape of a block that has a collision box. Blocks you can
+	 * walk through (one snow layer, leaf litter, petals, rails, plants) don't cover a ledge.
+	 */
 	private static boolean insideShape(Level level, Vec3 p) {
 		BlockPos pos = BlockPos.containing(p);
 		BlockState state = level.getBlockState(pos);
-		if (state.isAir()) return false;
+		if (state.isAir() || state.getCollisionShape(level, pos).isEmpty()) return false;
 		VoxelShape shape = state.getShape(level, pos);
 		if (shape.isEmpty()) return false;
 		double x = p.x - pos.getX(), y = p.y - pos.getY(), z = p.z - pos.getZ();
