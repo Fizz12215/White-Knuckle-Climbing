@@ -279,7 +279,12 @@ public final class ClimbController {
 					}
 					double[] st = closestSegmentParams(eye, castEnd, a, b);
 					Vec3 onRay = eye.add(castEnd.subtract(eye).scale(st[0]));
-					Vec3 onEdge = a.add(b.subtract(a).scale(st[1]));
+					// Judge an end of the edge a hair inside it: an exact end lies on block boundaries, where the
+					// probes would see "outside" every block (four floor blocks meeting at a corner would pass as a
+					// ledge). A point just inside a real edge is still on it.
+					double length = b.subtract(a).length();
+					double nudge = length > 2 * END_NUDGE ? END_NUDGE / length : 0.5;
+					Vec3 onEdge = a.add(b.subtract(a).scale(Mth.clamp(st[1], nudge, 1 - nudge)));
 					if (onRay.distanceToSqr(onEdge) > radius * radius) continue;
 					double along = st[0] * castLength;
 					if (best != null && along >= best.along()) continue;
@@ -334,6 +339,8 @@ public final class ClimbController {
 
 	/** How far the open-space probes sit from an edge (blocks). */
 	private static final double PROBE = 0.04;
+	/** How far inside an edge its ends are judged (blocks); see findHandhold. */
+	private static final double END_NUDGE = 0.001;
 	/** Room a hand needs along a ledge either side of the grip (blocks). */
 	private static final double HAND_CLEARANCE = 0.1;
 

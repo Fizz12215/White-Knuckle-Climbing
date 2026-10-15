@@ -472,3 +472,15 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   - fence rails, wall tops, stairs and lanterns still catch where they did, and the full suite passes.
 - **Test helper:** `tryGrab` waits 6 ticks after aiming, so the 0.2 s grab memory of the previous
   view can't satisfy a check (the first run grabbed x 150.8 from memory).
+
+## 2026-10-15: grabbing a flat floor at block seams (player report)
+- **Report:** "you can grab a flat floor at the seam of the blocks". Reproduced: aiming at the point
+  where four floor blocks meet grabbed (171.0, -60.0, 0.0). The middle of a seam between two blocks
+  didn't (control).
+- **Cause:** when the closest point is an edge's exact end, it lies on block boundaries. The "drop
+  beside" probe then sits on the diagonal block's face, and insideShape's strict test calls that
+  outside, so the corner passed as a ledge.
+- **Fix:** findHandhold judges, and grabs at, a point 0.001 blocks inside the edge instead of its
+  exact end.
+- **After:** floor corner and seam both grab nothing; all other ledge checks are unchanged (the wall-top
+  grab moves by the nudge, x 1.0 -> 1.001); full suite passes.

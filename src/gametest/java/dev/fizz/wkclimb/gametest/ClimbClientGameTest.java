@@ -544,8 +544,12 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("fill 151 -60 -2 151 -59 -2 minecraft:stone");
 			Vec3 sideCorner = tryGrab(ctx, server, 150.8, 0.2, 150.97, -59.0, -1.0);
 			Vec3 sideMiddle = tryGrab(ctx, server, 150.5, 0.2, 150.5, -59.0, -1.0);
-			LOG.info("[wkclimb] snow 1 layer: {}; snow 3 layers: {}; overhang inner corner: {}; side inner corner: {}; middle of that ledge: {}",
-					snow1, snow3, overhang, sideCorner, sideMiddle);
+			// a flat floor has no ledges: not where four blocks meet, nor along a seam between two
+			Vec3 floorCorner = tryGrab(ctx, server, 170.5, 0.5, 171.0, -60.0, 0.0);
+			Vec3 floorSeam = tryGrab(ctx, server, 170.5, 0.5, 170.5, -60.0, -0.0);
+			LOG.info("[wkclimb] snow 1 layer: {}; snow 3 layers: {}; overhang inner corner: {}; side inner corner: {}; middle of that ledge: {}; floor corner: {}; floor seam: {}",
+					snow1, snow3, overhang, sideCorner, sideMiddle, floorCorner, floorSeam);
+			if (floorCorner != null || floorSeam != null) throw new AssertionError("grabbed a flat floor: corner " + floorCorner + ", seam " + floorSeam);
 			if (snow1 == null || Math.abs(snow1.y - -58.0) > 1e-3) throw new AssertionError("ledge under one snow layer: " + snow1);
 			if (snow3 == null || Math.abs(snow3.y - -57.625) > 1e-3) throw new AssertionError("edge of three snow layers: " + snow3);
 			if (overhang != null && Math.abs(overhang.z - -2.0) < 1e-3) throw new AssertionError("grabbed the inner corner under the overhang: " + overhang);

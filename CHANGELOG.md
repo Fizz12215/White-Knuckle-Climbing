@@ -18,6 +18,7 @@ Fixes, each making it behave like the game:
 - **Held hands** are drawn at the game's 95% size.
 - **Snow:** ledges covered by a layer of snow can be grabbed again (one layer has no collision, but it
   used to hide the ledge). Thicker snow is held by its own edge.
+- **Flat floors:** you can no longer grab the floor where four blocks meet.
 - **Inner corners:** you can no longer grab a concave corner. That covers the back edge of a block
   under an overhang, and the end of a ledge pressed against a taller block (a hand needs room).
 
