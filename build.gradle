@@ -77,6 +77,12 @@ tasks.register("installMod", Copy) {
 	doLast { println "Installed ${base.archivesName.get()}-${version}.jar into ${modsDir}" }
 }
 tasks.named("build") { finalizedBy "installMod" }
+// Say so when local.properties points at a mods folder that no longer exists (e.g. a renamed instance)
+gradle.taskGraph.whenReady { graph ->
+	if (graph.hasTask(":installMod") && modsDir != null && !file(modsDir).isDirectory()) {
+		logger.warn("WARNING: modsDir in local.properties doesn't exist, so the jar was NOT installed: ${modsDir}")
+	}
+}
 
 // Beta package for testers: the mod jar, the asset extractor (+ one-click scripts) and a guide.
 // No White Knuckle files are included: each tester builds the pack from their own copy of the game.
