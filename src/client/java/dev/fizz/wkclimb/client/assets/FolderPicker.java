@@ -10,8 +10,9 @@ import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
+import java.io.File;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
@@ -114,10 +115,12 @@ public final class FolderPicker {
 			}
 		});
 		try {
+			// SDL takes what follows the last separator as a file name (Windows: steamapps with "common"
+			// typed in), so a folder to open needs a separator at the end, as tinyfd did
+			String location = start == null ? null : start + File.separator;
 			mc.execute(() -> {
 				try {
-					SDLDialog.SDL_ShowOpenFolderDialog(callback, 0L, mc.getWindow().handle(),
-							start == null ? null : start.toString(), false);
+					SDLDialog.SDL_ShowOpenFolderDialog(callback, 0L, mc.getWindow().handle(), location, false);
 				} catch (Throwable e) {
 					LOG.warn("SDL's folder dialog didn't open", e);
 					done.complete(new Result.Failed(e.toString()));

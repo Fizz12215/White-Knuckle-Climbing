@@ -80,10 +80,19 @@ public final class GameLocator {
 	/** Where the folder pickers start: the first Steam library's steamapps/common that exists. */
 	public static Optional<Path> pickerStart() {
 		String registry = isWindows() ? registrySteamPath() : null;
-		for (Path lib : steamLibraries(steamRoots(home(), registry))) {
+		return pickerStart(steamLibraries(steamRoots(home(), registry)), flatpakAppId().isPresent(), home());
+	}
+
+	/**
+	 * In a Flatpak the sandbox can't see Steam, so with no library found it's Steam's usual place,
+	 * unchecked: the portal's picker runs outside the sandbox, so it can open it if it's there.
+	 */
+	static Optional<Path> pickerStart(List<Path> libraries, boolean flatpak, Path home) {
+		for (Path lib : libraries) {
 			Path common = lib.resolve("steamapps").resolve("common");
 			if (Files.isDirectory(common)) return Optional.of(common);
 		}
+		if (flatpak) return Optional.of(expand(STEAM_ROOTS.get(0), home).resolve("steamapps").resolve("common"));
 		return Optional.empty();
 	}
 

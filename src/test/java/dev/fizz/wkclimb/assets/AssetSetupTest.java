@@ -87,6 +87,17 @@ class AssetSetupTest {
 	}
 
 	@Test
+	void pickerStart(@TempDir Path tmp) throws IOException {
+		Path home = tmp.resolve("home");
+		Path library = tmp.resolve("SteamLibrary");
+		// nothing visible: a Flatpak still starts at Steam's usual place, unchecked; elsewhere no suggestion
+		assertEquals(Optional.of(home.resolve(".local/share/Steam/steamapps/common")), GameLocator.pickerStart(List.of(library), true, home));
+		assertEquals(Optional.empty(), GameLocator.pickerStart(List.of(library), false, home));
+		Files.createDirectories(library.resolve("steamapps/common"));
+		assertEquals(Optional.of(library.resolve("steamapps/common")), GameLocator.pickerStart(List.of(library), true, home));
+	}
+
+	@Test
 	void flatpakInfo(@TempDir Path tmp) throws IOException {
 		Path info = tmp.resolve(".flatpak-info");
 		assertEquals(Optional.empty(), GameLocator.flatpakAppId(info));
