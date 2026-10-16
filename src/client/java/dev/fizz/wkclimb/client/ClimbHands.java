@@ -5,6 +5,7 @@ import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.WKClimb;
 import dev.fizz.wkclimb.sim.ClimbSim;
 import dev.fizz.wkclimb.sim.WK;
+import dev.fizz.wkclimb.client.mixin.CameraInvoker;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -196,7 +197,7 @@ public final class ClimbHands {
 		int w = g.guiWidth(), h = g.guiHeight();
 		float partial = delta.getGameTimeDeltaPartialTick(false);
 		Camera camera = mc.gameRenderer.mainCamera();
-		double fov = camera.getFov(); // the FOV the frame is rendered with (26.3 keeps it on the camera)
+		double fov = ((CameraInvoker) camera).wkclimb$calculateFov(partial);
 		double tanFov = Math.tan(Math.toRadians(fov / 2));
 		double aspect = (double) w / h;
 		// SetCameraFov: the hand rig scales and drops as the FOV widens past 90 (sprinting)

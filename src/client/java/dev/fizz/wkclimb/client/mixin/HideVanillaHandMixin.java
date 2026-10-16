@@ -4,7 +4,6 @@ import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.client.ClimbController;
 import dev.fizz.wkclimb.client.ClimbHands;
 import net.minecraft.client.renderer.GameRenderer;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public abstract class HideVanillaHandMixin {
 	@Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
-	private void wkclimb$hideHand(float partialTick, boolean sleeping, Matrix4f projection, CallbackInfo ci) {
+	private void wkclimb$hideHand(CallbackInfo ci) {
 		if (ClimbConfig.hideVanillaHand && ClimbController.INSTANCE.isEnabled() && ClimbHands.isActive()) ci.cancel();
 	}
 }
