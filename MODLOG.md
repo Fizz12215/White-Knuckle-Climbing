@@ -639,3 +639,41 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
     column hugged its left edge. A full-width spacer now keeps the column full width;
   - at the owner's request, the placeholder pixel-art hand icons drawn without the pack were
     removed. Without the pack there's now no hand HUD (Minecraft's crosshair and arm).
+
+## 2026-10-16: port to Minecraft 26.3 (0.5.0-beta)
+- **Goal:** move 0.4.0-beta to Minecraft 26.3, unchanged in play. 0.4.0-beta (tag `v0.4.0-beta`) is
+  the last version for 1.21.9. Branch `port-26.3`; the working notes are in `PORT-26.3.md` until the
+  port is done.
+- **Method:** the port-a-mod skill. 0.4.0-beta is the source of truth (`git show v0.4.0-beta:...`),
+  every 26.3 name was looked up with `javap` against the real jars, one commit per unit, and the
+  gametest is the oracle on both graphics engines.
+- **What changed:**
+  - build: non-remapping Loom 1.18, no mappings (26.x ships Mojang's names), Java 25, Gradle 9.7.1;
+  - `ResourceLocation` -> `Identifier`; payload registry renames;
+  - shaders: ShaderC rules (`layout(location)`, `#include`, the separate-shader-objects extension);
+  - render pipelines and GPU buffers moved to `com.mojang.renderpearl`;
+  - the damage look: 26.3 rebuilds a list of post effects every frame, so a hook adds ours to it
+    (it now stacks with vanilla's effects instead of giving way to them);
+  - GUI: `GuiGraphicsExtractor`, screens through `mc.gui`; input: SDL3 scancodes and mouse buttons;
+  - camera: the FOV hook moved to `Camera.calculateFov`; the bob hooks take the camera render state;
+  - the Windows folder picker: tinyfd is gone from 26.3, so it's SDL3's `SDL_ShowOpenFolderDialog`;
+  - the pack: format 97, content version 2, so 0.4.0 packs get the rebuild offer;
+  - Fabric Loader 0.19.3 or newer (what Fabric API for 26.3 needs).
+- **Test tooling:** `WKCLIMB_TEST_GRAPHICS=opengl|vulkan` picks the engine for the gametest (passed
+  as `--graphicsBackend`, since the test framework rewrites `options.txt`). `installMod` now skips a
+  Prism instance of another Minecraft version: an early port build had overwritten 0.4.0-beta in
+  the owner's 1.21.9 instance (restored from the release zip).
+- **Verified (this Linux PC, NVIDIA 615.78):** 36 unit tests. Gametest:
+  - OpenGL, no pack: `ALL CHECKS PASSED (with WK asset pack: false)`;
+  - OpenGL, with a freshly built 26.3 pack: all checks passed; damage look within 0.24-0.26/255 of
+    the model at every health level, as on 1.21.9;
+  - Vulkan, with the pack: all checks passed, same numbers;
+  - `WKCLIMB_TEST_BUILD=1` on Vulkan and on OpenGL: the Build button, the out-of-date offer, Stop and
+    the rebuild all passed.
+- **Found by looking at the screenshots, not by the checks:** the setup screen showed only its title
+  and buttons. 26.3's scroll area keeps whatever height it had when its maximum was set, and we set
+  the maximum before laying out the text (0 tall). Fixed by laying it out first, as vanilla does.
+  The test helper for the screen's pages also built its widgets twice (26.3 screens know
+  `minecraft` from the start), which drew the title twice.
+- **Not verified yet:** Windows (above all the SDL3 folder picker), a manual play in a real 26.3
+  client, the Linux portal picker and fullscreen handling outside the test.

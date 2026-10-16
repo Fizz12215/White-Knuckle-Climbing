@@ -1,5 +1,6 @@
-WHITE KNUCKLE CLIMBING  -  0.4.0 beta  -  for Minecraft Java Edition 1.21.9 (Fabric)
+WHITE KNUCKLE CLIMBING  -  0.5.0 beta  -  for Minecraft Java Edition 26.3 (Fabric)
 =====================================================================================
+(On Minecraft 1.21.9, use 0.4.0 beta instead: it's the last version for 1.21.9.)
 Climb Minecraft like the White Knuckle climber: grab ledges with each hand, watch your grip run
 out, swing from bars and chains, and move, sound and get hurt the way the game does.
 
@@ -11,7 +12,7 @@ and it contains none of the game's files.
 
 WHAT'S IN THIS ZIP
 ------------------
-  mods/white-knuckle-climbing-0.4.0-beta.jar   the mod
+  mods/white-knuckle-climbing-0.5.0-beta.jar   the mod
   asset-extractor/                             only if the in-game Build button can't run: builds
                                                White Knuckle's hands and sounds by hand (step 3)
   README.txt                                   this guide
@@ -19,26 +20,26 @@ WHAT'S IN THIS ZIP
 
 WHAT YOU NEED
 -------------
-  - Minecraft Java Edition 1.21.9
-  - Fabric Loader for 1.21.9           https://fabricmc.net/use/installer/
-  - Fabric API for 1.21.9              https://modrinth.com/mod/fabric-api
-                                       (on its Versions tab, pick one marked 1.21.9)
+  - Minecraft Java Edition 26.3
+  - Fabric Loader for 26.3             https://fabricmc.net/use/installer/
+  - Fabric API for 26.3                https://modrinth.com/mod/fabric-api
+                                       (on its Versions tab, pick one marked 26.3)
   - Optional but recommended: White Knuckle on Steam. Without it the mod still works, with
     Minecraft's own arm, crosshair and sounds.
 
 
 =====================================================================================
-STEP 1 - INSTALL FABRIC (skip if you already play Fabric 1.21.9)
+STEP 1 - INSTALL FABRIC (skip if you already play Fabric 26.3)
 =====================================================================================
 Official Minecraft launcher:
   1. Download the Fabric installer from https://fabricmc.net/use/installer/
        Windows: the .EXE.   Linux: the universal .JAR. Run it with:  java -jar fabric-installer-*.jar
-  2. Pick Minecraft version 1.21.9 and click Install.
-  3. Open the Minecraft launcher, pick the "fabric-loader-1.21.9" profile, press Play once and
+  2. Pick Minecraft version 26.3 and click Install.
+  3. Open the Minecraft launcher, pick the "fabric-loader-26.3" profile, press Play once and
      quit at the title screen. That creates the mods folder.
 
 Prism Launcher / MultiMC:
-  1. Add Instance > Minecraft 1.21.9 > OK.
+  1. Add Instance > Minecraft 26.3 > OK.
   2. Right-click the instance > Edit > Version > Install Loader > Fabric > OK.
 
 
@@ -47,7 +48,7 @@ STEP 2 - PUT THE MODS IN
 =====================================================================================
 Copy TWO files into your mods folder:
   - the Fabric API .jar you downloaded
-  - mods/white-knuckle-climbing-0.4.0-beta.jar from this zip
+  - mods/white-knuckle-climbing-0.5.0-beta.jar from this zip
 
 Where the mods folder is:
   Windows, official launcher:  press Win+R, type  %APPDATA%\.minecraft\mods  and press Enter
@@ -207,14 +208,15 @@ PLAYING
   Knuckle's exact step height, and more; see the mod's page for what each one does).
 
   Updating from an older version? Start Minecraft and press Start when the mod offers to rebuild
-  the pack, then Continue at each step.
+  the pack, then Continue at each step. Packs from 0.4.0 or older always need this once, because
+  Minecraft 26.3 uses a newer pack format.
 
 
 =====================================================================================
 PLAYING TOGETHER
 =====================================================================================
   - Everyone needs the mod. The host or server needs it too: open a single-player world to LAN,
-    or put this mod and Fabric API on a Fabric 1.21.9 server.
+    or put this mod and Fabric API on a Fabric 26.3 server.
   - On a server without the mod, climbing switches itself off (otherwise the server would kick
     you for flying).
   - For server owners: the server trusts each player's client about when they're hanging (no fall
@@ -226,8 +228,8 @@ PLAYING TOGETHER
 IF SOMETHING GOES WRONG
 =====================================================================================
   Minecraft crashes or won't start
-      Check that it's Minecraft 1.21.9, Fabric Loader 0.17 or newer, and the Fabric API made for
-      1.21.9.
+      Check that it's Minecraft 26.3, Fabric Loader 0.19.3 or newer, and the Fabric API made for
+      26.3.
   I see Minecraft's arm, crosshair and sounds instead of White Knuckle's
       The White Knuckle Assets pack isn't on. Do step 3, and check it's on the right-hand
       ("Selected") side in Options > Resource Packs. If you clicked "Don't ask again", set

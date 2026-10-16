@@ -28,31 +28,64 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
 ## Adaptation matrix
 | Area | 1.21.9 code | 26.3 change | Verdict | Status |
 |---|---|---|---|---|
-| Build | `build.gradle`, wrapper | non-remapping Loom, `implementation`, `jar` (not `remapJar`), Java 25 | adapt | compiles |
-| Ids | `ResourceLocation` (22 uses) | `Identifier` (same factory methods) | rename | compiles |
-| Networking | `PayloadTypeRegistry.playC2S/playS2C` | `serverboundPlay` / `clientboundPlay` | rename | compiles |
-| Shaders | `core/hand.fsh`, `core/blood.fsh`, `post/damage.fsh`, `include/wk_damage.glsl` | ShaderC: `#extension GL_ARB_separate_shader_objects`, `layout(location)`, `#include`, guards | adapt | edited, not yet compiled by the game |
-| Render pipelines | `RenderPipeline.builder(...).withUniform("Globals", ...)` | package `com.mojang.renderpearl.api.pipeline`; uniforms via bind group layouts (`GLOBALS_SNIPPET`) | adapt | todo |
-| Damage post effect | `GameRenderer.setPostEffect/currentPostEffect/clearPostEffect`, PostPass uniform buffer made writable by `PostPassMixin` | requested-effects list (`getRequestedPostEffects()`), `END_OF_FRAME_POST_EFFECT`; `GpuDevice`/`GpuBuffer` moved to renderpearl | adapt | todo |
-| GUI / HUD | `GuiGraphics`, `HudElementRegistry` | `GuiGraphicsExtractor` (`text`, `centeredText`, `pose()` is a `Matrix3x2fStack`) | adapt | todo |
-| Setup screen | `Screen.render`, `MultiLineTextWidget.setColor`, `mc.screen`/`setScreen` | `extractRenderState`, screen access through `mc.gui` | adapt | todo |
-| Input | GLFW key and mouse codes, `InputConstants.Type.KEYSYM` | SDL3 scancodes, `InputConstants.Type.KEYBOARD` | adapt | todo |
-| Window | `Window.isFullscreen/toggleFullScreen` | to find (SDL window) | adapt | todo |
-| Folder picker (Windows) | LWJGL tinyfd | **tinyfd no longer ships**; SDL3 `SDL_ShowOpenFolderDialog` | replace | todo |
-| Folder picker (Linux) | own D-Bus portal client | unchanged (pure Java) | keep | compiles |
-| Camera | `Camera.getYRot/getXRot`, `getMainCamera` | to find | adapt | todo |
-| Misc client API | `Util`, `KeyBindingHelper`, toasts, `getOverlay`, `displayClientMessage`, `registerReloader` | to find | adapt | todo |
-| Mixins (21) | camera, eye height, travel, input, hand hiding, hurt shake, sounds, step height, health, food, sneak edge, bars, post pass | each target re-checked against 26.3 with `javap` | adapt | todo |
-| Asset extractor | `PACK_FORMAT = 69` | resource pack format 97.1 | adapt | todo |
-| Gametests | GLFW input codes, client gametest API | SDL3 codes; API changes to find | adapt | todo |
+| Build | `build.gradle`, wrapper | non-remapping Loom, `implementation`, `jar` (not `remapJar`), Java 25 | adapt | tested |
+| Ids | `ResourceLocation` (22 uses) | `Identifier` (same factory methods) | rename | tested |
+| Networking | `PayloadTypeRegistry.playC2S/playS2C` | `serverboundPlay` / `clientboundPlay` | rename | tested (dedicated-server check) |
+| Shaders | `core/hand.fsh`, `core/blood.fsh`, `post/damage.fsh`, `include/wk_damage.glsl` | ShaderC: `#extension GL_ARB_separate_shader_objects`, `layout(location)`, `#include`, guards | adapt | tested, OpenGL and Vulkan |
+| Render pipelines | `RenderPipeline.builder(...).withUniform("Globals", ...)` | package `com.mojang.renderpearl.api.pipeline`; `GUI_TEXTURED_SNIPPET` already binds Globals | adapt | tested, OpenGL and Vulkan |
+| Damage post effect | `GameRenderer.setPostEffect/currentPostEffect/clearPostEffect`, PostPass uniform buffer made writable by `PostPassMixin` | our id added to `requestedPostEffects` at `update` TAIL (`GameRendererMixin`); `GpuDevice`/`GpuBuffer` moved to renderpearl | adapt | tested (model error 0.24-0.26/255, as on 1.21.9), OpenGL and Vulkan |
+| GUI / HUD | `GuiGraphics`, `HudElementRegistry` | `GuiGraphicsExtractor`; HUD elements are `extractRenderState(g, delta)` | adapt | tested |
+| Setup screen | `MultiLineTextWidget.setColor`, `mc.screen`/`setScreen`, `Util.getPlatform().openPath`, `confirmLinkNow(String)` | colour inside the text; `mc.gui.screen()/setScreen()`; `Blaze3D.openPath`; `confirmLinkNow(URI)` | adapt | tested (screenshots of every page in the build test) |
+| Input | GLFW key and mouse codes, `InputConstants.Type.KEYSYM` | SDL3 scancodes (`SDLScancode`), mouse buttons (`SDLMouse`), `InputConstants.Type.KEYBOARD` | adapt | tested (gametest presses keys and buttons) |
+| Window | `Window.isFullscreen/toggleFullScreen` | the `fullscreen` option (as F11 does) | adapt | compiles; see deviations |
+| Folder picker (Windows) | LWJGL tinyfd | **tinyfd no longer ships**; SDL3 `SDL_ShowOpenFolderDialog`, opened on the main thread | replace | compiles; needs the Windows test |
+| Folder picker (Linux) | own D-Bus portal client | unchanged (pure Java) | keep | compiles; manual check |
+| Camera | `Camera.getYRot/getXRot`, `getMainCamera`, `GameRenderer.getFov` | `yRot()/xRot()`, `mainCamera()`, `Camera.calculateFov` | adapt | tested |
+| Misc client API | `Util`, `KeyBindingHelper`, toasts, `getOverlay`, `displayClientMessage`, `registerReloader` | `net.minecraft.util.Util`, `KeyMappingHelper.registerKeyMapping`, `mc.gui.toastManager()`, `mc.gui.overlay()`, `sendOverlayMessage`/`sendSystemMessage`, `registerReloadListener` | adapt | tested |
+| Mixins (21) | camera, eye height, travel, input, hand hiding, hurt shake, sounds, step height, health, food, sneak edge, bars, post pass | all re-checked with `javap`; 3 changed (below) | adapt | tested |
+| Asset extractor | `PACK_FORMAT = 69` | resource pack format 97 (game: 97.1); pack content version 1 -> 2 | adapt | tested (pack built and loaded) |
+| Gametests | GLFW input codes, client gametest API | SDL3 codes; no `waitForChunksRender`; dedicated connection not `AutoCloseable` | adapt | tested |
 
 ## Log
 1. **Build and first renames:** wrapper 9.7.1; the Loom/Java/dependency switch; `Identifier`;
-   `PayloadTypeRegistry`. The shared (`main`) source set compiles. The client has 83 errors left
-   (grouped above).
+   `PayloadTypeRegistry`. The shared (`main`) source set compiles. The client had 83 errors left.
 2. **Shaders:** the four files brought to the ShaderC rules, comparing against vanilla 26.3's
    `position_tex_color`, `post/blit`, `post/box_blur` and `globals.glsl`. `SamplerInfo`, `Globals` and
    `DynamicTransforms` are unchanged for our use. The post-effect JSON format is unchanged.
+3. **Client compiles** (commit `1f15944`): render API, damage post effect, GUI, input, folder picker,
+   small APIs.
+4. **Gametests compile** (`8728961`); pack format 97 and content version 2 (`b7cf27e`), so a 1.21.9
+   pack gets the rebuild offer.
+5. **First launch** crashed on one hook (`getFov` is gone). All 21 hooks then checked against 26.3:
+   - the FOV hook moved to `Camera.calculateFov` (`CameraFovMixin`), and the hands recompute it
+     through `CameraInvoker`, as they did with `GameRenderer.getFov`;
+   - `bobHurt`/`bobView` take `(CameraRenderState, PoseStack)`;
+   - the hand-hiding hook no longer names the parameters it never used.
+6. **Gametest results** (all on this Linux PC, NVIDIA):
+   - OpenGL, no pack: all checks passed.
+   - OpenGL, with the pack: all checks passed; damage look within 0.24-0.26/255 of the model.
+   - Vulkan, with the pack: all checks passed; same numbers.
+   - Vulkan, `WKCLIMB_TEST_BUILD=1` (real private Python folder): the Build button installed the
+     libraries, built and switched on the pack, the out-of-date offer, Stop and the two-step rebuild
+     all passed; then the climbing checks without the pack.
+   - OpenGL, `WKCLIMB_TEST_BUILD=1`: all passed (build + switch on only: the libraries were current).
+7. **The setup screen showed no text** (found in the Vulkan build run's screenshots; every state
+   check had passed):
+   - 26.3's `ScrollableLayout.arrangeElements` keeps the box's current height (clamped), and
+     `setMaxHeight` sizes it from the content's height at that moment. We set the maximum before
+     the text was laid out, so the box stayed 0 tall and clipped everything. Now `repositionElements`
+     calls `scroll.arrangeElements()` first, as vanilla's `RestrictionsScreen` does.
+   - The test helper `showPageForTest` rebuilt "if `minecraft != null`", but 26.3 screens get
+     `minecraft` in the constructor. It built a zero-width set of widgets before the screen opened,
+     and opening added a second set (the title showed twice). It now checks `layout != null`.
+   - Re-checked in the OpenGL build run's screenshots: every page has its text and colours.
+8. **Folder picker robustness:** the SDL callback and the dialog call always answer, so an exception
+   can't leave the picker waiting forever.
+9. **`installMod` guard:** an early port build had replaced 0.4.0-beta in the owner's 1.21.9 Prism
+   instance (restored from the release zip). `installMod` now reads the instance's `mmc-pack.json`
+   and skips another Minecraft version with a warning (checked: it skips the 1.21.9 instance).
+   - `WKCLIMB_TEST_GRAPHICS=opengl|vulkan` added to `build.gradle`: the test framework rewrites
+     `options.txt`, so the engine goes in as the `--graphicsBackend` launch argument.
 
 ## 26.3 API map (checked with javap)
 - **Render API:** `com.mojang.blaze3d.{pipeline.RenderPipeline, shaders.UniformType, buffers.GpuBuffer,
@@ -73,22 +106,61 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
   - `PostPass.<init>` creates uniform buffers with
     `renderpearl/api/device/GpuDevice.createBuffer(Supplier;I;ByteBuffer)`; `GpuBuffer.USAGE_COPY_DST`
     exists.
-- **FOV:** `GameRenderer.getFov(Camera,float,boolean)` is gone; there's a `Camera.getFov()F`.
+- **Camera and FOV:**
+  - `GameRenderer.getFov(Camera,float,boolean)` is gone. `Camera.update(DeltaTracker)` (called from
+    `GameRenderer.update`, before `renderLevel`) stores `calculateFov(partial)` in `fov` and
+    `calculateHudFov(partial)` in `hudFov`. `calculateFov` = old `getFov(..., true)`, including
+    panorama 90 and the death/fluid changes; `calculateHudFov` = old `getFov(..., false)`.
+  - `Camera.yRot()/xRot()`, `GameRenderer.mainCamera()`.
+  - `GameRenderer.bobHurt/bobView(CameraRenderState, PoseStack)`, called from `renderLevel` and
+    `renderItemInHand(CameraRenderState, PlayerRenderState, GpuTextureView)`, as before.
 - **GUI:**
   - `GuiGraphicsExtractor` has `text`/`centeredText` (not `drawString`), `blit(RenderPipeline,
-    Identifier, ...)` with the same argument lists, and `fill`.
-  - `pose()` returns a `Matrix3x2fStack`; `guiWidth/guiHeight` are unchanged.
+    Identifier, ...)` with the same argument lists, and `fill`. `pose()` returns a `Matrix3x2fStack`.
+  - Fabric `HudElement.extractRenderState(GuiGraphicsExtractor, DeltaTracker)`.
+  - Screens: `mc.gui.screen()`, `mc.gui.setScreen()`, `mc.gui.overlay()`, `mc.gui.toastManager()`,
+    `mc.gui.hud.isHidden()` (was `options.hideGui`).
+  - `MultiLineTextWidget` has no `setColor`: the colour goes in the `Component`.
+  - `ConfirmLinkScreen.confirmLinkNow(Screen, URI)`; `com.mojang.blaze3d.Blaze3D.openPath(Path)` opens
+    a folder (`Util.OS` can't any more).
+- **Input:** `KeyMapping(String, InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_*, Category)`;
+  mouse buttons `SDLMouse.SDL_BUTTON_LEFT/RIGHT`. Fabric: `KeyMappingHelper.registerKeyMapping`.
+  The gametest `TestInput.holdKey/pressKey/holdMouse(int)` take the same SDL codes.
+- **Window:** no `isFullscreen/toggleFullScreen`. F11 (`Minecraft.toggleFullscreen`, from the
+  `keyFullscreen` binding) flips `options.fullscreen()`, whose callback calls
+  `Window.setFullscreen(boolean)`, then saves. `Minecraft.fullscreenStateChanged` copies every real
+  window change into the option and saves `options.txt`.
+- **Messages:** `Player.sendOverlayMessage(Component)` (was `displayClientMessage(c, true)`),
+  `sendSystemMessage(Component)` (was `displayClientMessage(c, false)`).
+- **Resources:** Fabric `ResourceLoader.registerReloadListener(Identifier, PreparableReloadListener)`.
+  Resource pack format 97.1 (`version.json` `pack_version.resource_major/minor`).
+- **Graphics engine:** option `preferredGraphicsBackend` (`default`/`opengl`/`vulkan`); launch
+  argument `--graphicsBackend <same>` wins over it.
 - **Networking:** `PayloadTypeRegistry.serverboundPlay()/clientboundPlay()`.
 - **LWJGL 3.4.3 modules:** no GLFW and no tinyfd; SDL3 (`lwjgl-sdl`), shaderc, spvc, vulkan, vma.
+  `SDLDialog.SDL_ShowOpenFolderDialog(callback, userdata, window, defaultLocation, allowMany)`;
+  the callback gets a NULL list on error, an empty list on cancel.
+- **Gametest API:** no `waitForChunksRender` (we wait 60 ticks); `TestDedicatedServerContext.connect()`
+  returns a `TestDedicatedServerConnection` that has `close()` but isn't `AutoCloseable`.
 
 ## Forced deviations
 - **The damage look now stacks with vanilla post effects** (creeper/spider vision while spectating,
   `/posteffect`). Before, it gave way to them, because 1.21.9 had a single post-effect slot.
-(none yet)
+- **Leaving fullscreen for the folder picker is written to `options.txt`** (and written back when the
+  picker closes): 26.3 saves every real window change. Only a quit while the picker is open would
+  leave the game windowed next time. 1.21.9's `toggleFullScreen` didn't touch the option.
+
+## Seen in the logs, not ours
+- `Requested post effect does not exist: minecraft:end_of_frame`: 26.3 always requests its
+  `end_of_frame` slot, which only a resource pack fills.
+- `Illegal option value 0 for Anisotropic Filtering`: the test run folder's `options.txt`.
 
 ## Unverified
-- Everything at runtime: nothing has been run on 26.3 yet.
+- The Windows folder picker on SDL3, and the whole mod on Windows (needs the Windows test).
+- The Linux portal picker and the fullscreen handling in a real (non-test) client.
+- A manual play in a 26.3 Prism instance.
 
 ## Next task
-Fix the client compile errors area by area (render pipelines, then the damage post effect, the GUI/HUD,
-input and window, then the small APIs), and look up every name with `javap`.
+A 26.3 Prism instance for a manual play (the owner decides how it's made), then the Windows test
+handoff through the private testing repo. After both: fold this file into DEVELOPING/MODLOG, merge
+to main and release 0.5.0-beta (each push only with the owner's OK).

@@ -4,7 +4,7 @@ Build a private Minecraft resource pack with White Knuckle's own hand sprites an
 read from YOUR White Knuckle install. Nothing from the game ships with the mod; run this once.
 
     pip install -r tools/requirements.txt
-    python3 tools/extract_wk_assets.py --instance ~/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances/1.21.9 --enable
+    python3 tools/extract_wk_assets.py --instance ~/.var/app/org.prismlauncher.PrismLauncher/data/PrismLauncher/instances/WhiteKnuckle --enable
 
 What it reads (all found through the ENT_Player component in the level3 scene):
   * hands[0].handPoses      -> the five first-person hand sprites (normal/open/grab/crouch/sprint)

@@ -226,6 +226,9 @@ public class AssetSetupScreen extends Screen {
 	@Override
 	protected void repositionElements() {
 		if (layout == null) return;
+		// Lay the text out first: 26.3's ScrollableLayout sizes its box from the content's height when the
+		// maximum is set, and later keeps that height (a box set before the text was laid out stays 0 tall).
+		scroll.arrangeElements();
 		scroll.setMaxHeight(Math.max(40, layout.getContentHeight() - 8));
 		layout.arrangeElements();
 	}
@@ -411,6 +414,6 @@ public class AssetSetupScreen extends Screen {
 		page = View.valueOf(name);
 		if (page == View.PICKER_WRONG) wrongFolder = Path.of("/home/someone/Downloads");
 		if (page == View.PICKER_FAILED) pickerError = "example: no folder picker";
-		if (minecraft != null) rebuildWidgets();
+		if (layout != null) rebuildWidgets(); // already set up (26.3 screens have minecraft from the start)
 	}
 }

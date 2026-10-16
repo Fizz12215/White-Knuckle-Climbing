@@ -30,6 +30,13 @@ fabricApi {
 	}
 }
 
+// WKCLIMB_TEST_GRAPHICS=opengl or vulkan picks the in-game tests' graphics engine. The test framework
+// rewrites options.txt at startup, so it goes in as a launch argument.
+def testGraphics = System.getenv("WKCLIMB_TEST_GRAPHICS")
+if (testGraphics) {
+	loom.runs.named("clientGameTest") { programArgs("--graphicsBackend", testGraphics) }
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -73,8 +80,17 @@ def localFile = file("local.properties")
 if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
 def modsDir = localProps.getProperty("modsDir")
 
+// The Minecraft version of the Prism instance that owns modsDir (its mmc-pack.json), or null if unknown.
+// A jar for another Minecraft version would stop that instance from starting, so it isn't copied there.
+def instanceMinecraft = {
+	def pack = modsDir == null ? null : file("${modsDir}/../../mmc-pack.json")
+	if (pack == null || !pack.isFile()) return null
+	return new groovy.json.JsonSlurper().parse(pack).components?.find { it.uid == "net.minecraft" }?.version
+}
+def instanceMatches = { -> instanceMinecraft() in [null, project.minecraft_version] }
+
 tasks.register("installMod", Copy) {
-	onlyIf { modsDir != null && file(modsDir).isDirectory() }
+	onlyIf { modsDir != null && file(modsDir).isDirectory() && instanceMatches() }
 	dependsOn tasks.named("jar")
 	from tasks.named("jar")
 	into modsDir ?: "build/no-mods-dir"
@@ -89,6 +105,10 @@ tasks.named("build") { finalizedBy "installMod" }
 gradle.taskGraph.whenReady { graph ->
 	if (graph.hasTask(":installMod") && modsDir != null && !file(modsDir).isDirectory()) {
 		logger.warn("WARNING: modsDir in local.properties doesn't exist, so the jar was NOT installed: ${modsDir}")
+	}
+	if (graph.hasTask(":installMod") && modsDir != null && file(modsDir).isDirectory() && !instanceMatches()) {
+		logger.warn("WARNING: the instance at modsDir is Minecraft ${instanceMinecraft()}, this build is " +
+				"${project.minecraft_version}, so the jar was NOT installed: ${modsDir}")
 	}
 }
 

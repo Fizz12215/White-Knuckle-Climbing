@@ -5,21 +5,26 @@ history of every change with what was measured. This file is the map.
 
 ## What it is
 
-A Fabric mod for **Minecraft 1.21.9** that plays like White Knuckle (Dark Machine, Unity 6 / Mono):
+A Fabric mod for **Minecraft 26.3** that plays like White Knuckle (Dark Machine, Unity 6 / Mono):
 two-handed grip climbing on ledges and rods, White Knuckle's on-foot movement, camera, hands, HUD,
 sounds and health rules. Gameplay is reimplemented from the game's decompiled code and serialized
 data. **No game files ship with the mod.** Art and audio come from a resource pack each player
 builds from their own install (`tools/extract_wk_assets.py`).
 
-Status: 0.4.0-beta (climbing only; 0.3.0 was the first public release). See *Open issues* at the end.
+Status: 0.5.0-beta, the 26.3 port of 0.4.0-beta with no gameplay changes (climbing only; 0.3.0 was
+the first public release). 0.4.0-beta (tag `v0.4.0-beta`) is the last version for Minecraft 1.21.9.
+See *Open issues* at the end.
 
 ## Setup
 
-- JDK 21 or newer (the build compiles with `--release 21`; it has been built with JDK 25).
-- The Gradle wrapper (Gradle 9.1), Fabric Loom 1.12.7 with **Mojang mappings**, Fabric Loader
-  0.19.5 and Fabric API 0.134.1+1.21.9 (`gradle.properties`).
+- JDK 25 (Minecraft 26.3 needs Java 25).
+- The Gradle wrapper (Gradle 9.7.1), Fabric Loom 1.18 (`net.fabricmc.fabric-loom`: Minecraft 26.x
+  ships with Mojang's own names, so there are no mappings and nothing is remapped), Fabric Loader
+  0.19.5 and Fabric API 0.162.0+26.3 (`gradle.properties`).
 - Optional: `local.properties` with `modsDir=/path/to/instance/minecraft/mods`. If present, every
-  `./gradlew build` copies the jar there and deletes older versions of it. The file isn't committed.
+  `./gradlew build` copies the jar there and deletes older versions of it. It skips a Prism
+  instance whose `mmc-pack.json` names another Minecraft version (with a warning), so a 1.21.9
+  instance keeps working. The file isn't committed.
 - To work on the assets or research: Python 3.10-3.14 with `pip install -r tools/requirements.txt`,
   and a White Knuckle install.
 
@@ -28,7 +33,7 @@ Status: 0.4.0-beta (climbing only; 0.3.0 was the first public release). See *Ope
 | `./gradlew build` | compile, run unit tests, build `build/libs/*.jar` (and install it, see above) |
 | `./gradlew test` | `ClimbSimTest`: headless checks of the ported physics against hand-derived numbers |
 | `./gradlew runClient` | dev client |
-| `./gradlew runClientGameTest` | real client + flat world; scripted checks of almost everything (~4 min). Set `WKCLIMB_TEST_PACK=<extracted pack folder>` to test with the real sprites and sounds, and `WKCLIMB_TEST_BUILD=1` to also run the in-game Build button for real (`AssetBuildGameTest`: needs White Knuckle and Python; clicks Continue at every step; add `XDG_DATA_HOME=<empty dir>` for a fresh private Python folder). Screenshots: `build/run/clientGameTest/screenshots/` |
+| `./gradlew runClientGameTest` | real client + flat world; scripted checks of almost everything (~4 min). Set `WKCLIMB_TEST_PACK=<extracted pack folder>` to test with the real sprites and sounds, `WKCLIMB_TEST_GRAPHICS=opengl` or `vulkan` to pick the graphics engine (the test framework rewrites `options.txt`, so it's passed as `--graphicsBackend`), and `WKCLIMB_TEST_BUILD=1` to also run the in-game Build button for real (`AssetBuildGameTest`: needs White Knuckle and Python; clicks Continue at every step; add `XDG_DATA_HOME=<empty dir>` for a fresh private Python folder). Screenshots: `build/run/clientGameTest/screenshots/` |
 | `./gradlew betaZip` | release download: `build/beta/White-Knuckle-Climbing-<version>.zip` (jar, extractor, scripts, `beta/README.txt` = the player guide) |
 | `python tools/extract_wk_assets.py --out <dir> [--zip]` | build the "White Knuckle Assets" resource pack from your install (`--instance <prism instance> --enable` installs it) |
 | `python tools/dump_component.py <Class> [--file ...] [--keys ...]` | dump a game component's serialized values (for checking or porting numbers) |
@@ -65,7 +70,7 @@ src/client/java/dev/fizz/wkclimb/client/   client only
   ClimbKeybinds.java      applies the game's default keys once
   assets/                 the Build button: AssetPack (pack status, when to offer, switch on),
                           AssetBuilder (the steps, each waiting for an OK), AssetSetupScreen,
-                          FolderPicker (portal or tinyfd, leaving fullscreen first)
+                          FolderPicker (portal or SDL3, leaving fullscreen first)
   mixin/                  travel hook, input, camera, sounds, hide vanilla hand, post-pass access
 src/client/resources/assets/wkclimb/    lang, the damage post effect + shaders (our own files;
                                         the maths is in shaders/include/wk_damage.glsl)
@@ -132,7 +137,8 @@ Python extractor as before. The mod runs it for them, and asks first at every st
     pure-Java D-Bus client over the session bus socket, wire format in `DBusWire`). In a Flatpak the
     chosen folder comes back as a document-portal path (`/run/user/<uid>/doc/<id>/...`) the sandbox can
     read, which is remembered across restarts;
-  - Windows, or Linux without a portal: LWJGL tinyfd (shipped with Minecraft);
+  - Windows, or Linux without a portal: SDL3's `SDL_ShowOpenFolderDialog` (26.3 ships SDL3, and
+    no tinyfd), opened on the main thread; its callback answers on any thread;
   - a fullscreen game is put in a window first (and back after), so the picker or the winget window
     never takes the focus from fullscreen Minecraft.
 - **When the extractor adds or changes files, raise `PACK_CONTENT_VERSION` in the script and
@@ -212,8 +218,14 @@ Everything ported is commented with its source class/field. Sources:
     popup that steals focus, so the keystrokes land in the game instead of the console. Check
     for the popup (screenshot) before typing, or ask the user to tick "Always allow".
 - **Post effects:**
-  - In 1.21.9 post-effect uniforms are fixed per JSON file. The damage grade makes its own
-    pass's uniform buffer writable (`PostPassMixin` adds `COPY_DST`) and writes it every frame.
+  - Post-effect uniforms are fixed per JSON file. The damage grade makes its own pass's uniform
+    buffer writable (`PostPassMixin` adds `COPY_DST`) and writes it every frame.
+  - 26.3 has no single post-effect slot: `GameRenderer.update()` rebuilds a list of requested
+    effects every frame (its `end_of_frame` slot, the player's, the spectated mob's) and runs them all.
+    `GameRendererMixin` adds `wkclimb:damage` at `update` TAIL while `ClimbDamage.gradeRequested()`.
+  - Shaders are compiled by ShaderC for both OpenGL and Vulkan: `#version` first,
+    `#extension GL_ARB_separate_shader_objects : require`, `layout(location = N)` on every `in`/`out`,
+    `#include` (not `#moj_import`), and include guards. Test on both engines.
   - Keep uniform blocks to plain floats: Minecraft's `Std140Builder` pads `vec3` to 16 bytes, but
     GLSL std140 packs a following float at offset 12, so the shader read padding.
 - **Minecraft and Fabric hooks:**
@@ -222,10 +234,15 @@ Everything ported is commented with its source class/field. Sources:
   - `Player.maybeBackOffFromEdge` (the sneak edge guard) runs for `MoverType.SELF` *and* on the
     server's replay of client moves, so `NoSneakEdgeMixin` is common code keyed on `isWkMode`:
     client-only would get the player pulled back to the edge by the server.
-  - Eye height: the player's sizes are in `Avatar.getDefaultDimensions(Pose)` (1.21.9). The
+  - Eye height: the player's sizes are in `Avatar.getDefaultDimensions(Pose)` (1.21.9 and 26.3). The
     `eyeHeight` field is only refreshed on a pose change, so after joining, respawning or changing
     dimension a standing player keeps 1.62 until something calls `refreshDimensions()`
     (`ClimbHands.tick` does when it's stale).
+  - FOV (26.3): `Camera.update` stores `calculateFov(partial)` once per frame, before `renderLevel`.
+    `CameraFovMixin` hooks `calculateFov`; the hands call it again through `CameraInvoker`, so they
+    see this frame's White Knuckle FOV, as they did on 1.21.9.
+  - Keys and mouse buttons (26.3) are SDL3 codes: `SDLScancode.SDL_SCANCODE_*` with
+    `InputConstants.Type.KEYBOARD`, `SDLMouse.SDL_BUTTON_*`. The gametest input takes the same codes.
   - Step height is `LivingEntity.maxUpStep()` (the STEP_HEIGHT attribute). Lowering it client-side
     only is safe: the server's taller step can replay any move the client makes.
   - Hook `Player.getHurtSound` / `getDeathSound`; `LivingEntity`'s versions are overridden.
@@ -300,6 +317,9 @@ Everything ported is commented with its source class/field. Sources:
 
    Not run on Windows: the .bat's own venv setup and its "Install Python 3.13 now" branch, and
    Steam libraries on other drives.
+
+   **0.5.0 (26.3) is not checked on Windows yet**, above all the new SDL3 folder picker and
+   leaving fullscreen for it. The rest of the Windows-specific code is shared with 0.4.0 unchanged.
 2. **Approximations, not exact ports:**
    - damage look: the vignette image is a fitted curve (within 0.02 opacity); blood splats and
      hit-direction glows are blended the GUI way, not in linear light like the game;

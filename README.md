@@ -5,8 +5,10 @@ out, swing from bars and chains, and move, sound and get hurt the way the game d
 climbing, movement and health rules are rebuilt from White Knuckle's own code and data, and checked
 against the game.
 
-Minecraft Java Edition **1.21.9**, **Fabric**. Version **0.4.0 beta**: climbing only. Items, the
-inventory and perks may come later.
+Minecraft Java Edition **26.3**, **Fabric**. Version **0.5.0 beta**: climbing only. Items, the
+inventory and perks may come later. Works with both of 26.3's graphics engines, OpenGL and Vulkan.
+On Minecraft 1.21.9, use [0.4.0 beta](https://github.com/Fizz12215/White-Knuckle-Climbing/releases/tag/v0.4.0-beta),
+the last version for it.
 
 > An unofficial fan mod, not made or endorsed by Dark Machine, White Knuckle's developers. The mod
 > contains none of the game's files: if you own White Knuckle, a small tool builds its hands and
@@ -35,10 +37,10 @@ inventory and perks may come later.
 The download zip contains `README.txt` with the same steps in more detail, for **Windows** and
 **Linux** (including Steam Deck).
 
-1. **Fabric:** install [Fabric Loader](https://fabricmc.net/use/installer/) for 1.21.9 (or, in Prism
-   Launcher, make a 1.21.9 instance and add Fabric under Edit > Version > Install Loader).
-2. **Mods:** put [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.9 and
-   `white-knuckle-climbing-0.4.0-beta.jar` in your `mods` folder:
+1. **Fabric:** install [Fabric Loader](https://fabricmc.net/use/installer/) for 26.3 (or, in Prism
+   Launcher, make a 26.3 instance and add Fabric under Edit > Version > Install Loader).
+2. **Mods:** put [Fabric API](https://modrinth.com/mod/fabric-api) for 26.3 and
+   `white-knuckle-climbing-0.5.0-beta.jar` in your `mods` folder:
    - Windows: `%APPDATA%\.minecraft\mods` (press Win+R and paste it)
    - Linux: `~/.minecraft/mods`
    - Prism: right-click the instance > Folder > `mods`
@@ -61,7 +63,8 @@ The download zip contains `README.txt` with the same steps in more detail, for *
      folder picker. That covers another drive, or a **Flatpak launcher** (Prism Launcher from Flathub,
      most Steam Deck setups), which can't see your Steam folder. In a Flatpak, choosing the folder lets
      the launcher read just that folder: no commands, no restart.
-   - When a mod update needs a newer pack, the screen offers to rebuild it (two steps).
+   - When a mod update needs a newer pack, the screen offers to rebuild it (two steps). Packs built
+     for 0.4.0 or older need this once: 26.3 uses a newer pack format.
    - Please read [What the Build button does](#what-the-build-button-does-to-your-computer) and
      [Safety](#safety-what-this-access-means) below.
    - If the button can't run, the download zip also has the tool to do it by hand (the
@@ -140,7 +143,7 @@ more than before. In plain words:
 
 ## Multiplayer
 - Everyone needs the mod, and so does the host or server (LAN worlds work; for a server, install
-  this mod and Fabric API on a Fabric 1.21.9 server).
+  this mod and Fabric API on a Fabric 26.3 server).
 - On a server **without** the mod, climbing switches itself off, because the server would otherwise
   kick you for flying.
 - **For server owners:** the server trusts each player's game about when they're hanging (no fall
@@ -174,8 +177,8 @@ moving handholds, and White Knuckle's swimming (Minecraft's is used). The number
 your held item even though the hotbar is hidden.
 
 ## Troubleshooting
-- **Minecraft won't start:** check it's 1.21.9, with Fabric Loader 0.17 or newer and the Fabric API
-  made for 1.21.9.
+- **Minecraft won't start:** check it's 26.3, with Fabric Loader 0.19.3 or newer and the Fabric API
+  made for 26.3.
 - **Minecraft's arm, crosshair and sounds instead of White Knuckle's:** the White Knuckle Assets
   pack isn't on (step 3). If
   you pressed "Don't ask again", set `asset_prompt=true` in `config/wkclimb.properties` and restart.

@@ -101,16 +101,28 @@ public final class FolderPicker {
 	private static Result sdlPick(Minecraft mc, Path start) throws Exception {
 		CompletableFuture<Result> done = new CompletableFuture<>();
 		SDL_DialogFileCallback callback = SDL_DialogFileCallback.create((userdata, filelist, filter) -> {
-			if (filelist == 0L) {
-				done.complete(new Result.Failed(SDLError.SDL_GetError()));
-				return;
+			try { // always answer, or the picker thread would wait forever
+				if (filelist == 0L) {
+					String error = SDLError.SDL_GetError();
+					done.complete(new Result.Failed(error == null || error.isBlank() ? "SDL's folder dialog failed" : error));
+					return;
+				}
+				long first = MemoryUtil.memGetAddress(filelist);
+				done.complete(first == 0L ? new Result.Cancelled() : new Result.Chosen(Path.of(MemoryUtil.memUTF8(first))));
+			} catch (Throwable e) {
+				done.complete(new Result.Failed(e.toString()));
 			}
-			long first = MemoryUtil.memGetAddress(filelist);
-			done.complete(first == 0L ? new Result.Cancelled() : new Result.Chosen(Path.of(MemoryUtil.memUTF8(first))));
 		});
 		try {
-			mc.execute(() -> SDLDialog.SDL_ShowOpenFolderDialog(callback, 0L, mc.getWindow().handle(),
-					start == null ? null : start.toString(), false));
+			mc.execute(() -> {
+				try {
+					SDLDialog.SDL_ShowOpenFolderDialog(callback, 0L, mc.getWindow().handle(),
+							start == null ? null : start.toString(), false);
+				} catch (Throwable e) {
+					LOG.warn("SDL's folder dialog didn't open", e);
+					done.complete(new Result.Failed(e.toString()));
+				}
+			});
 			return done.get();
 		} finally {
 			callback.free();

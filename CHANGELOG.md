@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0 beta: Minecraft 26.3
+- **Now for Minecraft 26.3** (Fabric Loader 0.19.3 or newer, Fabric API for 26.3). **0.4.0 beta stays
+  the version for Minecraft 1.21.9**; it gets no more updates.
+- **Works with both of 26.3's graphics engines**, OpenGL and Vulkan (Options > Video Settings >
+  Graphics API). The hands, blood and damage look are the same on both.
+- **Climbing, movement, health and sounds are unchanged** from 0.4.0.
+- **Rebuild the White Knuckle pack once:** 26.3 uses a newer pack format. At the title screen the
+  mod offers to rebuild it (two steps, about 15 seconds).
+- The damage look now also shows together with Minecraft's own screen effects (for example a
+  creeper's view while spectating one), instead of giving way to them. 26.3 can run several at once.
+- On Windows, **Choose its folder** now opens SDL3's folder picker, since Minecraft 26.3 no longer
+  ships the old one.
+
 ## 0.4.0 beta: White Knuckle's hands and sounds from a button in the game
 - **White Knuckle's hands and sounds are built in the game:** at the title screen the mod finds your
   copy of White Knuckle and offers to build them. There's nothing to copy and no tool to run.
