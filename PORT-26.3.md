@@ -90,6 +90,23 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
    and skips another Minecraft version with a warning (checked: it skips the 1.21.9 instance).
    - `WKCLIMB_TEST_GRAPHICS=opengl|vulkan` added to `build.gradle`: the test framework rewrites
      `options.txt`, so the engine goes in as the `--graphicsBackend` launch argument.
+10. **Shader double check** (owner's request):
+    - Against 0.4.0: only syntax lines changed (the extension, `#include`, `layout(location)`, an
+      include guard); no maths.
+    - Against vanilla 26.3: hand/blood replace `core/position_tex_color.fsh` (the `GUI_TEXTURED_SNIPPET`
+      pair) with the same locations (0 `texCoord0`, 1 `vertexColor`, out 0) and blocks; `damage.fsh`
+      takes `screenquad`'s location 0 `texCoord`, and `SamplerInfo` as `post/box_blur`; `post/blit`
+      still has `BlitConfig { vec4 ColorModulate }`; `Globals.ScreenSize` and
+      `DynamicTransforms.ColorModulator` exist. `DamageConfig` = three std140 floats, as written.
+    - `gl_FragCoord` runs the other way on Vulkan, but every use (the vignette) is symmetric about the
+      screen centre.
+    - OpenGL vs Vulkan, same test with the pack, 50 screenshot pairs: the post effect is identical
+      (max 1/255 on at most 0.009% of pixels); the hand areas use exactly the same colours (117 of 117
+      in the stamina frames, 1834 of 1834 under the near-death look), with only sprite-edge pixels
+      placed differently (scaled-sprite rounding). Blood and sprint frames differ as expected (random
+      splats, motion).
+    - Not done: compiler warnings (no `glslc` here; the game compiled both engines without a message)
+      and Vulkan validation layers (not installed).
 
 ## 26.3 API map (checked with javap)
 - **Render API:** `com.mojang.blaze3d.{pipeline.RenderPipeline, shaders.UniformType, buffers.GpuBuffer,

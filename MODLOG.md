@@ -702,3 +702,15 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
 - **Change (owner's choice):** a `low_health_volume` setting, 0 to 1 (clamped), **default 0.5**;
   1 = the game's level. The gametest now expects the game's values times the setting: 0.211 / 0.397 at
   2% health with the default. All checks passed with the pack (OpenGL).
+
+## 2026-10-16: shader double check (owner's request)
+- **Source:** since 0.4.0 only syntax changed in the four shader files; every input, output and
+  uniform block matches the vanilla 26.3 shaders they pair with (`position_tex_color`,
+  `screenquad`, `post/blit`, `globals.glsl`, `dynamictransforms.glsl`), and `DamageConfig` matches the
+  buffer the mod writes. The only screen-position use (the hurt vignette) is symmetric, so Vulkan's
+  flipped `gl_FragCoord` can't change it.
+- **OpenGL vs Vulkan** (same pack test, 50 screenshot pairs): the post effect is identical to within
+  1/255 on at most 0.009% of pixels; the hands use exactly the same colours on both, only some edge
+  pixels of the scaled sprites land differently. Random blood and moving sprint frames differ as
+  expected. All checks passed on both.
+- **Not done:** offline compiler warnings and Vulkan validation layers (neither installed).
