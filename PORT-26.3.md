@@ -54,7 +54,36 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
    `position_tex_color`, `post/blit`, `post/box_blur` and `globals.glsl`. `SamplerInfo`, `Globals` and
    `DynamicTransforms` are unchanged for our use. The post-effect JSON format is unchanged.
 
+## 26.3 API map (checked with javap)
+- **Render API:** `com.mojang.blaze3d.{pipeline.RenderPipeline, shaders.UniformType, buffers.GpuBuffer,
+  systems.GpuDevice}` moved to `com.mojang.renderpearl.api.{pipeline.RenderPipeline,
+  pipeline.UniformType, buffers.GpuBuffer, device.GpuDevice}`; `CommandEncoder` is in
+  `renderpearl.api.commands`. `Std140Builder` and `RenderSystem.getDevice()` didn't move.
+- **Pipelines:** there's no `withUniform`/`withSampler`. Uniforms come from bind group layouts
+  (`BindGroupLayouts.GLOBALS/PROJECTION/DYNAMIC_TRANSFORMS/SAMPLER0`).
+  `RenderPipelines.GUI_TEXTURED_SNIPPET` already includes `GLOBALS_SNIPPET`, so our hand and blood
+  pipelines only drop the `withUniform` line.
+- **Post effects:** `currentPostEffect/setPostEffect/clearPostEffect` are gone.
+  - `GameRenderer.update()` clears `requestedPostEffects`, then adds `END_OF_FRAME_POST_EFFECT`, the
+    player's `getActivePostEffects()` and the spectated effect.
+  - `extract()` copies the list to `GameRenderState`, and `render()` prepares and applies it.
+  - **So we add our id at `update` TAIL.** Several effects now run together.
+  - `ShaderManager.getPostChain(Identifier, Set<Identifier>)`, `LevelTargetBundle.MAIN_TARGETS`,
+    `PostChain.passes` and `PostPass.customUniforms` are unchanged.
+  - `PostPass.<init>` creates uniform buffers with
+    `renderpearl/api/device/GpuDevice.createBuffer(Supplier;I;ByteBuffer)`; `GpuBuffer.USAGE_COPY_DST`
+    exists.
+- **FOV:** `GameRenderer.getFov(Camera,float,boolean)` is gone; there's a `Camera.getFov()F`.
+- **GUI:**
+  - `GuiGraphicsExtractor` has `text`/`centeredText` (not `drawString`), `blit(RenderPipeline,
+    Identifier, ...)` with the same argument lists, and `fill`.
+  - `pose()` returns a `Matrix3x2fStack`; `guiWidth/guiHeight` are unchanged.
+- **Networking:** `PayloadTypeRegistry.serverboundPlay()/clientboundPlay()`.
+- **LWJGL 3.4.3 modules:** no GLFW and no tinyfd; SDL3 (`lwjgl-sdl`), shaderc, spvc, vulkan, vma.
+
 ## Forced deviations
+- **The damage look now stacks with vanilla post effects** (creeper/spider vision while spectating,
+  `/posteffect`). Before, it gave way to them, because 1.21.9 had a single post-effect slot.
 (none yet)
 
 ## Unverified

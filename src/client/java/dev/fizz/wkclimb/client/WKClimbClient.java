@@ -5,7 +5,7 @@ import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.WKClimb;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
@@ -13,7 +13,8 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLScancode;
 
 public class WKClimbClient implements ClientModInitializer {
 	public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(WKClimb.id("climbing"));
@@ -31,32 +32,32 @@ public class WKClimbClient implements ClientModInitializer {
 
 		// The White Knuckle pack can be switched on or off at any time (the setup screen, Options >
 		// Resource Packs), so the cached "are its sprites there?" answers are dropped on every reload.
-		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(WKClimb.id("sprite_checks"),
+		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(WKClimb.id("sprite_checks"),
 				(ResourceManagerReloadListener) manager -> {
 					ClimbHands.forgetTextures();
 					ClimbDamage.forgetAvailable();
 				});
 
-		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-				"key.wkclimb.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY));
+		toggleKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.wkclimb.toggle", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_R, CATEGORY));
 
-		focusKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-				"key.wkclimb.focus", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, CATEGORY));
+		focusKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+				"key.wkclimb.focus", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_UNKNOWN, CATEGORY));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ClimbKeybinds.applyOnce(client);
 			dev.fizz.wkclimb.client.assets.AssetPack.tick(client);
-			ClimbCrosshair.setFocus(client.screen == null && focusKey.isDown());
+			ClimbCrosshair.setFocus(client.gui.screen() == null && focusKey.isDown());
 			if (client.player != null && !client.isPaused()) ClimbHands.tick(client.player);
 			while (toggleKey.consumeClick()) {
 				boolean on = !ClimbController.INSTANCE.isEnabled();
 				if (on && !serverHasMod) {
-					if (client.player != null) client.player.displayClientMessage(Component.translatable("wkclimb.server_missing.short"), true);
+					if (client.player != null) client.player.sendOverlayMessage(Component.translatable("wkclimb.server_missing.short"));
 					continue;
 				}
 				ClimbController.INSTANCE.setEnabled(on);
 				if (client.player != null) {
-					client.player.displayClientMessage(Component.translatable(on ? "wkclimb.hands.on" : "wkclimb.hands.off"), true);
+					client.player.sendOverlayMessage(Component.translatable(on ? "wkclimb.hands.on" : "wkclimb.hands.off"));
 				}
 			}
 		});
@@ -68,7 +69,7 @@ public class WKClimbClient implements ClientModInitializer {
 				VanillaHudElements.ARMOR_BAR, VanillaHudElements.AIR_BAR, VanillaHudElements.EXPERIENCE_LEVEL,
 				VanillaHudElements.INFO_BAR, VanillaHudElements.HELD_ITEM_TOOLTIP)) {
 			HudElementRegistry.replaceElement(id, vanilla -> (g, delta) -> {
-				if (!ClimbController.INSTANCE.isEnabled()) vanilla.render(g, delta);
+				if (!ClimbController.INSTANCE.isEnabled()) vanilla.extractRenderState(g, delta);
 			});
 		}
 		// The climbing movement needs the mod on the server: without it a hanging player looks like
@@ -81,7 +82,7 @@ public class WKClimbClient implements ClientModInitializer {
 				enabledBeforeUnsupported = ClimbController.INSTANCE.isEnabled();
 				ClimbController.INSTANCE.setEnabled(false);
 				client.execute(() -> {
-					if (client.player != null) client.player.displayClientMessage(Component.translatable("wkclimb.server_missing"), false);
+					if (client.player != null) client.player.sendSystemMessage(Component.translatable("wkclimb.server_missing"));
 				});
 			}
 			ClimbController.INSTANCE.onJoin();
@@ -94,7 +95,7 @@ public class WKClimbClient implements ClientModInitializer {
 				dev.fizz.wkclimb.net.FallGripPayload.TYPE,
 				(payload, context) -> ClimbController.INSTANCE.onFallHurt(payload.grab(), payload.land()));
 		HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, vanilla -> (g, delta) -> {
-			if (!ClimbCrosshair.render(g, delta)) vanilla.render(g, delta);
+			if (!ClimbCrosshair.render(g, delta)) vanilla.extractRenderState(g, delta);
 		});
 		HudElementRegistry.attachElementAfter(VanillaHudElements.CROSSHAIR, WKClimb.id("hand_icons"), ClimbHud::render);
 	}

@@ -3,11 +3,14 @@ package dev.fizz.wkclimb.client.assets;
 import dev.fizz.wkclimb.assets.GameLocator;
 import dev.fizz.wkclimb.assets.PortalFolderPicker;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.lwjgl.sdl.SDLDialog;
+import org.lwjgl.sdl.SDLError;
+import org.lwjgl.sdl.SDL_DialogFileCallback;
+import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.util.concurrent.CompletableFuture;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
@@ -15,8 +18,9 @@ import java.util.function.Consumer;
  * The system's own folder picker, for choosing White Knuckle's folder.
  *  - Linux (also in a Flatpak): the desktop portal. In a Flatpak this is what lets the sandbox read the
  *    folder chosen, with no command and no launcher restart.
- *  - Windows, or Linux without a portal: LWJGL's tinyfd (a native dialog on Windows; zenity or kdialog
- *    on Linux). Not inside a Flatpak, where those only see the sandbox.
+ *  - Windows, or Linux without a portal: SDL3's folder dialog (Minecraft 26.3 runs on SDL3 and no longer
+ *    ships tinyfd): the native dialog on Windows. Not inside a Flatpak, where only the portal can grant
+ *    the sandbox a folder.
  * A fullscreen game is put in a window first, so the picker doesn't take the focus from fullscreen
  * Minecraft (switching away from fullscreen has frozen it on an NVIDIA + Wayland desktop), and goes
  * back to fullscreen afterwards.
@@ -38,9 +42,9 @@ public final class FolderPicker {
 	public static void choose(Minecraft mc, String title, Consumer<Result> onDone) {
 		boolean wasFullscreen = leaveFullscreen(mc);
 		Thread t = new Thread(() -> {
-			Result result = pick(title);
+			Result result = pick(mc, title);
 			mc.execute(() -> {
-				if (wasFullscreen && !mc.getWindow().isFullscreen()) mc.getWindow().toggleFullScreen();
+				if (wasFullscreen && !mc.options.fullscreen().get()) mc.options.fullscreen().set(true);
 				onDone.accept(result);
 			});
 		}, "wkclimb-folder-picker");
@@ -60,14 +64,14 @@ public final class FolderPicker {
 		}
 	}
 
-	/** Puts a fullscreen game in a window; true if it was fullscreen (the player's setting is untouched). */
+	/** Puts a fullscreen game in a window, as F11 does; true if it was fullscreen (restored afterwards). */
 	static boolean leaveFullscreen(Minecraft mc) {
-		if (!mc.getWindow().isFullscreen()) return false;
-		mc.getWindow().toggleFullScreen();
+		if (!mc.options.fullscreen().get()) return false;
+		mc.options.fullscreen().set(false);
 		return true;
 	}
 
-	private static Result pick(String title) {
+	private static Result pick(Minecraft mc, String title) {
 		Path start = GameLocator.pickerStart().orElse(null);
 		boolean flatpak = GameLocator.flatpakAppId().isPresent();
 		if (!GameLocator.isWindows()) {
@@ -83,11 +87,33 @@ public final class FolderPicker {
 			}
 		}
 		try {
-			String chosen = TinyFileDialogs.tinyfd_selectFolderDialog(title, start == null ? "" : start + File.separator);
-			return chosen == null ? new Result.Cancelled() : new Result.Chosen(Path.of(chosen));
+			return sdlPick(mc, start);
 		} catch (Throwable e) {
 			LOG.warn("The folder picker didn't work", e);
 			return new Result.Failed(e.toString());
+		}
+	}
+
+	/**
+	 * SDL3's folder dialog. SDL wants it opened from the main thread; the answer comes to a callback
+	 * (on any thread): a NULL list on error, an empty list when cancelled, else the chosen path.
+	 */
+	private static Result sdlPick(Minecraft mc, Path start) throws Exception {
+		CompletableFuture<Result> done = new CompletableFuture<>();
+		SDL_DialogFileCallback callback = SDL_DialogFileCallback.create((userdata, filelist, filter) -> {
+			if (filelist == 0L) {
+				done.complete(new Result.Failed(SDLError.SDL_GetError()));
+				return;
+			}
+			long first = MemoryUtil.memGetAddress(filelist);
+			done.complete(first == 0L ? new Result.Cancelled() : new Result.Chosen(Path.of(MemoryUtil.memUTF8(first))));
+		});
+		try {
+			mc.execute(() -> SDLDialog.SDL_ShowOpenFolderDialog(callback, 0L, mc.getWindow().handle(),
+					start == null ? null : start.toString(), false));
+			return done.get();
+		} finally {
+			callback.free();
 		}
 	}
 }

@@ -59,7 +59,7 @@ public final class AssetPack {
 
 	/** Once per session, at the title screen: offer to build a missing or out-of-date pack. */
 	public static void tick(Minecraft mc) {
-		if (checkedThisSession || !(mc.screen instanceof TitleScreen) || mc.getOverlay() != null) return;
+		if (checkedThisSession || !(mc.gui.screen() instanceof TitleScreen) || mc.gui.overlay() != null) return;
 		checkedThisSession = true;
 		if (FabricLoader.getInstance().isModLoaded("wkclimb-gametest")) return; // keep the tests' screens as they are
 		offer(mc);
@@ -72,7 +72,7 @@ public final class AssetPack {
 	public static void offer(Minecraft mc) {
 		Status status = check(mc.getResourceManager());
 		if (status == Status.OK || !ClimbConfig.assetPrompt || AssetBuilder.INSTANCE.state().active()) return;
-		mc.setScreen(new AssetSetupScreen(mc.screen, status));
+		mc.gui.setScreen(new AssetSetupScreen(mc.gui.screen(), status));
 	}
 
 	/** Is the pack in the active list? */
@@ -101,6 +101,6 @@ public final class AssetPack {
 	}
 
 	static void toast(Minecraft mc, String title, String detail) {
-		SystemToast.addOrUpdate(mc.getToastManager(), TOAST, Component.translatable(title), Component.translatable(detail));
+		SystemToast.addOrUpdate(mc.gui.toastManager(), TOAST, Component.translatable(title), Component.translatable(detail));
 	}
 }

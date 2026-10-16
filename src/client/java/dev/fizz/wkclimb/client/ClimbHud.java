@@ -3,7 +3,7 @@ package dev.fizz.wkclimb.client;
 import dev.fizz.wkclimb.sim.ClimbSim;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * The two hand icons beside the crosshair, as in White Knuckle: open when a ledge is in reach, a fist
@@ -13,10 +13,10 @@ import net.minecraft.client.gui.GuiGraphics;
 public final class ClimbHud {
 	private ClimbHud() {}
 
-	public static void render(GuiGraphics g, DeltaTracker delta) {
+	public static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		ClimbController ctl = ClimbController.INSTANCE;
-		if (!ctl.isEnabled() || mc.player == null || mc.options.hideGui || !ClimbHands.haveTextures()) return;
+		if (!ctl.isEnabled() || mc.player == null || mc.gui.hud.isHidden() || !ClimbHands.haveTextures()) return;
 		renderIcons(g, ctl, ctl.hovered() != null);
 	}
 
@@ -34,7 +34,7 @@ public final class ClimbHud {
 	/** InteractHands' anchored x position in the crosshair group. */
 	private static final double INTERACT_HANDS_X = 0.15436;
 
-	private static void renderIcons(GuiGraphics g, ClimbController ctl, boolean hover) {
+	private static void renderIcons(GuiGraphicsExtractor g, ClimbController ctl, boolean hover) {
 		double unit = ClimbCrosshair.uiUnit() * HAND_ICON_SCALE;
 		float box = (float) (64 * unit);
 		float centerX = g.guiWidth() / 2f + (float) (INTERACT_HANDS_X * unit), centerY = g.guiHeight() / 2f;

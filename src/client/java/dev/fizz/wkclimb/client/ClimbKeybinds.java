@@ -5,7 +5,8 @@ import dev.fizz.wkclimb.ClimbConfig;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLScancode;
 
 /**
  * White Knuckle's default bindings (Rewired "Default" keyboard and mouse maps in the level1 scene),
@@ -32,18 +33,18 @@ public final class ClimbKeybinds {
 	}
 
 	public static void apply(Options o) {
-		set(o.keySprint, GLFW.GLFW_KEY_LEFT_SHIFT);
-		set(o.keyShift, GLFW.GLFW_KEY_LEFT_CONTROL);
-		set(o.keyInventory, GLFW.GLFW_KEY_TAB);
+		set(o.keySprint, SDLScancode.SDL_SCANCODE_LSHIFT);
+		set(o.keyShift, SDLScancode.SDL_SCANCODE_LCTRL);
+		set(o.keyInventory, SDLScancode.SDL_SCANCODE_TAB);
 		o.keyPlayerList.setKey(InputConstants.UNKNOWN);
-		set(o.keyJump, GLFW.GLFW_KEY_SPACE);
-		o.keyAttack.setKey(InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_LEFT));
-		o.keyUse.setKey(InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_RIGHT));
+		set(o.keyJump, SDLScancode.SDL_SCANCODE_SPACE);
+		o.keyAttack.setKey(InputConstants.Type.MOUSE.getOrCreate(SDLMouse.SDL_BUTTON_LEFT));
+		o.keyUse.setKey(InputConstants.Type.MOUSE.getOrCreate(SDLMouse.SDL_BUTTON_RIGHT));
 		KeyMapping.resetMapping();
 		o.save();
 	}
 
-	private static void set(KeyMapping key, int glfwKey) {
-		key.setKey(InputConstants.Type.KEYSYM.getOrCreate(glfwKey));
+	private static void set(KeyMapping key, int scancode) {
+		key.setKey(InputConstants.Type.KEYBOARD.getOrCreate(scancode));
 	}
 }

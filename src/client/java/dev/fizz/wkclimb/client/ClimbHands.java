@@ -1,16 +1,14 @@
 package dev.fizz.wkclimb.client;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.WKClimb;
-import dev.fizz.wkclimb.client.mixin.GameRendererInvoker;
 import dev.fizz.wkclimb.sim.ClimbSim;
 import dev.fizz.wkclimb.sim.WK;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -184,11 +182,11 @@ public final class ClimbHands {
 		texturesChecked = false;
 	}
 
-	public static void render(GuiGraphics g, DeltaTracker delta) {
+	public static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		ClimbController ctl = ClimbController.INSTANCE;
 		LocalPlayer player = mc.player;
-		if (!ctl.isEnabled() || player == null || mc.options.hideGui || !mc.options.getCameraType().isFirstPerson()) return;
+		if (!ctl.isEnabled() || player == null || mc.gui.hud.isHidden() || !mc.options.getCameraType().isFirstPerson()) return;
 		if (!haveTextures()) return;
 
 		long now = System.nanoTime();
@@ -197,8 +195,8 @@ public final class ClimbHands {
 
 		int w = g.guiWidth(), h = g.guiHeight();
 		float partial = delta.getGameTimeDeltaPartialTick(false);
-		Camera camera = mc.gameRenderer.getMainCamera();
-		double fov = ((GameRendererInvoker) mc.gameRenderer).wkclimb$getFov(camera, partial, true);
+		Camera camera = mc.gameRenderer.mainCamera();
+		double fov = camera.getFov(); // the FOV the frame is rendered with (26.3 keeps it on the camera)
 		double tanFov = Math.tan(Math.toRadians(fov / 2));
 		double aspect = (double) w / h;
 		// SetCameraFov: the hand rig scales and drops as the FOV widens past 90 (sprinting)
@@ -265,7 +263,7 @@ public final class ClimbHands {
 	}
 
 	private static boolean buttonHeld(Minecraft mc, int i) {
-		return mc.screen == null && (i == 0 ? mc.options.keyAttack.isDown() : mc.options.keyUse.isDown());
+		return mc.gui.screen() == null && (i == 0 ? mc.options.keyAttack.isDown() : mc.options.keyUse.isDown());
 	}
 
 	/** HandAnimation's pose choice. */
@@ -283,12 +281,11 @@ public final class ClimbHands {
 	 */
 	private static final RenderPipeline HAND = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
 			.withLocation(WKClimb.id("pipeline/hand"))
-			.withFragmentShader(WKClimb.id("core/hand"))
-			.withUniform("Globals", UniformType.UNIFORM_BUFFER)
+			.withFragmentShader(WKClimb.id("core/hand")) // GUI_TEXTURED_SNIPPET already binds Globals (ScreenSize)
 			.build());
 
 	/** staminaUsed: 1 - grip%, the game's _StaminaAmount for this hand. */
-	private static void blit(GuiGraphics g, Identifier texture, int x, int y, int size, boolean mirror, float staminaUsed) {
+	private static void blit(GuiGraphicsExtractor g, Identifier texture, int x, int y, int size, boolean mirror, float staminaUsed) {
 		if (size <= 0) return;
 		int color = ClimbDamage.handColor(staminaUsed);
 		if (mirror) {
@@ -300,8 +297,8 @@ public final class ClimbHands {
 
 	/** Camera right, up and forward vectors in world space. */
 	static Vec3[] cameraBasis(Camera camera) {
-		Vec3 forward = Vec3.directionFromRotation(camera.getXRot(), camera.getYRot());
-		double yaw = Math.toRadians(camera.getYRot());
+		Vec3 forward = Vec3.directionFromRotation(camera.xRot(), camera.yRot());
+		double yaw = Math.toRadians(camera.yRot());
 		Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
 		return new Vec3[] { right, right.cross(forward), forward };
 	}
@@ -309,8 +306,8 @@ public final class ClimbHands {
 	/** World point to GUI coordinates {x, y, depth}, or null if behind the camera. */
 	static float[] project(Camera camera, Vec3 point, double tanHalfFov, double aspect, int w, int h) {
 		Vec3 v = point.subtract(camera.position());
-		Vec3 forward = Vec3.directionFromRotation(camera.getXRot(), camera.getYRot());
-		double yaw = Math.toRadians(camera.getYRot());
+		Vec3 forward = Vec3.directionFromRotation(camera.xRot(), camera.yRot());
+		double yaw = Math.toRadians(camera.yRot());
 		Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
 		Vec3 up = right.cross(forward);
 		double z = v.dot(forward);

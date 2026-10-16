@@ -3,7 +3,7 @@ package dev.fizz.wkclimb.client;
 import dev.fizz.wkclimb.WKClimb;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
@@ -48,10 +48,10 @@ public final class ClimbCrosshair {
 	}
 
 	/** @return true if the White Knuckle crosshair was drawn (so the vanilla one should not be). */
-	public static boolean render(GuiGraphics g, DeltaTracker delta) {
+	public static boolean render(GuiGraphicsExtractor g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		if (!ClimbController.INSTANCE.isEnabled() || mc.player == null || !ClimbHands.haveTextures() || !available()) return false;
-		if (!mc.options.getCameraType().isFirstPerson() || mc.options.hideGui) return true;
+		if (!mc.options.getCameraType().isFirstPerson() || mc.gui.hud.isHidden()) return true;
 		double unit = uiUnit();
 		float cx = g.guiWidth() / 2f, cy = g.guiHeight() / 2f;
 
@@ -66,7 +66,7 @@ public final class ClimbCrosshair {
 	}
 
 	/** Draws the smallest pre-filtered copy at least as big as the on-screen size (a mipmap stand-in). */
-	private static void draw(GuiGraphics g, String id, int fullSize, float cx, float cy, double size, double guiScale) {
+	private static void draw(GuiGraphicsExtractor g, String id, int fullSize, float cx, float cy, double size, double guiScale) {
 		double pixels = size * guiScale;
 		int texSize = fullSize;
 		for (int s : new int[] { 32, 64, 128, 256 }) {

@@ -4,7 +4,7 @@ import dev.fizz.wkclimb.WKClimb;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -46,11 +46,10 @@ public final class ClimbDamage {
 	 */
 	private static final double OVERLAY_CAMERA_FOV = 90;
 	/** The blood, drawn with the hurt vignette over it (shaders/core/blood.fsh). */
-	private static final com.mojang.blaze3d.pipeline.RenderPipeline BLOOD_PIPELINE = RenderPipelines.register(
-			com.mojang.blaze3d.pipeline.RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+	private static final com.mojang.renderpearl.api.pipeline.RenderPipeline BLOOD_PIPELINE = RenderPipelines.register(
+			com.mojang.renderpearl.api.pipeline.RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
 					.withLocation(WKClimb.id("pipeline/blood"))
-					.withFragmentShader(WKClimb.id("core/blood"))
-					.withUniform("Globals", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
+					.withFragmentShader(WKClimb.id("core/blood")) // GUI_TEXTURED_SNIPPET already binds Globals
 					.build());
 
 	private record Splat(double x, double y, double size, int tile, double lifetime, double drift, double born) {}
@@ -101,7 +100,7 @@ public final class ClimbDamage {
 		hurtAmount = Math.max(0.6, hurtAmount);
 		Vec3 pos = source.getSourcePosition();
 		if (pos != null) {
-			Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+			Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 			Vec3[] basis = ClimbHands.cameraBasis(camera);
 			Vec3 to = pos.subtract(camera.position()).normalize();
 			Vec3 flat = to.subtract(basis[2].scale(to.dot(basis[2])));
@@ -132,7 +131,7 @@ public final class ClimbDamage {
 		}
 	}
 
-	public static void render(GuiGraphics g, DeltaTracker delta) {
+	public static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
 		if (!ClimbController.INSTANCE.isEnabled() || player == null) {
@@ -154,7 +153,7 @@ public final class ClimbDamage {
 		// the HUD hidden), so neither piles up.
 		splats.removeIf(s -> (now - s.born()) / s.lifetime() >= 1);
 		for (int i = 0; i < 4; i++) direction[i] = Math.max(0, direction[i] - dt * 1.25);
-		if (!available() || mc.options.hideGui) return;
+		if (!available() || mc.gui.hud.isHidden()) return;
 
 		// screen blood
 		double fov = OVERLAY_CAMERA_FOV;
@@ -230,28 +229,31 @@ public final class ClimbDamage {
 	 * The damage look as one post effect (wkclimb:damage) whose uniforms are rewritten every frame, so
 	 * it follows health smoothly: it fades out as health regenerates, as in the game.
 	 */
-	private static final Identifier GRADE = WKClimb.id("damage");
+	public static final Identifier GRADE = WKClimb.id("damage");
+	/** Whether the damage look is requested for the next frame (GameRendererMixin adds it). */
+	private static boolean gradeOn;
 	private static double appliedBlend;
 	private static int appliedStep;
 	/** What the hands are drawn with this frame (neutral when the effect isn't on screen). */
 	private static float handSaturation = 1, handBright = 1, handVignette;
+
+	public static boolean gradeRequested() {
+		return gradeOn;
+	}
 
 	private static void updateColorGrade(Minecraft mc, double blend, double vignette) {
 		if (mc.player == null || mc.player.isSpectator()) blend = vignette = 0;
 		handSaturation = 1;
 		handBright = 1;
 		handVignette = 0;
-		var renderer = mc.gameRenderer;
-		Identifier current = renderer.currentPostEffect();
-		boolean ours = GRADE.equals(current);
 		if (blend <= 0.002 && vignette <= 0) {
-			if (ours) renderer.clearPostEffect();
+			gradeOn = false;
 			appliedBlend = 0;
 			appliedStep = 0;
 			return;
 		}
-		if (current != null && !ours) return; // leave vanilla effects (spectating a creeper) alone
-		if (!ours) ((dev.fizz.wkclimb.client.mixin.GameRendererInvoker) renderer).wkclimb$setPostEffect(GRADE);
+		// 26.3 runs every requested post effect in turn, so this no longer has to give way to vanilla's
+		gradeOn = true;
 		var chain = mc.getShaderManager().getPostChain(GRADE, net.minecraft.client.renderer.LevelTargetBundle.MAIN_TARGETS);
 		if (chain == null) return;
 		var passes = ((dev.fizz.wkclimb.client.mixin.PostChainAccessor) chain).wkclimb$passes();
@@ -301,9 +303,7 @@ public final class ClimbDamage {
 
 	/** Turn the grade off (hands toggled off, or leaving the world). */
 	public static void clearColorGrade() {
-		Minecraft mc = Minecraft.getInstance();
-		Identifier current = mc.gameRenderer.currentPostEffect();
-		if (GRADE.equals(current)) mc.gameRenderer.clearPostEffect();
+		gradeOn = false;
 		appliedStep = 0;
 		appliedBlend = 0;
 		handSaturation = 1;
@@ -314,7 +314,7 @@ public final class ClimbDamage {
 	public static int colorGradeStep() { return appliedStep; }
 
 	/** Draw a texture stretched over a rectangle, optionally mirrored (by flipping the UVs). */
-	private static void stretch(GuiGraphics g, Identifier tex, int tw, int th, float x, float y, float width, float height,
+	private static void stretch(GuiGraphicsExtractor g, Identifier tex, int tw, int th, float x, float y, float width, float height,
 			boolean flipX, boolean flipY, int color) {
 		var pose = g.pose();
 		pose.pushMatrix();

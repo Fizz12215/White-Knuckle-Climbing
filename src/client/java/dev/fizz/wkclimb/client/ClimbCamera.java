@@ -133,9 +133,9 @@ public final class ClimbCamera {
 		double toBlocks = WK.PLAYER_SCALE * ClimbConfig.blocksPerUnit;
 		// Moving the camera by +offset moves the view by -offset.
 		pose.translate(-(bobX + shakeX) * toBlocks, -(bobY + shakeY) * toBlocks, -shakeZ * toBlocks);
-		pose.mulPose(Axis.ZP.rotationDegrees((float) -(camSway + shakeRoll)));
-		pose.mulPose(Axis.XP.rotationDegrees((float) shakePitch));
-		pose.mulPose(Axis.YP.rotationDegrees((float) shakeYaw));
+		pose.rotate(Axis.ZP.rotationDegrees((float) -(camSway + shakeRoll)));
+		pose.rotate(Axis.XP.rotationDegrees((float) shakePitch));
+		pose.rotate(Axis.YP.rotationDegrees((float) shakeYaw));
 	}
 
 	private static double[] insideUnitSphere(double scale, double maxLen) {

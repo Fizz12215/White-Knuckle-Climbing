@@ -175,7 +175,7 @@ public final class ClimbController {
 		V3 hoverPoint = found == null ? null : toWk(found.point());
 		BlockPos hoverBlock = found == null ? null : found.block();
 
-		boolean noScreen = mc.screen == null;
+		boolean noScreen = mc.gui.screen() == null;
 		boolean[] held = {
 				noScreen && mc.options.keyAttack.isDown(),
 				noScreen && mc.options.keyUse.isDown()

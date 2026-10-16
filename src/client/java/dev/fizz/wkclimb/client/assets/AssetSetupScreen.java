@@ -4,7 +4,6 @@ import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.assets.ExtractorSetup;
 import dev.fizz.wkclimb.assets.GameLocator;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.Util;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.components.ScrollableLayout;
@@ -123,7 +122,7 @@ public class AssetSetupScreen extends Screen {
 			case PICKER_INFO -> {
 				text("wkclimb.assets.picker.info", WHITE);
 				text(flatpakApp != null ? "wkclimb.assets.picker.info.flatpak" : "wkclimb.assets.picker.info.saved", WHITE);
-				if (minecraft.getWindow().isFullscreen()) text("wkclimb.assets.leaves_fullscreen", GREY);
+				if (minecraft.options.fullscreen().get()) text("wkclimb.assets.leaves_fullscreen", GREY);
 				button(row1, "wkclimb.assets.open_picker", b -> openPicker());
 				button(row1, "gui.back", b -> page(null));
 			}
@@ -154,7 +153,7 @@ public class AssetSetupScreen extends Screen {
 					button(row1, "wkclimb.assets.copy", b -> copy(command));
 				} else {
 					text(windows ? "wkclimb.assets.picker.failed.config.windows" : "wkclimb.assets.picker.failed.config", WHITE);
-					button(row1, "wkclimb.assets.open_config", b -> Util.getPlatform().openPath(FabricLoader.getInstance().getConfigDir()));
+					button(row1, "wkclimb.assets.open_config", b -> com.mojang.blaze3d.Blaze3D.openPath(FabricLoader.getInstance().getConfigDir()));
 					button(row2, "wkclimb.assets.try_again", b -> start());
 				}
 				button(row1, "gui.back", b -> page(null));
@@ -163,7 +162,7 @@ public class AssetSetupScreen extends Screen {
 				text("wkclimb.assets.python.info", WHITE);
 				text("wkclimb.assets.python.info.after", WHITE);
 				text("wkclimb.assets.python.info.remove", GREY);
-				if (minecraft.getWindow().isFullscreen()) text("wkclimb.assets.leaves_fullscreen", GREY);
+				if (minecraft.options.fullscreen().get()) text("wkclimb.assets.leaves_fullscreen", GREY);
 				button(row1, "wkclimb.assets.install_python", b -> installPython());
 				button(row1, "gui.back", b -> page(null));
 			}
@@ -180,15 +179,15 @@ public class AssetSetupScreen extends Screen {
 				AssetBuilder.Step step = builder.step();
 				stepHeading(builder.plan(), step);
 				text("wkclimb.assets.running." + key(step), WHITE);
-				liveLine = body.addChild(new MultiLineTextWidget(Component.literal(builder.lastLine()), font)
-						.setMaxWidth(wrapWidth()).setCentered(true).setColor(GREY), s -> s.alignHorizontallyCenter());
+				liveLine = body.addChild(new MultiLineTextWidget(grey(builder.lastLine()), font)
+						.setMaxWidth(wrapWidth()).setCentered(true), s -> s.alignHorizontallyCenter());
 				button(row1, "wkclimb.assets.cancel", b -> builder.cancel());
 			}
 			case NO_PYTHON -> {
 				if (windows) {
 					text(pythonInstallStarted ? "wkclimb.assets.no_python.windows.installing" : "wkclimb.assets.no_python.windows", WHITE);
 					button(row1, "wkclimb.assets.install_python_more", b -> page(View.PYTHON_INFO));
-					button(row1, "wkclimb.assets.python_org", b -> ConfirmLinkScreen.confirmLinkNow(this, PYTHON_DOWNLOAD));
+					button(row1, "wkclimb.assets.python_org", b -> ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create(PYTHON_DOWNLOAD)));
 				} else {
 					text("wkclimb.assets.no_python.linux", WHITE);
 					literal("Ubuntu / Debian / Mint:  sudo apt install python3 python3-venv", AQUA);
@@ -212,7 +211,7 @@ public class AssetSetupScreen extends Screen {
 				path(AssetBuilder.logFile());
 				text("wkclimb.assets.failed.report.ask", WHITE);
 				button(row1, "wkclimb.assets.try_again", b -> start());
-				button(row1, "wkclimb.assets.open_log", b -> Util.getPlatform().openPath(AssetBuilder.logFile().getParent()));
+				button(row1, "wkclimb.assets.open_log", b -> com.mojang.blaze3d.Blaze3D.openPath(AssetBuilder.logFile().getParent()));
 				button(row2, "gui.done", b -> onClose());
 			}
 		}
@@ -235,14 +234,14 @@ public class AssetSetupScreen extends Screen {
 	public void tick() {
 		if (builder.state() == AssetBuilder.State.DONE) {
 			builder.reset();
-			minecraft.setScreen(parent);
+			minecraft.gui.setScreen(parent);
 			return;
 		}
 		if (!viewKey().equals(shownKey)) {
 			rebuildWidgets();
 		} else if (liveLine != null) {
 			String dots = ".".repeat((int) (System.currentTimeMillis() / 400 % 4));
-			liveLine.setMessage(Component.literal(builder.lastLine().isEmpty() ? dots : builder.lastLine()));
+			liveLine.setMessage(grey(builder.lastLine().isEmpty() ? dots : builder.lastLine()));
 			repositionElements();
 		}
 	}
@@ -253,7 +252,7 @@ public class AssetSetupScreen extends Screen {
 		else builder.reset();
 		pickerRun++;
 		FolderPicker.cancel();
-		minecraft.setScreen(parent);
+		minecraft.gui.setScreen(parent);
 	}
 
 	// ---- actions ----
@@ -285,7 +284,7 @@ public class AssetSetupScreen extends Screen {
 		int run = ++pickerRun;
 		page(View.PICKER_OPEN);
 		FolderPicker.choose(minecraft, Component.translatable("wkclimb.assets.picker.title").getString(), result -> {
-			if (run != pickerRun || minecraft.screen != this) return; // cancelled meanwhile
+			if (run != pickerRun || minecraft.gui.screen() != this) return; // cancelled meanwhile
 			switch (result) {
 				case FolderPicker.Result.Chosen c -> {
 					Optional<Path> found = GameLocator.fromChosenFolder(c.folder());
@@ -315,7 +314,7 @@ public class AssetSetupScreen extends Screen {
 			pythonInstallStarted = true;
 			page(null);
 		} catch (IOException e) {
-			ConfirmLinkScreen.confirmLinkNow(this, PYTHON_DOWNLOAD);
+			ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create(PYTHON_DOWNLOAD));
 		}
 	}
 
@@ -394,8 +393,13 @@ public class AssetSetupScreen extends Screen {
 	}
 
 	private void para(Component c, int colour) {
-		body.addChild(new MultiLineTextWidget(c, font).setMaxWidth(wrapWidth()).setCentered(true).setColor(colour),
+		// 26.3's MultiLineTextWidget has no colour of its own: the colour goes in the text
+		body.addChild(new MultiLineTextWidget(c.copy().withColor(colour & 0xFFFFFF), font).setMaxWidth(wrapWidth()).setCentered(true),
 				s -> s.alignHorizontallyCenter());
+	}
+
+	private static Component grey(String s) {
+		return Component.literal(s).withColor(GREY & 0xFFFFFF);
 	}
 
 	private void button(LinearLayout row, String key, Button.OnPress onPress) {
