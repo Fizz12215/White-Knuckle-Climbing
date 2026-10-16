@@ -105,8 +105,11 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
       in the stamina frames, 1834 of 1834 under the near-death look), with only sprite-edge pixels
       placed differently (scaled-sprite rounding). Blood and sprint frames differ as expected (random
       splats, motion).
-    - Not done: compiler warnings (no `glslc` here; the game compiled both engines without a message)
-      and Vulkan validation layers (not installed).
+    - Vulkan validation layer (Khronos 1.4.341, `WKCLIMB_TEST_VK_VALIDATION=1`): the full test with the
+      pack passed with **no validation message**. `VK_LOADER_DEBUG=layer` showed the layer inserted at
+      instance and device level for the whole run.
+    - Not done: offline compiler warnings (no `glslc` here; the game compiled both engines without a
+      message).
 
 ## 26.3 API map (checked with javap)
 - **Render API:** `com.mojang.blaze3d.{pipeline.RenderPipeline, shaders.UniformType, buffers.GpuBuffer,

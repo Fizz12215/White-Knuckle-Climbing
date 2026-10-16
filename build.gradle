@@ -36,6 +36,12 @@ def testGraphics = System.getenv("WKCLIMB_TEST_GRAPHICS")
 if (testGraphics) {
 	loom.runs.named("clientGameTest") { programArgs("--graphicsBackend", testGraphics) }
 }
+// WKCLIMB_TEST_VK_VALIDATION=1 (with WKCLIMB_TEST_GRAPHICS=vulkan) runs the tests through the Khronos
+// validation layer (installed separately, e.g. vulkan-validation-layers) and names the GPU objects, so
+// its messages in the log say which pipeline or shader they're about.
+if (System.getenv("WKCLIMB_TEST_VK_VALIDATION")) {
+	loom.runs.named("clientGameTest") { programArgs("--vulkanValidation", "--renderDebugLabels") }
+}
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"

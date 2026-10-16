@@ -713,4 +713,8 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   1/255 on at most 0.009% of pixels; the hands use exactly the same colours on both, only some edge
   pixels of the scaled sprites land differently. Random blood and moving sprint frames differ as
   expected. All checks passed on both.
-- **Not done:** offline compiler warnings and Vulkan validation layers (neither installed).
+- **Vulkan validation layer** (Khronos 1.4.341, installed by the owner): the full test with the pack
+  ran through it (`WKCLIMB_TEST_VK_VALIDATION=1`, which adds `--vulkanValidation
+  --renderDebugLabels`) and it reported nothing. The loader's debug output (`VK_LOADER_DEBUG=layer`)
+  confirmed the layer was in for the whole run.
+- **Not done:** offline compiler warnings (no `glslc` installed).
