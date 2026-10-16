@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
@@ -75,14 +75,14 @@ public class WKClimb implements ModInitializer {
 		return THROUGH_BARS.contains(player.getUUID());
 	}
 
-	public static ResourceLocation id(String path) {
-		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+	public static Identifier id(String path) {
+		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
 
 	@Override
 	public void onInitialize() {
-		PayloadTypeRegistry.playC2S().register(ClimbStatePayload.TYPE, ClimbStatePayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(dev.fizz.wkclimb.net.FallGripPayload.TYPE, dev.fizz.wkclimb.net.FallGripPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(ClimbStatePayload.TYPE, ClimbStatePayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(dev.fizz.wkclimb.net.FallGripPayload.TYPE, dev.fizz.wkclimb.net.FallGripPayload.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(ClimbStatePayload.TYPE, (payload, context) -> {
 			UUID id = context.player().getUUID();
 			if (payload.hanging()) HANGING.add(id);

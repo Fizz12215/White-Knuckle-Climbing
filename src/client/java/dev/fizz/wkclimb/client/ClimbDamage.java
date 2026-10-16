@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
@@ -35,9 +35,9 @@ import java.util.Random;
 public final class ClimbDamage {
 	private ClimbDamage() {}
 
-	private static final ResourceLocation BLOOD = WKClimb.id("textures/gui/damage/blood_splatter.png");
-	private static final ResourceLocation SIDE = WKClimb.id("textures/gui/damage/direction_side.png");
-	private static final ResourceLocation TOP = WKClimb.id("textures/gui/damage/direction_top.png");
+	private static final Identifier BLOOD = WKClimb.id("textures/gui/damage/blood_splatter.png");
+	private static final Identifier SIDE = WKClimb.id("textures/gui/damage/direction_side.png");
+	private static final Identifier TOP = WKClimb.id("textures/gui/damage/direction_top.png");
 	private static final int BLOOD_TEX = 1024, BLOOD_TILE = 256;
 	/**
 	 * The game draws the screen blood with its Overlay Camera, whose field of view stays at 90 (only the
@@ -230,7 +230,7 @@ public final class ClimbDamage {
 	 * The damage look as one post effect (wkclimb:damage) whose uniforms are rewritten every frame, so
 	 * it follows health smoothly: it fades out as health regenerates, as in the game.
 	 */
-	private static final ResourceLocation GRADE = WKClimb.id("damage");
+	private static final Identifier GRADE = WKClimb.id("damage");
 	private static double appliedBlend;
 	private static int appliedStep;
 	/** What the hands are drawn with this frame (neutral when the effect isn't on screen). */
@@ -242,7 +242,7 @@ public final class ClimbDamage {
 		handBright = 1;
 		handVignette = 0;
 		var renderer = mc.gameRenderer;
-		ResourceLocation current = renderer.currentPostEffect();
+		Identifier current = renderer.currentPostEffect();
 		boolean ours = GRADE.equals(current);
 		if (blend <= 0.002 && vignette <= 0) {
 			if (ours) renderer.clearPostEffect();
@@ -302,7 +302,7 @@ public final class ClimbDamage {
 	/** Turn the grade off (hands toggled off, or leaving the world). */
 	public static void clearColorGrade() {
 		Minecraft mc = Minecraft.getInstance();
-		ResourceLocation current = mc.gameRenderer.currentPostEffect();
+		Identifier current = mc.gameRenderer.currentPostEffect();
 		if (GRADE.equals(current)) mc.gameRenderer.clearPostEffect();
 		appliedStep = 0;
 		appliedBlend = 0;
@@ -314,7 +314,7 @@ public final class ClimbDamage {
 	public static int colorGradeStep() { return appliedStep; }
 
 	/** Draw a texture stretched over a rectangle, optionally mirrored (by flipping the UVs). */
-	private static void stretch(GuiGraphics g, ResourceLocation tex, int tw, int th, float x, float y, float width, float height,
+	private static void stretch(GuiGraphics g, Identifier tex, int tw, int th, float x, float y, float width, float height,
 			boolean flipX, boolean flipY, int color) {
 		var pose = g.pose();
 		pose.pushMatrix();

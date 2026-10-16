@@ -1,5 +1,6 @@
 plugins {
-	id 'fabric-loom' version "${loom_version}"
+	// Minecraft 26.x ships unobfuscated (Mojang's names), so Loom doesn't remap and there are no mappings
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
 version = project.mod_version
@@ -31,9 +32,8 @@ fabricApi {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -59,12 +59,12 @@ processClientResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = 25
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 // Copy the built jar into a local Minecraft instance (path from local.properties: modsDir=...).
@@ -75,8 +75,8 @@ def modsDir = localProps.getProperty("modsDir")
 
 tasks.register("installMod", Copy) {
 	onlyIf { modsDir != null && file(modsDir).isDirectory() }
-	dependsOn tasks.named("remapJar")
-	from tasks.named("remapJar")
+	dependsOn tasks.named("jar")
+	from tasks.named("jar")
 	into modsDir ?: "build/no-mods-dir"
 	// remove older versions of this mod so only one copy is ever in the mods folder
 	doFirst {
@@ -95,14 +95,14 @@ gradle.taskGraph.whenReady { graph ->
 // Beta package for testers: the mod jar, the asset extractor (+ one-click scripts) and a guide.
 // No White Knuckle files are included: each tester builds the pack from their own copy of the game.
 tasks.register("betaZip", Zip) {
-	dependsOn tasks.named("remapJar")
+	dependsOn tasks.named("jar")
 	archiveFileName = "White-Knuckle-Climbing-${version}.zip"
 	destinationDirectory = layout.buildDirectory.dir("beta")
 	into("White-Knuckle-Climbing-${version}") {
 		from("beta/README.txt")
 		from("LICENSE")
 		from("CHANGELOG.md")
-		into("mods") { from tasks.named("remapJar") }
+		into("mods") { from tasks.named("jar") }
 		into("asset-extractor") {
 			from("tools/extract_wk_assets.py")
 			from("tools/requirements.txt")

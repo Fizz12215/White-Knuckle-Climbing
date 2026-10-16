@@ -5,7 +5,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * White Knuckle's crosshair (UI_CrosshairController), drawn in place of Minecraft's while the hands are on:
@@ -18,8 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 public final class ClimbCrosshair {
 	private ClimbCrosshair() {}
 
-	private static final ResourceLocation BASE = WKClimb.id("textures/gui/crosshair_base.png");
-	private static final ResourceLocation FOCUS = WKClimb.id("textures/gui/crosshair_focus.png");
+	private static final Identifier BASE = WKClimb.id("textures/gui/crosshair_base.png");
+	private static final Identifier FOCUS = WKClimb.id("textures/gui/crosshair_focus.png");
 	private static final int BASE_TEX = 512, FOCUS_TEX = 158;
 	private static final double FOCUS_INTERP_TIME = 0.13;
 
@@ -76,7 +76,7 @@ public final class ClimbCrosshair {
 				break;
 			}
 		}
-		ResourceLocation tex = texSize == fullSize ? WKClimb.id("textures/gui/crosshair_" + id + ".png")
+		Identifier tex = texSize == fullSize ? WKClimb.id("textures/gui/crosshair_" + id + ".png")
 				: WKClimb.id("textures/gui/crosshair_" + id + "_" + texSize + ".png");
 		var pose = g.pose();
 		pose.pushMatrix();

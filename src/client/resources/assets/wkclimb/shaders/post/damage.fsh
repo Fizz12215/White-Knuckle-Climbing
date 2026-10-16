@@ -1,13 +1,14 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // White Knuckle's damage look over the world: damageFX grade + hurt vignette (see wk_damage.glsl).
 // The values are rewritten every frame by the mod (ClimbDamage.updateColorGrade).
 
-#moj_import <wkclimb:wk_damage.glsl>
+#include <wkclimb:wk_damage.glsl>
 
 uniform sampler2D InSampler;
 
-in vec2 texCoord;
+layout(location = 0) in vec2 texCoord;
 
 layout(std140) uniform SamplerInfo {
     vec2 OutSize;
@@ -20,7 +21,7 @@ layout(std140) uniform DamageConfig {
     float Vignette;
 };
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 void main() {
     vec3 color = texture(InSampler, texCoord).rgb;

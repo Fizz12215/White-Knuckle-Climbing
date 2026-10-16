@@ -13,7 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
@@ -161,7 +161,7 @@ public final class ClimbHands {
 		return HandSway.BASE;
 	}
 
-	static ResourceLocation tex(String name) {
+	static Identifier tex(String name) {
 		return WKClimb.id("textures/gui/hands/" + name + ".png");
 	}
 
@@ -288,7 +288,7 @@ public final class ClimbHands {
 			.build());
 
 	/** staminaUsed: 1 - grip%, the game's _StaminaAmount for this hand. */
-	private static void blit(GuiGraphics g, ResourceLocation texture, int x, int y, int size, boolean mirror, float staminaUsed) {
+	private static void blit(GuiGraphics g, Identifier texture, int x, int y, int size, boolean mirror, float staminaUsed) {
 		if (size <= 0) return;
 		int color = ClimbDamage.handColor(staminaUsed);
 		if (mirror) {

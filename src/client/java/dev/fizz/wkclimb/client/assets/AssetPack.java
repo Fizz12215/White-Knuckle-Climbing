@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
@@ -26,8 +26,8 @@ public final class AssetPack {
 	public static final String NAME = "White Knuckle Assets";
 	/** Its id in Minecraft's pack list (a folder in resourcepacks/). */
 	public static final String ID = "file/" + NAME;
-	private static final ResourceLocation HAND = WKClimb.id("textures/gui/hands/grab.png");
-	private static final ResourceLocation INFO = WKClimb.id("wk_pack_info.json");
+	private static final Identifier HAND = WKClimb.id("textures/gui/hands/grab.png");
+	private static final Identifier INFO = WKClimb.id("wk_pack_info.json");
 	private static final SystemToast.SystemToastId TOAST = new SystemToast.SystemToastId(6000L);
 
 	public enum Status { MISSING, OUTDATED, OK }

@@ -1,3 +1,6 @@
+#ifndef WKCLIMB_WK_DAMAGE_GLSL
+#define WKCLIMB_WK_DAMAGE_GLSL
+
 // White Knuckle's damage look, measured against the game and read from its post shader
 // ("Hidden/Dark Machine/Post Process WK"). Shared by the screen pass (post/damage) and the hands
 // (core/hand), which the game draws in the world, under the same effect.
@@ -50,3 +53,5 @@ vec3 wk_damage(vec3 color, vec2 uv, vec2 size, float saturation, float bright, f
     c = clamp(mix(vec3(value), c, saturation) * bright, 0.0, 1.0);
     return wk_to_srgb(wk_vignette_linear(c, uv, size, vignette));
 }
+
+#endif

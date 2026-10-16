@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 // First-person hand sprites, as White Knuckle's SHDR_Base_Inventory draws them with the default hand
 // cosmetic (read from the game's shader and material data), then its damage look (wk_damage.glsl;
@@ -16,16 +17,16 @@
 //    red once just over 62.5% is used: 5/8 + 6/16 = 1);
 //  - then x _Color (0.8113 grey).
 
-#moj_import <minecraft:dynamictransforms.glsl>
-#moj_import <minecraft:globals.glsl>
-#moj_import <wkclimb:wk_damage.glsl>
+#include <minecraft:dynamictransforms.glsl>
+#include <minecraft:globals.glsl>
+#include <wkclimb:wk_damage.glsl>
 
 uniform sampler2D Sampler0;
 
-in vec2 texCoord0;
-in vec4 vertexColor;
+layout(location = 0) in vec2 texCoord0;
+layout(location = 1) in vec4 vertexColor;
 
-out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 const float OUTLINE = 0.4902;
 const vec3 RED = vec3(1.0, 0.0, 0.0);

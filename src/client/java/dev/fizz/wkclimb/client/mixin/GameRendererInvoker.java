@@ -11,5 +11,5 @@ public interface GameRendererInvoker {
 	float wkclimb$getFov(Camera camera, float partialTick, boolean useFovSetting);
 
 	@Invoker("setPostEffect")
-	void wkclimb$setPostEffect(net.minecraft.resources.ResourceLocation id);
+	void wkclimb$setPostEffect(net.minecraft.resources.Identifier id);
 }
