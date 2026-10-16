@@ -7,8 +7,9 @@ against the game.
 
 Minecraft Java Edition **26.3**, **Fabric**. Version **0.5.0 beta**: climbing only. Items, the
 inventory and perks may come later. Works with both of 26.3's graphics engines, OpenGL and Vulkan.
-On Minecraft 1.21.9, use [0.4.0 beta](https://github.com/Fizz12215/White-Knuckle-Climbing/releases/tag/v0.4.0-beta),
-the last version for it.
+All new versions are for 26.3. Minecraft 1.21.9 is legacy:
+[0.4.0 beta](https://github.com/Fizz12215/White-Knuckle-Climbing/releases/tag/v0.4.0-beta) stays available for it,
+but gets no more updates.
 
 > An unofficial fan mod, not made or endorsed by Dark Machine, White Knuckle's developers. The mod
 > contains none of the game's files: if you own White Knuckle, a small tool builds its hands and
