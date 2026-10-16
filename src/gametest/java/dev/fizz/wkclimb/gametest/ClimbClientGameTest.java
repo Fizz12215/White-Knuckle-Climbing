@@ -7,11 +7,12 @@ import dev.fizz.wkclimb.sim.ClimbSim;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestServerConnection;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLScancode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		boolean withPack = installPack(ctx);
 
 		try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
-			sp.getClientWorld().waitForChunksRender();
+			ctx.waitTicks(60); // 26.3: no waitForChunksRender
 			var server = sp.getServer();
 			server.runCommand("gamemode survival @a");
 			server.runCommand("difficulty peaceful");
@@ -72,11 +73,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			// --- The side of a tall wall is not a ledge ---
 			server.runCommand("tp @a 12.5 -60 0.0 180 0");
 			ctx.waitTicks(10);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(4);
 			check(ctx, "looking at the middle of a wall: nothing to grab", mc -> ClimbController.INSTANCE.hovered() == null && !hand(0).isHanging());
 			ctx.takeScreenshot("wkclimb-01-wall-side");
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 
 			// --- A ledge: both hands catch its top edge ---
 			// (aim 55 degrees up: the ledge edge is 1 block ahead and 1.56 above White Knuckle's 1.44 eye, 57.3
@@ -85,8 +86,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.waitTicks(10);
 			ctx.takeScreenshot("wkclimb-02-hands-at-rest");
 			double y0 = playerY(ctx);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			ctx.waitTicks(3);
 			check(ctx, "both hands grab the ledge", mc -> hand(0).isHanging() && hand(1).isHanging());
 			double holdY = ctx.computeOnClient(mc -> ClimbController.toMcPublic(hand(0).holdPoint()).y);
@@ -108,8 +109,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			double y1 = playerY(ctx);
 			ctx.takeScreenshot("wkclimb-04-mantled");
 			ctx.getInput().releaseKey(o -> o.keyUp);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			ctx.waitTicks(10);
 			double yTop = playerY(ctx);
 			LOG.info("[wkclimb] climbing: y {} -> {} while holding, {} after letting go (top of wall is -57)", y0, y1, yTop);
@@ -118,20 +119,20 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			// --- A button on the wall works as a handhold ---
 			server.runCommand("tp @a 1.5 -60 0.5 180 5");
 			ctx.waitTicks(30);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(3);
 			check(ctx, "grabs the stone button on the wall", mc -> hand(0).isHanging()
 					&& mc.level.getBlockState(net.minecraft.core.BlockPos.containing(ClimbController.toMcPublic(hand(0).holdPoint())))
 							.is(net.minecraft.tags.BlockTags.BUTTONS));
 			ctx.takeScreenshot("wkclimb-03a-button");
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(30);
 
 			// --- A ledge below you: stand on the wall and grab its edge at your feet ---
 			server.runCommand("tp @a 0.5 -57 -1.5 0 72");
 			ctx.waitTicks(20);
 			check(ctx, "standing on top of the wall", mc -> mc.player.onGround() && Math.abs(mc.player.getY() - -57.0) < 1e-6);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(3);
 			check(ctx, "grabs the ledge below, at the wall's top edge", mc -> hand(0).isHanging());
 			double belowY = ctx.computeOnClient(mc -> ClimbController.toMcPublic(hand(0).holdPoint()).y);
@@ -152,14 +153,14 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 					ctx.computeOnClient(mc -> mc.player.position().toString()), ctx.computeOnClient(mc -> mc.player.onGround()));
 			ctx.takeScreenshot("wkclimb-03c-hanging-below-edge");
 			check(ctx, "hanging from the ledge below the top", mc -> hand(0).isHanging() && !mc.player.onGround() && mc.player.getY() < -57.5);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(30);
 
 			// --- Climbing jump: both hands let go, then catch the ledge again ---
 			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(30);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			ctx.waitTicks(15);
 			double yJump = playerY(ctx);
 			ctx.getInput().holdKey(o -> o.keyJump);
@@ -175,8 +176,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.waitTicks(20);
 			check(ctx, "a hand catches a ledge again after the jump while the buttons are held",
 					mc -> hand(0).isHanging() || hand(1).isHanging());
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			ctx.waitTicks(2);
 			check(ctx, "releasing the buttons lets go", mc -> !hand(0).isHanging() && !hand(1).isHanging());
 			ctx.waitTicks(20);
@@ -187,7 +188,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(3.0));
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(3);
 			check(ctx, "left hand hanging alone", mc -> hand(0).isHanging() && !hand(1).isHanging());
 			int ticks = 0;
@@ -198,7 +199,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				if (ticks == 45) ctx.takeScreenshot("wkclimb-06-grip-low");
 			}
 			LOG.info("[wkclimb] one-hand hang from 3 grip lasted {} more ticks, grip now {}, grabWait {}", ticks, hand(0).grip(), hand(0).grabWait());
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			if (ticks < 45 || ticks > 65) throw new AssertionError("fatigue after " + ticks + " ticks");
 			if (hand(0).grabWait() < 0.8) throw new AssertionError("no fatigue cooldown");
 
@@ -206,7 +207,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 0.5 -60 9.0 0 -55");
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(2);
 			check(ctx, "left hand grabs the ice ledge", mc -> hand(0).isHanging());
 			int iceTicks = 0;
@@ -215,7 +216,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				iceTicks++;
 			}
 			LOG.info("[wkclimb] Chimney ice hold lasted {} ticks (maxHoldTime 2 s = 40 ticks)", iceTicks);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			if (iceTicks < 30 || iceTicks > 50) throw new AssertionError("ice hold lasted " + iceTicks + " ticks");
 
 			// --- Non-full blocks: ledges sit on the visible shape ---
@@ -239,8 +240,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("fill 0 -60 61 0 -59 61 minecraft:iron_chain[axis=y]");
 			server.runCommand("tp @a 0.5 -60 60.5 0 -89");
 			ctx.waitTicks(20);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			ctx.waitTicks(3);
 			LOG.info("[wkclimb] chain: hovered={} hanging={} {} handhold={}", ClimbController.INSTANCE.hovered(),
 					hand(0).isHanging(), hand(1).isHanging(), hand(0).handhold());
@@ -262,8 +263,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				if (t == 10) ctx.takeScreenshot("wkclimb-08b-swinging");
 			}
 			LOG.info("[wkclimb] swing on the chain: z from {} to {} ({} blocks), still hanging {}", minZ, maxZ, maxZ - minZ, hand(0).isHanging());
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_RIGHT);
 			if (maxZ - minZ < 0.5) throw new AssertionError("no swing: " + (maxZ - minZ));
 			// a vertical chain (z 61.41..61.59) would stop the body (half-width 0.3) at z 61.11
 			if (maxZ < 61.3) throw new AssertionError("swing stopped at the chain rod (z " + maxZ + ")");
@@ -282,7 +283,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("fill -2 -60 70 2 -57 70 minecraft:iron_bars");
 			server.runCommand("tp @a 0.5 -60 71.6 180 0");
 			ctx.waitTicks(30);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(3);
 			check(ctx, "grabs the iron-bar wall as a plain handhold (no swinging, no pass-through)", mc -> hand(0).isHanging()
 					&& hand(0).handhold() == dev.fizz.wkclimb.sim.Handhold.DEFAULT && !dev.fizz.wkclimb.WKClimb.clientThroughBars);
@@ -291,7 +292,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.getInput().releaseKey(o -> o.keyUp);
 			double wallZ = ctx.computeOnClient(mc -> mc.player.getZ());
 			LOG.info("[wkclimb] pushing into the iron-bar wall while holding it: z {} (pane z 70.44..70.56, so 70.86 or more)", wallZ);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			if (wallZ < 70.8) throw new AssertionError("passed through the iron-bar wall: z " + wallZ);
 			ctx.waitTicks(20);
 
@@ -321,7 +322,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("damage @p 15 minecraft:generic");
 			ctx.waitTicks(10);
 			double blendLow = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbDamage.colorGradeBlend());
-			String effect = ctx.computeOnClient(mc -> String.valueOf(mc.gameRenderer.currentPostEffect()));
+			String effect = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbDamage.gradeRequested() ? dev.fizz.wkclimb.client.ClimbDamage.GRADE.toString() : "null");
 			double satLow = centerSaturation(ctx.takeScreenshot("wkclimb-09d-low-health-grey"));
 			LOG.info("[wkclimb] at 25% health: grade {} ({}), centre saturation {} vs {} at full health", blendLow, effect, satLow, satFull);
 			if (blendLow < 0.25 || !effect.equals("wkclimb:damage")) throw new AssertionError("no damage grade at low health");
@@ -346,7 +347,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			// the grade goes at full health; the post pass stays until the hurt vignette has faded too
 			ctx.waitTicks(10);
 			check(ctx, "grade clears at full health", mc -> dev.fizz.wkclimb.client.ClimbDamage.colorGradeBlend() == 0);
-			ctx.waitFor(mc -> mc.gameRenderer.currentPostEffect() == null, 400);
+			ctx.waitFor(mc -> !dev.fizz.wkclimb.client.ClimbDamage.gradeRequested(), 400);
 			server.runCommand("effect give @p minecraft:instant_health 1 5");
 			ctx.waitTicks(20);
 
@@ -560,10 +561,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 60.5 -60 50.5 0 0");
 			ctx.waitTicks(10);
 			float eyeStand = ctx.computeOnClient(mc -> mc.player.getEyeHeight());
-			ctx.getInput().holdKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.getInput().holdKey(SDLScancode.SDL_SCANCODE_LCTRL);
 			ctx.waitTicks(10);
 			float eyeCrouch = ctx.computeOnClient(mc -> mc.player.getEyeHeight());
-			ctx.getInput().releaseKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.getInput().releaseKey(SDLScancode.SDL_SCANCODE_LCTRL);
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.setEnabled(false));
 			ctx.waitTicks(2);
@@ -579,11 +580,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("fill 59 -60 59 61 -60 61 minecraft:stone");
 			server.runCommand("tp @a 60.5 -59 61.4 0 0");
 			ctx.waitTicks(10);
-			ctx.getInput().holdKey(GLFW.GLFW_KEY_LEFT_CONTROL);
-			ctx.getInput().holdKey(GLFW.GLFW_KEY_W);
+			ctx.getInput().holdKey(SDLScancode.SDL_SCANCODE_LCTRL);
+			ctx.getInput().holdKey(SDLScancode.SDL_SCANCODE_W);
 			ctx.waitTicks(60);
-			ctx.getInput().releaseKey(GLFW.GLFW_KEY_W);
-			ctx.getInput().releaseKey(GLFW.GLFW_KEY_LEFT_CONTROL);
+			ctx.getInput().releaseKey(SDLScancode.SDL_SCANCODE_W);
+			ctx.getInput().releaseKey(SDLScancode.SDL_SCANCODE_LCTRL);
 			double edgeY = ctx.computeOnClient(mc -> mc.player.getY());
 			LOG.info("[wkclimb] crouch-walking off a 1-block ledge: y {} (started at -59)", edgeY);
 			if (edgeY > -59.5) throw new AssertionError("crouching held the player at the ledge: y " + edgeY);
@@ -601,11 +602,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 80.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(5);
 			boolean mossHeld = ctx.computeOnClient(mc -> hand(0).isHanging());
 			String grabSound = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.lastPlayedForTest());
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.waitTicks(10);
 			LOG.info("[wkclimb] grabbed a moss ledge: {}, sound {}", mossHeld, grabSound);
 			if (!mossHeld) throw new AssertionError("couldn't grab the moss ledge");
@@ -639,7 +640,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				float sh = serverHealth(server);
 				float ch = ctx.computeOnClient(mc -> mc.player.getHealth());
 				int st = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbDamage.colorGradeStep());
-				String fx = ctx.computeOnClient(mc -> String.valueOf(mc.gameRenderer.currentPostEffect()));
+				String fx = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbDamage.gradeRequested() ? dev.fizz.wkclimb.client.ClimbDamage.GRADE.toString() : "null");
 				boolean dead = ctx.computeOnClient(mc -> mc.player.isDeadOrDying());
 				String row = String.format("server %.2f client %.2f step %d fx %s dead %s", sh, ch, st, fx, dead);
 				if (!row.equals(last)) trace.append("\n  t=").append(t).append(' ').append(row);
@@ -651,7 +652,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("difficulty peaceful");
 			if (ctx.computeOnClient(mc -> mc.player.isDeadOrDying())) {
 				ctx.runOnClient(mc -> mc.player.respawn());
-				ctx.waitFor(mc -> mc.player != null && !mc.player.isDeadOrDying() && mc.screen == null, 200);
+				ctx.waitFor(mc -> mc.player != null && !mc.player.isDeadOrDying() && mc.gui.screen() == null, 200);
 				ctx.waitTicks(20);
 				float respawned = serverHealth(server);
 				int stepAfter = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbDamage.colorGradeStep());
@@ -670,7 +671,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			if (afterTp < 19.9f) throw new AssertionError("teleport counted as a fall: " + afterTp);
 
 			// --- Toggling off gives the mouse back to Minecraft ---
-			ctx.getInput().pressKey(GLFW.GLFW_KEY_R);
+			ctx.getInput().pressKey(SDLScancode.SDL_SCANCODE_R);
 			ctx.waitTick();
 			check(ctx, "toggle key turns the hands off", mc -> !ClimbController.INSTANCE.isEnabled());
 		}
@@ -678,33 +679,37 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		// --- Dedicated server: the mod runs there, the client sees it has the mod (climbing stays on),
 		// and hanging for 5 s doesn't get the player kicked for flying ---
 		ctx.runOnClient(mc -> ClimbController.INSTANCE.setEnabled(true)); // keys don't work on the title screen
-		try (TestDedicatedServerContext ds = ctx.worldBuilder().createServer();
-				TestServerConnection conn = ds.connect()) {
-			conn.getClientWorld().waitForChunksRender();
-			ds.runCommand("gamemode survival @a");
-			ds.runCommand("difficulty peaceful");
-			ds.runCommand("fill -4 -60 -3 4 -58 -2 minecraft:stone");
-			ds.runCommand("tp @a 0.5 -60 0.0 180 -55");
-			ctx.waitTicks(20);
-			check(ctx, "climbing stays on with a modded dedicated server", mc -> ClimbController.INSTANCE.isEnabled());
-			ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
-			ctx.waitTicks(5);
-			check(ctx, "both hands hang on a ledge on the dedicated server", mc -> hand(0).isHanging() && hand(1).isHanging());
-			boolean wkMode = ds.computeOnServer(server -> dev.fizz.wkclimb.WKClimb.isWkMode(server.getPlayerList().getPlayers().get(0)));
-			if (!wkMode) throw new AssertionError("the dedicated server doesn't know the player is in White Knuckle mode");
-			for (int t = 0; t < 100; t++) {
-				ctx.waitTick();
-				if (ctx.computeOnClient(mc -> mc.getConnection() == null || mc.level == null)) {
-					throw new AssertionError("disconnected while hanging on the dedicated server");
+		try (TestDedicatedServerContext ds = ctx.worldBuilder().createServer()) {
+			TestDedicatedServerConnection conn = ds.connect(); // 26.3: not AutoCloseable, closed below
+			try {
+				ctx.waitTicks(60); // 26.3: no waitForChunksRender
+				ds.runCommand("gamemode survival @a");
+				ds.runCommand("difficulty peaceful");
+				ds.runCommand("fill -4 -60 -3 4 -58 -2 minecraft:stone");
+				ds.runCommand("tp @a 0.5 -60 0.0 180 -55");
+				ctx.waitTicks(20);
+				check(ctx, "climbing stays on with a modded dedicated server", mc -> ClimbController.INSTANCE.isEnabled());
+				ctx.runOnClient(mc -> ClimbController.INSTANCE.sim.resetHands(10.0));
+				ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
+				ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
+				ctx.waitTicks(5);
+				check(ctx, "both hands hang on a ledge on the dedicated server", mc -> hand(0).isHanging() && hand(1).isHanging());
+				boolean wkMode = ds.computeOnServer(server -> dev.fizz.wkclimb.WKClimb.isWkMode(server.getPlayerList().getPlayers().get(0)));
+				if (!wkMode) throw new AssertionError("the dedicated server doesn't know the player is in White Knuckle mode");
+				for (int t = 0; t < 100; t++) {
+					ctx.waitTick();
+					if (ctx.computeOnClient(mc -> mc.getConnection() == null || mc.level == null)) {
+						throw new AssertionError("disconnected while hanging on the dedicated server");
+					}
 				}
+				check(ctx, "still hanging and connected after 5 s on the dedicated server", mc -> hand(0).isHanging() && mc.getConnection() != null);
+				ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
+				ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_RIGHT);
+				ctx.waitTicks(10);
+				LOG.info("[wkclimb] dedicated server: climbing on, hung 5 s without a kick, server WK mode {}", wkMode);
+			} finally {
+				conn.close();
 			}
-			check(ctx, "still hanging and connected after 5 s on the dedicated server", mc -> hand(0).isHanging() && mc.getConnection() != null);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
-			ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
-			ctx.waitTicks(10);
-			LOG.info("[wkclimb] dedicated server: climbing on, hung 5 s without a kick, server WK mode {}", wkMode);
 		}
 		LOG.info("[wkclimb] ALL CHECKS PASSED (with WK asset pack: {})", withPack);
 	}
@@ -753,10 +758,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		ctx.runOnClient(mc -> mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, new Vec3(tx, ty, tz)));
 		// wait out the 0.2 s grab memory of wherever the view pointed before, so only this aim counts
 		ctx.waitTicks(6);
-		ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 		ctx.waitTicks(3);
 		Vec3 grip = ctx.computeOnClient(mc -> hand(0).isHanging() ? ClimbController.toMcPublic(hand(0).holdPoint()) : null);
-		ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 		ctx.waitTicks(30);
 		return grip;
 	}
@@ -768,13 +773,13 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		ctx.runOnClient(mc -> mc.player.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES,
 				new net.minecraft.world.phys.Vec3(tx, ty, tz)));
 		ctx.waitTick();
-		ctx.getInput().holdMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 		ctx.waitTicks(3);
 		boolean hanging = hand(0).isHanging();
 		var grip = ctx.computeOnClient(mc -> ClimbController.toMcPublic(hand(0).holdPoint()));
 		LOG.info("[wkclimb] {}: hanging={} grip={} (expected y {}..{})", what, hanging, grip, minY, maxY);
 		ctx.takeScreenshot("wkclimb-nf-" + what.replace(' ', '-'));
-		ctx.getInput().releaseMouse(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+		ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 		ctx.waitTicks(30);
 		if (!hanging || grip.y < minY - 1e-3 || grip.y > maxY + 1e-3) throw new AssertionError(what + ": hanging=" + hanging + " grip=" + grip);
 	}

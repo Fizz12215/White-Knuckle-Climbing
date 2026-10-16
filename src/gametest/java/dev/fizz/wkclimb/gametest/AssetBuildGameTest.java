@@ -44,7 +44,7 @@ public class AssetBuildGameTest implements FabricClientGameTest {
 		}
 		removePack(ctx);
 		check(ctx, "no pack: status MISSING", mc -> AssetPack.check(mc.getResourceManager()) == AssetPack.Status.MISSING);
-		Screen title = ctx.computeOnClient(mc -> mc.screen);
+		Screen title = ctx.computeOnClient(mc -> mc.gui.screen());
 		screenshotPages(ctx, title);
 
 		// The real thing: offer, Start, then Continue at each step
@@ -54,7 +54,7 @@ public class AssetBuildGameTest implements FabricClientGameTest {
 		ctx.clickScreenButton("wkclimb.assets.start");
 		List<String> steps = continueThroughSteps(ctx, "first");
 		LOG.info("[wkclimb] first build steps: {}", steps);
-		ctx.waitFor(mc -> !(mc.screen instanceof AssetSetupScreen) && mc.getOverlay() == null, 2400);
+		ctx.waitFor(mc -> !(mc.gui.screen() instanceof AssetSetupScreen) && mc.gui.overlay() == null, 2400);
 		check(ctx, "first build finished and the screen closed", mc -> AssetBuilder.INSTANCE.state() == AssetBuilder.State.IDLE);
 		if (System.getenv("XDG_DATA_HOME") != null) {
 			check(ctx, "a fresh private Python folder takes all four steps",
@@ -71,10 +71,10 @@ public class AssetBuildGameTest implements FabricClientGameTest {
 			write(AssetPack.packDir().resolve("assets/wkclimb/wk_pack_info.json"), "{\"version\": 0}");
 			return mc.reloadResourcePacks();
 		});
-		ctx.waitFor(mc -> reload.isDone() && mc.getOverlay() == null, 2400);
+		ctx.waitFor(mc -> reload.isDone() && mc.gui.overlay() == null, 2400);
 		check(ctx, "version 0 pack: status OUTDATED", mc -> AssetPack.check(mc.getResourceManager()) == AssetPack.Status.OUTDATED);
 		ctx.runOnClient(AssetPack::offer);
-		check(ctx, "out-of-date pack: the offer opens, nothing runs", mc -> mc.screen instanceof AssetSetupScreen
+		check(ctx, "out-of-date pack: the offer opens, nothing runs", mc -> mc.gui.screen() instanceof AssetSetupScreen
 				&& AssetBuilder.INSTANCE.state() == AssetBuilder.State.IDLE);
 		ctx.waitTicks(3);
 		ctx.takeScreenshot("wkclimb-assets-offer-outdated");
@@ -86,13 +86,13 @@ public class AssetBuildGameTest implements FabricClientGameTest {
 		ctx.clickScreenButton("wkclimb.assets.stop");
 		ctx.waitFor(mc -> AssetBuilder.INSTANCE.state() == AssetBuilder.State.IDLE, 600);
 		check(ctx, "Stop: still out of date, offer shown", mc -> AssetPack.check(mc.getResourceManager()) == AssetPack.Status.OUTDATED
-				&& mc.screen instanceof AssetSetupScreen);
+				&& mc.gui.screen() instanceof AssetSetupScreen);
 
 		ctx.waitTicks(3);
 		ctx.clickScreenButton("wkclimb.assets.start");
 		List<String> rebuild = continueThroughSteps(ctx, "rebuild");
 		check(ctx, "rebuild needs only build + switch on", mc -> rebuild.equals(List.of("BUILD_PACK", "ENABLE_PACK")));
-		ctx.waitFor(mc -> !(mc.screen instanceof AssetSetupScreen) && mc.getOverlay() == null, 2400);
+		ctx.waitFor(mc -> !(mc.gui.screen() instanceof AssetSetupScreen) && mc.gui.overlay() == null, 2400);
 		check(ctx, "rebuilt pack is current", mc -> AssetPack.check(mc.getResourceManager()) == AssetPack.Status.OK);
 
 		removePack(ctx);
@@ -172,7 +172,7 @@ public class AssetBuildGameTest implements FabricClientGameTest {
 			repo.reload();
 			return mc.reloadResourcePacks();
 		});
-		ctx.waitFor(mc -> reload.isDone() && mc.getOverlay() == null, 2400);
+		ctx.waitFor(mc -> reload.isDone() && mc.gui.overlay() == null, 2400);
 	}
 
 	private static void deleteTree(Path dir) {
