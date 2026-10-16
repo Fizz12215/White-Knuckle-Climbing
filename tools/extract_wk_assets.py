@@ -42,11 +42,11 @@ STEAM_ROOTS = [
     "C:/Program Files/Steam",
 ]
 PACK_NAME = "White Knuckle Assets"
-PACK_FORMAT = 69  # Minecraft 1.21.9
+PACK_FORMAT = 97  # Minecraft 26.3 (resource pack format 97.1)
 # What this extractor puts in the pack, written to assets/wkclimb/wk_pack_info.json. The mod rebuilds packs
 # with a lower number (or none), so raise it whenever the extractor adds or changes files. Must equal
 # ExtractorSetup.PACK_VERSION in the mod (a unit test checks).
-PACK_CONTENT_VERSION = 1
+PACK_CONTENT_VERSION = 2
 
 # (WK group, WK set) -> Minecraft sound event path under the wkclimb namespace
 SOUND_SETS = {

@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ExtractorSetup {
 	/** The pack contents this mod expects; equals PACK_CONTENT_VERSION in tools/extract_wk_assets.py. */
-	public static final int PACK_VERSION = 1;
+	public static final int PACK_VERSION = 2;
 	/** Python versions the extractor's libraries ship ready-made for, in the scripts' order of preference. */
 	static final List<String> VERSIONS = List.of("3.13", "3.12", "3.14", "3.11", "3.10");
 	/** Prints the version, then the real interpreter path (py.exe hands over to python.exe). */
