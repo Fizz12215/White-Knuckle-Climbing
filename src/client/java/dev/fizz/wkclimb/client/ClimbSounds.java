@@ -142,14 +142,16 @@ public final class ClimbSounds {
 
 	/**
 	 * ENT_Player.LateUpdate: the near-death loops follow health. damageAudio (heartbeat) eases toward
-	 * damageFXCurve(health) * 0.8, dyingAudio (mortal wound) toward dyingAudioCurve(health) * 0.8.
+	 * damageFXCurve(health) * 0.8, dyingAudio (mortal wound) toward dyingAudioCurve(health) * 0.8, both
+	 * times the low_health_volume setting (1 = the game's level).
 	 * The two are layers of one piece, so they start and stop together and stay in step.
 	 */
 	public static void updateHealthLoops(LocalPlayer player, boolean enabled) {
 		if (!available(HEARTBEAT) || !available(MORTAL_WOUND)) return;
 		double health = player.getMaxHealth() > 0 ? player.getHealth() / player.getMaxHealth() : 1;
-		float heartTarget = enabled ? (float) (ClimbDamage.damageFxCurve(health) * 0.8) : 0f;
-		float woundTarget = enabled ? (float) (ClimbDamage.dyingAudioCurve(health) * 0.8) : 0f;
+		double setting = dev.fizz.wkclimb.ClimbConfig.lowHealthVolume;
+		float heartTarget = enabled ? (float) (ClimbDamage.damageFxCurve(health) * 0.8 * setting) : 0f;
+		float woundTarget = enabled ? (float) (ClimbDamage.dyingAudioCurve(health) * 0.8 * setting) : 0f;
 		if (!playing(heartbeat) || !playing(mortalWound)) {
 			if (heartTarget <= 0.001f && woundTarget <= 0.001f) return;
 			if (heartbeat != null) heartbeat.end();

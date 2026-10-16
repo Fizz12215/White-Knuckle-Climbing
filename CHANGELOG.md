@@ -5,7 +5,10 @@
   the version for Minecraft 1.21.9**; it gets no more updates.
 - **Works with both of 26.3's graphics engines**, OpenGL and Vulkan (Options > Video Settings >
   Graphics API). The hands, blood and damage look are the same on both.
-- **Climbing, movement, health and sounds are unchanged** from 0.4.0.
+- **Climbing, movement and health are unchanged** from 0.4.0.
+- **The low-health heartbeat is half as loud by default.** It plays at White Knuckle's own level, but
+  without the game's music and ambience under it, it stood out in Minecraft. The new setting
+  `low_health_volume` (0 to 1) sets it: `1` is the game's level, `0` turns it off.
 - **Rebuild the White Knuckle pack once:** 26.3 uses a newer pack format. At the title screen the
   mod offers to rebuild it (two steps, about 15 seconds).
 - The damage look now also shows together with Minecraft's own screen effects (for example a

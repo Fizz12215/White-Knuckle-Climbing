@@ -380,11 +380,14 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 							walls[wi][0], health, clientHealth, look[0], look[1], look[2], String.format("%.2f", err));
 					if (err > 3) throw new AssertionError("damage look differs from the model: " + err + "/255 on " + walls[wi][0] + " at " + health);
 					if (withPack && wi == walls.length - 1 && health < 1) {
-						// near-death loops: damageFXCurve(2%) x 0.8 = 0.423, dyingAudioCurve(2%) x 0.8 = 0.797
+						// near-death loops: damageFXCurve(2%) x 0.8 = 0.423, dyingAudioCurve(2%) x 0.8 = 0.797 in
+						// White Knuckle, times the low_health_volume setting
 						float[] loops = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest());
-						LOG.info("[wkclimb] near-death loops at 2% health: heartbeat {}, mortal wound {} (WK 0.423, 0.797)", loops[1], loops[2]);
-						if (Math.abs(loops[1] - 0.423f) > 0.05f || Math.abs(loops[2] - 0.797f) > 0.05f) {
-							throw new AssertionError("near-death loop volumes off: " + loops[1] + ", " + loops[2]);
+						float setting = (float) dev.fizz.wkclimb.ClimbConfig.lowHealthVolume;
+						LOG.info("[wkclimb] near-death loops at 2% health: heartbeat {}, mortal wound {} (WK 0.423, 0.797 x setting {})",
+								loops[1], loops[2], setting);
+						if (Math.abs(loops[1] - 0.423f * setting) > 0.05f * setting || Math.abs(loops[2] - 0.797f * setting) > 0.05f * setting) {
+							throw new AssertionError("near-death loop volumes off: " + loops[1] + ", " + loops[2] + " at setting " + setting);
 						}
 					}
 				}

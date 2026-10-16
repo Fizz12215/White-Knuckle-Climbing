@@ -683,3 +683,22 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   ends with a separator, as tinyfd's did. Unit-tested; not yet seen on Windows or in the Flatpak.
 - **Not verified yet:** Windows (above all the SDL3 folder picker), a manual play in a real 26.3
   client, the Linux portal picker and fullscreen handling outside the test.
+
+## 2026-10-16: the low-health sound's volume (owner's report: "seems too loud")
+- **Checked against the game first:**
+  - `ENT_Player`'s serialized `damageAudioVolume`/`dyingAudioVolume` are 0.8, as the mod uses; the
+    health curves match (0.003 at 2% health, from the gametest).
+  - The three loop AudioSources (heartbeat, mortal wound, wind) are 2D and output to the
+    `Main-Mixer` group "Master" (-0.19 dB). The game's other sounds reach Master through "Effects"
+    (0 dB), so the mixer adds no difference. Its other groups (Announcer -3.9 dB, Radio -8.5 dB, with
+    lowpass and reverb) and Master's pitch shifter don't touch these sounds.
+  - The extractor's mono mix is a plain average, with no gain.
+- **Measured** (loud-part RMS of the extracted clips, times their play volume): both loops reach about
+  -22 dBFS each near death, like a heavy landing, but continuously. Hurt and jump are about -31,
+  grabs -38 to -43, footsteps -48; Minecraft's own hit is -27.5 and a stone step about -52. The
+  heartbeat starts below about 6 hearts and the mortal-wound layer below 2 hearts.
+- **So the port matched the game.** It stands out because White Knuckle always has music and
+  ambience under it.
+- **Change (owner's choice):** a `low_health_volume` setting, 0 to 1 (clamped), **default 0.5**;
+  1 = the game's level. The gametest now expects the game's values times the setting: 0.211 / 0.397 at
+  2% health with the default. All checks passed with the pack (OpenGL).

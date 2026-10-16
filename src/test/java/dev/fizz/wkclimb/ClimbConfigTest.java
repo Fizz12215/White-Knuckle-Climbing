@@ -17,6 +17,16 @@ class ClimbConfigTest {
 	}
 
 	@Test
+	void volumeSetting() {
+		assertEquals(0.5, ClimbConfig.volumeFrom(null, 0.5));
+		assertEquals(0.25, ClimbConfig.volumeFrom(" 0.25 ", 0.5));
+		assertEquals(1.0, ClimbConfig.volumeFrom("3", 0.5));
+		assertEquals(0.0, ClimbConfig.volumeFrom("-1", 0.5));
+		assertEquals(0.5, ClimbConfig.volumeFrom("loud", 0.5));
+		assertEquals(0.5, ClimbConfig.volumeFrom("NaN", 0.5));
+	}
+
+	@Test
 	void windowsPathTypedWithBackslashes() throws IOException {
 		// Properties alone would give "D:SteamLibrarysteamappscommonWhite Knuckle"
 		assertEquals("D:\\SteamLibrary\\steamapps\\common\\White Knuckle",

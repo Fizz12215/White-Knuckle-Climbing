@@ -205,7 +205,8 @@ PLAYING
   You can change them back in Options > Controls > Key Binds.
 
   Settings file: .minecraft/config/wkclimb.properties (field of view, reach, ledges only, White
-  Knuckle's exact step height, and more; see the mod's page for what each one does).
+  Knuckle's exact step height, the low-health heartbeat's volume, and more; see the mod's page for
+  what each one does).
 
   Updating from an older version? Start Minecraft and press Start when the mod offers to rebuild
   the pack, then Continue at each step. Packs from 0.4.0 or older always need this once, because

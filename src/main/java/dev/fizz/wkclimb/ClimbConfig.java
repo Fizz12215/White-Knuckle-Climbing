@@ -34,6 +34,11 @@ public final class ClimbConfig {
 	public static double fov = 90;
 	/** White Knuckle's 0.18-block step height in climbing mode (slabs and stairs must be jumped); else Minecraft's 0.6. */
 	public static boolean exactStepHeight = false;
+	/**
+	 * Volume of the low-health heartbeat and mortal-wound loops: 1 = White Knuckle's level, 0 = off. Half
+	 * by default: with no music or ambience under it, the game's level stands out in Minecraft.
+	 */
+	public static double lowHealthVolume = 0.5;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
 	public static boolean wkKeybindsApplied = false;
 	/** Offer to build White Knuckle's hands and sounds when the pack is missing or out of date (each step is confirmed). */
@@ -63,6 +68,7 @@ public final class ClimbConfig {
 		hideVanillaHand = Boolean.parseBoolean(p.getProperty("hide_vanilla_hand", Boolean.toString(hideVanillaHand)));
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
+		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume);
 		wkKeybindsApplied = Boolean.parseBoolean(p.getProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied)));
 		assetPrompt = Boolean.parseBoolean(p.getProperty("asset_prompt", Boolean.toString(assetPrompt)));
 		wkGameDir = gameDirFrom(text, p.getProperty("wk_game_dir", wkGameDir)).strip();
@@ -94,6 +100,7 @@ public final class ClimbConfig {
 		values.put("hide_vanilla_hand", Boolean.toString(hideVanillaHand));
 		values.put("fov", Double.toString(fov));
 		values.put("exact_step_height", Boolean.toString(exactStepHeight));
+		values.put("low_health_volume", Double.toString(lowHealthVolume));
 		values.put("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied));
 		values.put("asset_prompt", Boolean.toString(assetPrompt));
 		values.put("wk_game_dir", GameLocator.isWindows() ? wkGameDir.replace('\\', '/') : wkGameDir);
@@ -102,6 +109,17 @@ public final class ClimbConfig {
 			for (Map.Entry<String, String> e : values.entrySet()) w.write(e.getKey() + "=" + e.getValue() + "\n");
 		} catch (IOException e) {
 			LOG.warn("Could not write {}", path, e);
+		}
+	}
+
+	/** A volume setting: a number from 0 to 1 (clamped); def if missing or not a number. */
+	static double volumeFrom(String raw, double def) {
+		if (raw == null) return def;
+		try {
+			double v = Double.parseDouble(raw.strip());
+			return Double.isNaN(v) ? def : Math.clamp(v, 0.0, 1.0);
+		} catch (NumberFormatException e) {
+			return def;
 		}
 	}
 
