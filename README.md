@@ -5,7 +5,7 @@ out, swing from bars and chains, and move, sound and get hurt the way the game d
 climbing, movement and health rules are rebuilt from White Knuckle's own code and data, and checked
 against the game.
 
-Minecraft Java Edition **1.21.9**, **Fabric**. Version **0.3.1 beta**: climbing only. Items, the
+Minecraft Java Edition **1.21.9**, **Fabric**. Version **0.4.0 beta**: climbing only. Items, the
 inventory and perks may come later.
 
 > An unofficial fan mod, not made or endorsed by Dark Machine, White Knuckle's developers. The mod
@@ -38,21 +38,88 @@ The download zip contains `README.txt` with the same steps in more detail, for *
 1. **Fabric:** install [Fabric Loader](https://fabricmc.net/use/installer/) for 1.21.9 (or, in Prism
    Launcher, make a 1.21.9 instance and add Fabric under Edit > Version > Install Loader).
 2. **Mods:** put [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.9 and
-   `white-knuckle-climbing-0.3.1-beta.jar` in your `mods` folder:
+   `white-knuckle-climbing-0.4.0-beta.jar` in your `mods` folder:
    - Windows: `%APPDATA%\.minecraft\mods` (press Win+R and paste it)
    - Linux: `~/.minecraft/mods`
    - Prism: right-click the instance > Folder > `mods`
-3. **White Knuckle's hands and sounds (optional, needs White Knuckle on Steam):** extract the
-   download zip, then in its `asset-extractor` folder:
-   - **Windows:** double-click `Get White Knuckle Assets (Windows).bat`. It installs Python 3.13 for
-     you if needed (press Y, then run it again).
-   - **Linux:** open a terminal in that folder and run `bash get-white-knuckle-assets.sh` (needs
-     Python 3.10 to 3.14; on Ubuntu/Debian/Mint also `sudo apt install python3-venv`).
+3. **White Knuckle's hands and sounds (optional, needs White Knuckle on Steam):** start Minecraft.
+   The mod looks for your copy of White Knuckle and offers to build its hands and sounds from it.
+   Press **Start**, and the screen walks you through up to four steps. **Each step says exactly what
+   it will do on your computer, which folders it uses and how to undo it, and waits for you to press
+   Continue** (you can Stop at any step):
+   1. make a private Python folder (first time only);
+   2. download the Python libraries the tool needs from pypi.org (first time only: about 35 MB on
+      Windows, 45 MB on Linux; about 130 MB and 185 MB once installed);
+   3. build the pack from your copy of the game (about 15 seconds; it only reads White Knuckle's files);
+   4. turn the pack on.
 
-   It finds White Knuckle by itself (including Steam libraries on other drives) and makes
-   `White Knuckle Assets.zip`. In Minecraft: Options > Resource Packs > Open Pack Folder, copy the zip
-   in, and move the pack to the right-hand side. Please don't share the pack, since it's the game's own art and
-   audio.
+   Notes:
+   - It needs **Python 3.10 to 3.14**. On **Windows**, if Python isn't installed, the screen offers to
+     install Python 3.13, and explains what that does first. **Linux** usually has it already
+     (Ubuntu/Debian/Mint may also need `sudo apt install python3-venv`; the screen says so).
+   - **If White Knuckle isn't found**, press **Choose its folder** and pick it in your system's own
+     folder picker. That covers another drive, or a **Flatpak launcher** (Prism Launcher from Flathub,
+     most Steam Deck setups), which can't see your Steam folder. In a Flatpak, choosing the folder lets
+     the launcher read just that folder: no commands, no restart.
+   - When a mod update needs a newer pack, the screen offers to rebuild it (two steps).
+   - Please read [What the Build button does](#what-the-build-button-does-to-your-computer) and
+     [Safety](#safety-what-this-access-means) below.
+   - If the button can't run, the download zip also has the tool to do it by hand (the
+     `asset-extractor` folder, explained in `README.txt`).
+
+   Please don't share the pack, since it's the game's own art and audio.
+
+## What the Build button does to your computer
+Nothing happens until you press Continue on that step's screen, which shows the exact folders on your
+computer.
+
+| What | Where | Size | How to remove it |
+|---|---|---|---|
+| A private Python folder with the tool's libraries | Windows: `%LOCALAPPDATA%\wkclimb-extractor`<br>Linux: `~/.local/share/wkclimb-extractor`<br>Flatpak launcher: `~/.var/app/<launcher id>/data/wkclimb-extractor` | about 130 MB (Windows), 185 MB (Linux) | delete the folder |
+| The pack | `.minecraft/resourcepacks/White Knuckle Assets` | about 3 MB | delete the folder |
+| Turns the pack on | `.minecraft/options.txt` (Minecraft's own list) | - | Options > Resource Packs, move it to the left |
+| Remembers the White Knuckle folder you chose (if you chose one) | `.minecraft/config/wkclimb.properties` (`wk_game_dir`) | - | delete that line |
+| A log of what it ran and printed | `.minecraft/logs/wkclimb-assets.log` | small | delete the file |
+| **Only if you press Install Python (Windows):** Python 3.13 | installed by winget, Windows' own app installer, from python.org | about 100 MB | Settings > Apps > Installed apps > Python 3.13 > Uninstall |
+| **Only in a Flatpak, if you choose a folder:** read access to that folder for your launcher | your system's document portal | - | `flatpak document-unexport --doc-id=<id>` (the build step shows the exact command); `flatpak documents <launcher id>` lists what it can see |
+
+It downloads only from pypi.org (and python.org, if you install Python). It only reads White Knuckle's
+folder, and it never changes it.
+
+## Safety: what this access means
+Building the pack means running programs on your computer, and in a Flatpak, letting the launcher see
+more than before. In plain words:
+
+- **It runs downloaded code with your permissions.** The tool is the mod's own Python script plus
+  libraries from pypi.org (UnityPy, Pillow, numpy and a few more). Like any program you install, they
+  can do anything your user account can do. If one of those libraries were ever taken over by an
+  attacker, its code would run on your computer too.
+  - To make that less likely, the mod fixes the exact version of every library (`tools/requirements.txt`).
+    PyPI never lets anyone change the files of an existing version, so new code only arrives when a
+    mod update changes that list.
+- **Only get the mod from its official page**
+  ([GitHub releases](https://github.com/Fizz12215/White-Knuckle-Climbing/releases)). A modified copy
+  could show the same screens and run something else. Be wary of any other mod showing a screen like
+  this one.
+- **Minecraft mods already have full access.** Outside a Flatpak, every mod you install runs with your
+  user's permissions, so the Build button can't do anything a mod couldn't already do. What it adds is
+  downloading and running more code, which is why every step asks first.
+- **Folder access in a Flatpak.** A Flatpak launcher normally can't see your files, and that protects
+  you from a bad mod in any of its instances. Every folder you let it see becomes readable by the
+  launcher and every mod you run in it.
+  - **Don't give it your whole Steam folder.** That folder also holds Steam's login and settings files
+    (`config/`), which a bad mod could read. Choosing a folder gives access to that folder only. The
+    fallback command the mod shows if the picker fails is limited to White Knuckle's folder too.
+  - You can take the access away again (see the table above).
+- **Installing Python (Windows)** adds a program to your PC and agrees to Python's license for you.
+  Windows asks for your permission if it needs it. You can uninstall it like any other app.
+- **What it never does:**
+  - it never needs administrator rights (apart from Windows' own prompt when installing Python);
+  - it never changes White Knuckle's files;
+  - it never uploads anything;
+  - it never uses the internet except pypi.org (and python.org for Python);
+  - it never runs anything without a Continue from you.
+- **The pack is White Knuckle's own art and audio.** It's for your own use; please don't share it.
 
 ## Controls
 | Key | Action |
@@ -94,6 +161,8 @@ The download zip contains `README.txt` with the same steps in more detail, for *
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
 | `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
 | `wk_keybinds_applied` | `false` → `true` | set back to `false` to apply White Knuckle's keys again |
+| `asset_prompt` | `true` | offer to build White Knuckle's hands and sounds when the pack is missing or out of date (`false` after "Don't ask again") |
+| `wk_game_dir` | empty | White Knuckle's folder, set when you press **Choose its folder**, or by hand, for example `D:\SteamLibrary\steamapps\common\White Knuckle` |
 
 Datapacks can change what is climbable through the block tags `wkclimb:handholds`,
 `wkclimb:unclimbable`, `wkclimb:grab_anywhere`, `wkclimb:bars`, `wkclimb:icy_handholds`,
@@ -107,10 +176,13 @@ your held item even though the hotbar is hidden.
 ## Troubleshooting
 - **Minecraft won't start:** check it's 1.21.9, with Fabric Loader 0.17 or newer and the Fabric API
   made for 1.21.9.
-- **Plain drawn hands and Minecraft sounds:** the White Knuckle Assets pack isn't on (step 3).
-- **The asset tool can't find White Knuckle:** run it with
-  `--game "<the White Knuckle folder>"` (Steam: right-click White Knuckle > Manage > Browse local
-  files).
+- **Minecraft's arm, crosshair and sounds instead of White Knuckle's:** the White Knuckle Assets
+  pack isn't on (step 3). If
+  you pressed "Don't ask again", set `asset_prompt=true` in `config/wkclimb.properties` and restart.
+- **White Knuckle isn't found:** press **Choose its folder** on the setup screen (Steam: right-click
+  White Knuckle > Manage > Browse local files shows where it is).
+- **The build fails:** the screen shows the last lines, and the full log is
+  `.minecraft/logs/wkclimb-assets.log`. Please attach it to a bug report.
 - **Can't break or place blocks:** climbing mode is on, so press R.
 - **Bug reports:** [open an issue](https://github.com/Fizz12215/White-Knuckle-Climbing/issues) with what you were doing, a screenshot or clip, and
   `.minecraft/logs/latest.log`.

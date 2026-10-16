@@ -501,3 +501,141 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   renders after post-processing.
 - **Checked:** the full suite passes (damage look still 0.25/255 from the model), the hit screenshot
   shows the splats with the vignette tint toward the edges, and blood splats are still 2 per hit.
+
+## 2026-10-15: the in-game Build button for White Knuckle's hands and sounds
+- **Request:** "is it possible to streamline the asset extracting process such that it happens
+  automatically?", for Windows and Linux. The owner chose a build button in Minecraft that runs the
+  existing Python extractor. A Java rewrite was ruled out: Unity 6 files with no type trees, BC
+  textures, 4 FMOD-only Vorbis clips.
+- **Design:**
+  - the extractor and requirements.txt ride in the jar;
+  - at the first title screen the mod checks the pack (missing / outdated via the new
+    `wk_pack_info.json`, PACK_CONTENT_VERSION 1) and offers Build;
+  - `AssetBuilder` sets up the scripts' private venv and runs the extractor into resourcepacks/;
+  - the pack is switched on with no restart;
+  - later version bumps rebuild quietly once the player has agreed.
+  Details in DEVELOPING ("The in-game asset build").
+- **Found while planning:** Prism from Flathub can't see `~/.local/share/Steam`. Its runtime's
+  Python 3.13 has venv + ensurepip, and XDG_DATA_HOME is the app's own data folder. The screen
+  shows the one-line `flatpak override` (needs a launcher restart).
+- **Verified:**
+  - 22 unit tests (vdf, registry output, game folder, .flatpak-info, Python probe and order, venv
+    paths, pack version = the script's);
+  - `WKCLIMB_TEST_BUILD=1 WKCLIMB_TEST_PACK=... runClientGameTest`: all climbing checks pass with
+    the pack; then the real build from Steam's White Knuckle with Python 3.14:
+    - venv set up in 6 s (wheels already in pip's cache), extraction 13 s, 85 clips;
+    - the pack is switched on and the WK hands load with no restart;
+    - a version-0 pack is rebuilt in the background with a toast;
+  - each help screen screenshotted (layout OK; a toast line that ran off the screen was shortened);
+  - inside the Prism Flatpak sandbox, with a one-run `--filesystem` grant: venv + pip + extractor
+    in 29 s including downloads. Same 97 files as the instance's 0.3.1 pack, plus the info file;
+  - the winget command line (`cmd /c start "<title>" cmd /c "... & pause"`) runs both parts under
+    Wine's cmd.
+- **Sizes:** first setup downloads 45 MB of wheels (Python 3.14, Linux); the venv is 184 MB.
+- **Not verified:** a real Windows PC (Python search, winget install, registry Steam path); a
+  real Minecraft launched from the Flatpak (the sandbox steps were run by hand); a truly fresh pip
+  cache on a slow connection.
+
+## 2026-10-16: folder picker, a confirmation before every step, Windows review, safety docs
+- **Asked for:**
+  - a button that replaces the Flatpak terminal command;
+  - instructions that make sense on Windows;
+  - telling players exactly what the mod does to their computer;
+  - documentation on the dangers of this kind of access.
+- **Owner's choices:** the folder button everywhere, and a confirmation before each step.
+- **Design:**
+  - steps CREATE_VENV, INSTALL_LIBRARIES, BUILD_PACK and ENABLE_PACK; each waits in state CONFIRM;
+  - the silent background rebuild and `asset_auto_update` are gone;
+  - the folder picker: the desktop portal on Linux (a pure-Java D-Bus client), tinyfd on Windows;
+  - the screen leaves fullscreen before opening any other window.
+- **Found:**
+  - in Prism's sandbox, zenity is 3.44 (GTK3), whose dialog shows only the sandbox, and there's no
+    Python `gi`. `gdbus call` exits before the portal's Response arrives. So the portal is called
+    directly.
+  - The earlier Flatpak command granted all of `~/.local/share/Steam`. That folder includes Steam's
+    `config/` (`config.vdf` was readable from inside the sandbox). The fallback command is now limited
+    to White Knuckle's folder, and the docs explain why.
+  - **Windows:** a bare `python` can be Microsoft Store Python, whose AppData writes are redirected.
+    Removed it, added the Program Files paths, and the builder now checks the venv's python exists.
+  - pip evaluates `python_version` markers against the running interpreter, not `--python-version`, so
+    the pin check resolves the markers per version with pip's own `packaging`.
+- **Pinned** `tools/requirements.txt`: 18 packages; numpy 2.2.6 (3.10), 2.4.6 (3.11), 2.5.4 (3.12+).
+  - All 10 combinations of Python 3.10-3.14 x Linux/Windows resolve to exactly the pinned set.
+  - Downloads: 34 MB on Windows, 45 MB on Linux. A fresh venv is 183 MB and builds the same 98 files.
+  - The pip-upgrade step is dropped (mod and scripts).
+- **Verified:**
+  - 31 unit tests: D-Bus encoding and decoding (incl. big-endian), Response parsing, bus addresses,
+    chosen-folder rules, document-portal ids, the Windows candidates, the steps needed, all
+    requirements pinned, pack version = the script's;
+  - the portal client read `org.freedesktop.appearance color-scheme` from the desktop and from inside
+    Prism's Flatpak with Prism's own Java (through the sandbox's bus proxy);
+  - a gametest with an empty `XDG_DATA_HOME`:
+    - clicked Continue through all 4 steps (27 s, with the wheels in pip's cache);
+    - the pack is on and the WK hands load;
+    - Stop at a step changes nothing;
+    - an out-of-date pack brings back the offer (nothing runs by itself), and the rebuild has 2 steps;
+  - the climbing suite passes;
+  - screenshots of all pages, incl. long Windows-style paths (they wrap without hitting the buttons).
+    Fixed after looking: lone footer buttons now centred; two sentences that didn't fit their page.
+- **Owner's test in the real Flatpak Prism (00:19):**
+  - the broad Steam override removed;
+  - "Choose its folder..." opened the portal dialog;
+  - the choice came back as `/run/user/1000/doc/lh9OK_QVZ5rSxGU2CFyb3g/White Knuckle` and was saved
+    as `wk_game_dir`;
+  - the steps ran from there (the libraries were reinstalled for the new pins, then the build and
+    turning it on);
+  - the pack (version 1) is on. The owner reports it works.
+- **Not verified yet:**
+  - the `document-unexport` undo;
+  - on real Windows: tinyfd's dialog, winget and Store-Python detection. 0.4.0-beta goes to a
+    Windows tester for that.
+
+## 2026-10-16: Windows 11 test of 0.4.0-beta, and fixes from it
+- **How:** the owner booted their Windows 11 dual boot. A Claude Code session there followed
+  `windows-test/README.md` in the private testing repo and pushed `windows-test/results/` back. It
+  automated the clicking with universal-modder's Windows tools.
+- **Starting point:** no real Python (only the Microsoft Store alias), no Java (Temurin 21 installed
+  with the owner's OK), and White Knuckle installed for the test.
+- **Worked on Windows:**
+  - the Python search ignored the Store alias;
+  - "Install Python 3.13" opened winget in a titled Windows Terminal window, in front of Minecraft.
+    It installed per user with no UAC prompt and ended at "Press any key to continue". Try again
+    found `%LOCALAPPDATA%\Programs\Python\Python313\python.exe` without a restart;
+  - the venv and pip with the pinned Windows wheels, and the extractor (85 FMOD clips, 0 failed);
+  - the pack switched on. In a world: the hands, the crosshair, the grab pose, and the grab and
+    release sounds (recorded from the game's own audio);
+  - tinyfd's "Browse For Folder" opened in front of Minecraft, starting in `steamapps\common`. A wrong
+    folder was rejected, and the right one went on to the steps;
+  - fullscreen became a normal window while the dialog was open, then fullscreen again;
+  - Stop changed nothing;
+  - the beta .bat worked;
+  - 31 unit tests passed, and so did the climbing gametest.
+- **Bug found (not Windows-specific):** `ClimbHands.haveTextures()` and `ClimbDamage.available()`
+  cache their resource lookups for 200 calls, and nothing reset them on a reload. The asset gametest
+  failed `WK hand sprites loaded` when the climbing part before it had run without a pack. Linux runs
+  had always set `WKCLIMB_TEST_PACK`, so they never hit it. For players: a pack switched on showed up
+  only up to 200 frames later.
+  - **Fix:** the Windows session's patch. A v1 `ResourceLoader` client reload listener drops both
+    caches.
+- **Smaller fixes from the report:**
+  - **the folder spelling:** a game found through the registry `SteamPath` (`c:/program files
+    (x86)/steam`) was shown in lower case. It now goes through `toRealPath()`;
+  - **a wrong `wk_game_dir`:** the not-found screen blamed the Steam libraries. It now names
+    `wk_game_dir` and its value;
+  - **the config file:** `wk_game_dir` was saved escaped (`C\:\\...`). The config is now written by
+    hand (fixed order, paths as written, `/` on Windows), and the raw line is read, so a Windows path
+    typed with backslashes works. The "write / instead of \" hint is gone;
+  - **disk size:** the private folder is 126 MB on Windows, against 183 MB on Linux. The page shows
+    130 / 185 MB per system;
+  - **wrapping:** the Python path and the log path now sit on their own lines, and each undo line
+    names its folder.
+- **Verified here:** 36 unit tests (new: `ClimbConfigTest` for the raw `wk_game_dir`, and a
+  symlinked game folder resolving to its real path). The full gametest ran exactly like the failing
+  Windows run (no `WKCLIMB_TEST_PACK`, a fresh `XDG_DATA_HOME`): `ALL CHECKS PASSED (with WK asset
+  pack: false)`, then every asset check including `WK hand sprites loaded`.
+- **Owner's follow-ups (same day):**
+  - pages whose lines were all short (the progress pages, "Waiting for you to choose a folder",
+    steps 2 and 4) sat left of centre: the scroll area keeps the full text width, and the narrower
+    column hugged its left edge. A full-width spacer now keeps the column full width;
+  - at the owner's request, the placeholder pixel-art hand icons drawn without the pack were
+    removed. Without the pack there's now no hand HUD (Minecraft's crosshair and arm).

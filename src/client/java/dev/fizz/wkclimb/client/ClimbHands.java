@@ -179,6 +179,11 @@ public final class ClimbHands {
 		return haveTextures;
 	}
 
+	/** After a resource reload: look for the sprites again on the next call (the pack may have come or gone). */
+	static void forgetTextures() {
+		texturesChecked = false;
+	}
+
 	public static void render(GuiGraphics g, DeltaTracker delta) {
 		Minecraft mc = Minecraft.getInstance();
 		ClimbController ctl = ClimbController.INSTANCE;

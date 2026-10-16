@@ -8,8 +8,11 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.lwjgl.glfw.GLFW;
 
 public class WKClimbClient implements ClientModInitializer {
@@ -26,6 +29,14 @@ public class WKClimbClient implements ClientModInitializer {
 		ClimbConfig.load();
 		ClimbController.INSTANCE.setEnabled(ClimbConfig.enabledOnStart);
 
+		// The White Knuckle pack can be switched on or off at any time (the setup screen, Options >
+		// Resource Packs), so the cached "are its sprites there?" answers are dropped on every reload.
+		ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(WKClimb.id("sprite_checks"),
+				(ResourceManagerReloadListener) manager -> {
+					ClimbHands.forgetTextures();
+					ClimbDamage.forgetAvailable();
+				});
+
 		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				"key.wkclimb.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, CATEGORY));
 
@@ -34,6 +45,7 @@ public class WKClimbClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ClimbKeybinds.applyOnce(client);
+			dev.fizz.wkclimb.client.assets.AssetPack.tick(client);
 			ClimbCrosshair.setFocus(client.screen == null && focusKey.isDown());
 			if (client.player != null && !client.isPaused()) ClimbHands.tick(client.player);
 			while (toggleKey.consumeClick()) {

@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.4.0 beta: White Knuckle's hands and sounds from a button in the game
+- **White Knuckle's hands and sounds are built in the game:** at the title screen the mod finds your
+  copy of White Knuckle and offers to build them. There's nothing to copy and no tool to run.
+  - **Every step asks first.** Each step (Python folder, libraries, building the pack, turning it on)
+    says exactly what it will do on your computer, with the real folders, sizes and how to undo it,
+    and waits for Continue. You can Stop at any step.
+  - **Choose its folder:** if White Knuckle isn't found, pick it in your system's own folder picker.
+    In a Flatpak launcher (Prism from Flathub, Steam Deck) this lets the launcher read just that
+    folder: no terminal command, no restart.
+  - On Windows, the screen can install Python 3.13 for you (with winget), after explaining what that
+    does.
+  - When a mod update needs a newer pack, the screen offers to rebuild it.
+  - The tool's Python libraries are now pinned to exact versions, so nothing new is downloaded by
+    surprise.
+  - New README sections: what the Build button does to your computer (and how to remove it), and
+    what this kind of access means for your safety.
+  - New settings: `asset_prompt`, `wk_game_dir`.
+  - The manual tool is still in the download zip, in case the button can't run.
+  - Tested on Windows 11 and on Linux, including a Flatpak launcher.
+- **No more placeholder hands:** without the White Knuckle pack, the mod no longer draws its own
+  simple hand icons beside the crosshair. You see Minecraft's crosshair and arm until the pack is on.
+- **Switching the White Knuckle pack on or off takes effect at once.** The hands and blood used to
+  catch up a few seconds later.
+- **`config/wkclimb.properties` is easier to read:** settings stay in a fixed order, and folders are
+  written as they are. On Windows, `wk_game_dir` can be typed with `\` or `/`.
+
 ## 0.3.1 beta: closer to the game
 A full review of the climbing against White Knuckle's own code. To get the new sounds, run the
 asset tool again.

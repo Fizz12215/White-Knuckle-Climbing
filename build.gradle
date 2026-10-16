@@ -50,6 +50,14 @@ processResources {
 	}
 }
 
+// The asset extractor rides along in the jar, so the in-game Build button can run it (AssetBuilder).
+processClientResources {
+	from("tools") {
+		include "extract_wk_assets.py", "requirements.txt"
+		into "wkclimb/extractor"
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 }

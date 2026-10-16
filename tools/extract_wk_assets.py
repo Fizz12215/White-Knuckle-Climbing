@@ -43,6 +43,10 @@ STEAM_ROOTS = [
 ]
 PACK_NAME = "White Knuckle Assets"
 PACK_FORMAT = 69  # Minecraft 1.21.9
+# What this extractor puts in the pack, written to assets/wkclimb/wk_pack_info.json. The mod rebuilds packs
+# with a lower number (or none), so raise it whenever the extractor adds or changes files. Must equal
+# ExtractorSetup.PACK_VERSION in the mod (a unit test checks).
+PACK_CONTENT_VERSION = 1
 
 # (WK group, WK set) -> Minecraft sound event path under the wkclimb namespace
 SOUND_SETS = {
@@ -599,6 +603,7 @@ def main():
     print("  clips decoded: " + ", ".join(f"{n} {k}" for k, n in decoder.stats.items()))
     (pack / "assets/wkclimb/sounds.json").write_text(json.dumps(sounds_json, indent=1))
     (pack / "assets/wkclimb/wk_sound_meta.json").write_text(json.dumps(meta, indent=1))
+    (pack / "assets/wkclimb/wk_pack_info.json").write_text(json.dumps({"version": PACK_CONTENT_VERSION}))
     (pack / "pack.mcmeta").write_text(json.dumps({"pack": {
         "description": "White Knuckle hands and sounds, extracted from your own copy of the game",
         "pack_format": PACK_FORMAT, "min_format": PACK_FORMAT, "max_format": PACK_FORMAT}}, indent=1))

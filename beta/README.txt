@@ -1,4 +1,4 @@
-WHITE KNUCKLE CLIMBING  -  0.3.1 beta  -  for Minecraft Java Edition 1.21.9 (Fabric)
+WHITE KNUCKLE CLIMBING  -  0.4.0 beta  -  for Minecraft Java Edition 1.21.9 (Fabric)
 =====================================================================================
 Climb Minecraft like the White Knuckle climber: grab ledges with each hand, watch your grip run
 out, swing from bars and chains, and move, sound and get hurt the way the game does.
@@ -11,9 +11,9 @@ and it contains none of the game's files.
 
 WHAT'S IN THIS ZIP
 ------------------
-  mods/white-knuckle-climbing-0.3.1-beta.jar   the mod
-  asset-extractor/                             optional: builds White Knuckle's hands and sounds
-                                               from YOUR copy of the game (step 3)
+  mods/white-knuckle-climbing-0.4.0-beta.jar   the mod
+  asset-extractor/                             only if the in-game Build button can't run: builds
+                                               White Knuckle's hands and sounds by hand (step 3)
   README.txt                                   this guide
 
 
@@ -23,8 +23,8 @@ WHAT YOU NEED
   - Fabric Loader for 1.21.9           https://fabricmc.net/use/installer/
   - Fabric API for 1.21.9              https://modrinth.com/mod/fabric-api
                                        (on its Versions tab, pick one marked 1.21.9)
-  - Optional but recommended: White Knuckle on Steam. Without it the mod still works, with simple
-    drawn hands and Minecraft's sounds.
+  - Optional but recommended: White Knuckle on Steam. Without it the mod still works, with
+    Minecraft's own arm, crosshair and sounds.
 
 
 =====================================================================================
@@ -47,7 +47,7 @@ STEP 2 - PUT THE MODS IN
 =====================================================================================
 Copy TWO files into your mods folder:
   - the Fabric API .jar you downloaded
-  - mods/white-knuckle-climbing-0.3.1-beta.jar from this zip
+  - mods/white-knuckle-climbing-0.4.0-beta.jar from this zip
 
 Where the mods folder is:
   Windows, official launcher:  press Win+R, type  %APPDATA%\.minecraft\mods  and press Enter
@@ -61,44 +61,117 @@ Start Minecraft. If it reaches the title screen, the mod is installed.
 =====================================================================================
 STEP 3 - WHITE KNUCKLE'S HANDS AND SOUNDS (optional, needs White Knuckle on Steam)
 =====================================================================================
-A small tool builds a resource pack, "White Knuckle Assets.zip", from your own copy of the game.
-It finds White Knuckle by itself, including Steam libraries on other drives. The first run needs
-an internet connection to download its libraries; after that it takes about 15 seconds.
+The mod builds a resource pack, "White Knuckle Assets", from YOUR copy of the game.
 
---- WINDOWS ---
+Start Minecraft. At the title screen the mod says it found White Knuckle and offers to build its
+hands and sounds. Press Start. It then goes through up to four steps. EACH STEP FIRST SAYS EXACTLY
+WHAT IT WILL DO ON YOUR COMPUTER, WHICH FOLDERS IT USES AND HOW TO UNDO IT, AND WAITS FOR YOU TO PRESS
+CONTINUE. You can press Stop at any step.
+  1. Make a private Python folder (first time only).
+  2. Download the Python libraries the tool needs from pypi.org (first time only; about 35 MB on
+     Windows, 45 MB on Linux; about 130 MB and 185 MB on disk; it can take a few minutes).
+  3. Build the pack from your copy of the game (about 15 seconds; it only reads White Knuckle's
+     files and never changes them).
+  4. Turn the pack on. No copying, no menus.
+When a later mod update needs a newer pack, the screen offers to rebuild it (two steps).
+
+It needs Python 3.10 - 3.14:
+  Windows: if Python isn't installed, the screen offers to install Python 3.13 and explains what
+           that does first. It opens a window that uses winget (Windows' own app installer). When
+           that window says "Press any key to continue", press a key, then press Try again in
+           Minecraft (no restart needed).
+  Linux:   most distributions already have it. On Ubuntu / Debian / Mint you may also need
+               sudo apt install python3-venv
+           (the screen tells you if so).
+
+If White Knuckle isn't found (it's on another drive, or your launcher is a Flatpak, such as Prism
+Launcher from Flathub or most Steam Deck setups, which can't see your Steam folder):
+  Press "Choose its folder..." and pick the folder called White Knuckle in your system's folder
+  picker. (In Steam: right-click White Knuckle > Manage > Browse local files shows where it is.)
+  In a Flatpak this lets the launcher read just that one folder: no commands, no restart.
+
+Please read the two sections below before you start, and please don't share the pack: it's the game's
+own art and audio, so everyone makes their own.
+
+--- WHAT THE BUILD BUTTON DOES TO YOUR COMPUTER ---
+  A private Python folder with the tool's libraries (about 130 MB on Windows, 185 MB on Linux):
+      Windows: %LOCALAPPDATA%\wkclimb-extractor
+      Linux:   ~/.local/share/wkclimb-extractor
+      Flatpak launcher: ~/.var/app/<launcher id>/data/wkclimb-extractor
+      To remove it: delete the folder.
+  The pack (about 3 MB): .minecraft/resourcepacks/White Knuckle Assets
+      To remove it: delete the folder.
+  Turns the pack on in Minecraft's list (.minecraft/options.txt).
+      To undo: Options > Resource Packs, move it back to the left.
+  If you chose White Knuckle's folder: remembers it in .minecraft/config/wkclimb.properties
+  (wk_game_dir).
+  A log of what it ran: .minecraft/logs/wkclimb-assets.log
+  Only if you press Install Python (Windows): Python 3.13 from python.org (about 100 MB).
+      To remove it: Settings > Apps > Installed apps > Python 3.13 > Uninstall.
+  Only in a Flatpak, if you choose a folder: your launcher can read that folder.
+      To undo: flatpak document-unexport --doc-id=<id>   (the build step shows the exact command;
+      "flatpak documents <launcher id>" lists the folders it can see).
+  It downloads only from pypi.org (and python.org, if you install Python). It only reads White
+  Knuckle's folder and never changes it.
+
+--- SAFETY: WHAT THIS ACCESS MEANS ---
+  - It runs downloaded code with your permissions. The tool is the mod's own Python script plus
+    libraries from pypi.org (UnityPy, Pillow, numpy and a few more). Like any program you install,
+    they can do anything your user account can do. If one of those libraries were ever taken over
+    by an attacker, its code would run on your computer too. To make that less likely, the mod fixes
+    the exact version of every library: PyPI never lets anyone change the files of an existing
+    version, so new code only arrives when a mod update changes that list.
+  - Only get the mod from its official page:
+        https://github.com/Fizz12215/White-Knuckle-Climbing/releases
+    A modified copy could show the same screens and run something else. Be wary of any other mod
+    showing a screen like this one.
+  - Minecraft mods already have full access. Outside a Flatpak, every mod you install runs with your
+    user's permissions, so the Build button can't do anything a mod couldn't already do. What it adds
+    is downloading and running more code, which is why every step asks first.
+  - Folder access in a Flatpak. A Flatpak launcher normally can't see your files, and that protects
+    you from a bad mod in any of its instances. Every folder you let it see becomes readable by the
+    launcher and every mod you run in it. Don't give it your whole Steam folder: that folder also
+    holds Steam's login and settings files (config/), which a bad mod could read. Choosing a folder
+    gives access to that folder only. You can take the access away again (see above).
+  - Installing Python (Windows) adds a program to your PC and agrees to Python's license for you.
+    Windows asks for your permission if it needs it. You can uninstall it like any other app.
+  - What it never does: it never needs administrator rights (apart from Windows' own prompt when
+    installing Python), never changes White Knuckle's files, never uploads anything, never uses the
+    internet except pypi.org (and python.org for Python), and never runs anything without a Continue
+    from you.
+
+--- BY HAND (only if the Build button can't run) ---
+The asset-extractor folder in this zip does the same job outside Minecraft and makes
+"White Knuckle Assets.zip". It also needs Python 3.10 - 3.14 and an internet connection the first
+time.
+
+  WINDOWS
   1. Extract this zip first: right-click it > Extract All. (Running the tool from inside the zip
      won't work.)
   2. Open the extracted "asset-extractor" folder and double-click
          Get White Knuckle Assets (Windows).bat
      If Windows says "Windows protected your PC", click More info > Run anyway. (It's a plain
      text script; open it in Notepad to read what it does.)
-  3. It needs Python 3.10 - 3.14. If you don't have it, it offers to install Python 3.13: press Y,
-     wait for the install, close the window and double-click the .bat again.
-  4. The first run sets things up (a minute or two), then extracts. When it says "Done!",
-     "White Knuckle Assets.zip" is in the asset-extractor folder.
+  3. If Python is missing, it offers to install Python 3.13: press Y, wait for the install, close the
+     window and double-click the .bat again.
+  4. When it says "Done!", "White Knuckle Assets.zip" is in the asset-extractor folder.
 
---- LINUX (including Steam Deck in Desktop Mode) ---
+  LINUX (including Steam Deck in Desktop Mode)
   1. Extract this zip.
   2. Open a terminal in the "asset-extractor" folder (in most file managers: right-click >
      Open Terminal Here; on Steam Deck, Konsole) and run:
          bash get-white-knuckle-assets.sh
-  3. It needs Python 3.10 - 3.14, which most distributions already have. If it asks for it, or
-     says the "venv" module is missing, it prints the command to install it, for example on
-     Ubuntu / Debian / Mint:   sudo apt install python3-venv
-  4. When it says "Done!", "White Knuckle Assets.zip" is in the asset-extractor folder.
+  3. When it says "Done!", "White Knuckle Assets.zip" is in the asset-extractor folder.
 
---- THEN, IN MINECRAFT (both systems) ---
+  THEN, IN MINECRAFT
   Options > Resource Packs > Open Pack Folder. Copy "White Knuckle Assets.zip" into that folder,
   go back to Minecraft, click the pack on the left to move it to the right ("Selected"), then Done.
 
-  If the tool can't find White Knuckle, run it again with the game folder (in Steam: right-click
-  White Knuckle > Manage > Browse local files shows it):
+  If the tool can't find White Knuckle, run it again with the game folder:
       Windows (Command Prompt in the asset-extractor folder):
           "Get White Knuckle Assets (Windows).bat" --game "D:\SteamLibrary\steamapps\common\White Knuckle"
       Linux:
           bash get-white-knuckle-assets.sh --game "/path/to/White Knuckle"
-
-  Please don't share the pack: it's the game's own art and audio, so everyone makes their own.
 
 
 =====================================================================================
@@ -133,8 +206,8 @@ PLAYING
   Settings file: .minecraft/config/wkclimb.properties (field of view, reach, ledges only, White
   Knuckle's exact step height, and more; see the mod's page for what each one does).
 
-  Updating from an older version? Run the asset tool again (step 3): it now also builds the
-  falling wind, the near-death heartbeat and the fungus grab sounds.
+  Updating from an older version? Start Minecraft and press Start when the mod offers to rebuild
+  the pack, then Continue at each step.
 
 
 =====================================================================================
@@ -155,11 +228,15 @@ IF SOMETHING GOES WRONG
   Minecraft crashes or won't start
       Check that it's Minecraft 1.21.9, Fabric Loader 0.17 or newer, and the Fabric API made for
       1.21.9.
-  The hands are plain drawn shapes and the sounds are Minecraft's
+  I see Minecraft's arm, crosshair and sounds instead of White Knuckle's
       The White Knuckle Assets pack isn't on. Do step 3, and check it's on the right-hand
-      ("Selected") side in Options > Resource Packs.
-  The asset tool says Python is missing or too new
-      It needs Python 3.10 - 3.14. Having Python 3.15 as well is fine; the tool picks the right one.
+      ("Selected") side in Options > Resource Packs. If you clicked "Don't ask again", set
+      asset_prompt=true in .minecraft/config/wkclimb.properties and restart Minecraft.
+  It says Python is missing or too new
+      It needs Python 3.10 - 3.14. Having Python 3.15 as well is fine; it picks the right one.
+  Building the pack fails
+      The screen shows the last lines; the full log is .minecraft/logs/wkclimb-assets.log.
+      Please attach that file to a bug report.
   I can't break or place blocks
       Climbing mode is on: press R.
   Logs (useful for bug reports)

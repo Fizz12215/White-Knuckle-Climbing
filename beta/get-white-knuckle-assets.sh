@@ -36,7 +36,7 @@ if [ ! -f "$MARK" ]; then
     echo "On Ubuntu / Debian / Mint run:  sudo apt install python3-venv   then run this script again."
     exit 1
   fi
-  "$VENV/bin/python" -m pip install --quiet --upgrade pip
+  # exact versions from requirements.txt, ready-made only (never compiles anything)
   "$VENV/bin/python" -m pip install --quiet --only-binary=:all: -r requirements.txt
   touch "$MARK"
 fi

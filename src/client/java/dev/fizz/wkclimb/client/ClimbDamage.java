@@ -71,6 +71,11 @@ public final class ClimbDamage {
 		return available;
 	}
 
+	/** After a resource reload: look for the blood sprite again on the next call. */
+	static void forgetAvailable() {
+		recheck = 0;
+	}
+
 	public static int splatCount() { return splats.size(); }
 
 	/** Test support: clear the vignette, indicators and blood. */

@@ -1,0 +1,14 @@
+# Line endings, the same on every computer (the project is worked on from Linux and Windows).
+# Text files are stored with Linux line endings and checked out in each system's usual style...
+* text=auto
+# ...except scripts that must always have one style: Linux shell scripts break with Windows line
+# endings, and Windows .bat files can misbehave with Linux ones (the download zip is built on Linux).
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+# Never change these
+*.jar binary
+*.png binary
+*.jpg binary
+*.ogg binary
+*.zip binary

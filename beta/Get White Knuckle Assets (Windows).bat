@@ -22,7 +22,6 @@ if exist "%VENV%" rmdir /s /q "%VENV%"
 echo First run: setting up the extractor (a minute or two)...
 py -%PYVER% -m venv "%VENV%"
 if not "%errorlevel%"=="0" goto :fail
-"%VENV%\Scripts\python.exe" -m pip install --quiet --upgrade pip
 rem --only-binary: never try to compile anything (that needs Visual C++ and fails on most PCs)
 "%VENV%\Scripts\python.exe" -m pip install --quiet --only-binary=:all: -r requirements.txt
 if not "%errorlevel%"=="0" goto :fail

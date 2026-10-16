@@ -1,6 +1,8 @@
 .gradle/
 build/
 run/
+# Minecraft's logging, when unit tests load mod classes that log
+/logs/
 out/
 *.iml
 .idea/

@@ -5,7 +5,7 @@
 	"name": "White Knuckle Climbing gametests",
 	"environment": "client",
 	"entrypoints": {
-		"fabric-client-gametest": ["dev.fizz.wkclimb.gametest.ClimbClientGameTest"]
+		"fabric-client-gametest": ["dev.fizz.wkclimb.gametest.ClimbClientGameTest", "dev.fizz.wkclimb.gametest.AssetBuildGameTest"]
 	},
 	"depends": { "wkclimb": "*" }
 }

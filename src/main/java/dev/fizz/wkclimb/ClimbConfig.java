@@ -1,5 +1,6 @@
 package dev.fizz.wkclimb;
 
+import dev.fizz.wkclimb.assets.GameLocator;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /** config/wkclimb.properties */
@@ -33,14 +36,20 @@ public final class ClimbConfig {
 	public static boolean exactStepHeight = false;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
 	public static boolean wkKeybindsApplied = false;
+	/** Offer to build White Knuckle's hands and sounds when the pack is missing or out of date (each step is confirmed). */
+	public static boolean assetPrompt = true;
+	/** White Knuckle's install folder, if it isn't in the usual Steam libraries (set by the folder picker). Empty = search. */
+	public static String wkGameDir = "";
 
 	private ClimbConfig() {}
 
 	public static void load() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve("wkclimb.properties");
 		Properties p = new Properties();
+		String text = "";
 		if (Files.exists(path)) {
 			try (Reader r = Files.newBufferedReader(path)) {
+				text = Files.readString(path);
 				p.load(r);
 			} catch (IOException e) {
 				LOG.warn("Could not read {}", path, e);
@@ -55,24 +64,42 @@ public final class ClimbConfig {
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
 		wkKeybindsApplied = Boolean.parseBoolean(p.getProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied)));
+		assetPrompt = Boolean.parseBoolean(p.getProperty("asset_prompt", Boolean.toString(assetPrompt)));
+		wkGameDir = gameDirFrom(text, p.getProperty("wk_game_dir", wkGameDir)).strip();
 		save();
+	}
+
+	/**
+	 * wk_game_dir as the player wrote it. A .properties file treats a backslash as an escape, which would
+	 * eat a Windows path typed with backslashes (C:\Games\White Knuckle becomes C:GamesWhite Knuckle),
+	 * so the raw line is used, unless it's in the escaped form older versions saved (C\:\\Games...).
+	 */
+	static String gameDirFrom(String fileText, String parsed) {
+		java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?m)^[ \\t]*wk_game_dir[ \\t]*[=:][ \\t]*(.*?)[ \\t]*\\r?$").matcher(fileText);
+		if (!m.find()) return parsed;
+		String raw = m.group(1);
+		return raw.contains("\\\\") || raw.contains("\\:") ? parsed : raw;
 	}
 
 	public static void save() {
 		Path path = FabricLoader.getInstance().getConfigDir().resolve("wkclimb.properties");
-		Properties p = new Properties();
-
-		p.setProperty("blocks_per_unit", Double.toString(blocksPerUnit));
-		p.setProperty("reach_multiplier", Double.toString(reachMultiplier));
-		p.setProperty("handholds_only", Boolean.toString(handholdsOnly));
-		p.setProperty("enabled_on_start", Boolean.toString(enabledOnStart));
-		p.setProperty("ledges_only", Boolean.toString(ledgesOnly));
-		p.setProperty("hide_vanilla_hand", Boolean.toString(hideVanillaHand));
-		p.setProperty("fov", Double.toString(fov));
-		p.setProperty("exact_step_height", Boolean.toString(exactStepHeight));
-		p.setProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied));
+		// Written by hand rather than with Properties.store: a stable order, and paths readable as
+		// written (store would turn C:/Games into C\:/Games). On Windows, wk_game_dir is saved with /.
+		Map<String, String> values = new LinkedHashMap<>();
+		values.put("blocks_per_unit", Double.toString(blocksPerUnit));
+		values.put("reach_multiplier", Double.toString(reachMultiplier));
+		values.put("handholds_only", Boolean.toString(handholdsOnly));
+		values.put("enabled_on_start", Boolean.toString(enabledOnStart));
+		values.put("ledges_only", Boolean.toString(ledgesOnly));
+		values.put("hide_vanilla_hand", Boolean.toString(hideVanillaHand));
+		values.put("fov", Double.toString(fov));
+		values.put("exact_step_height", Boolean.toString(exactStepHeight));
+		values.put("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied));
+		values.put("asset_prompt", Boolean.toString(assetPrompt));
+		values.put("wk_game_dir", GameLocator.isWindows() ? wkGameDir.replace('\\', '/') : wkGameDir);
 		try (Writer w = Files.newBufferedWriter(path)) {
-			p.store(w, "White Knuckle Climbing");
+			w.write("# White Knuckle Climbing (README.md, \"Settings\", explains each one)\n");
+			for (Map.Entry<String, String> e : values.entrySet()) w.write(e.getKey() + "=" + e.getValue() + "\n");
 		} catch (IOException e) {
 			LOG.warn("Could not write {}", path, e);
 		}

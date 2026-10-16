@@ -11,7 +11,7 @@ sounds and health rules. Gameplay is reimplemented from the game's decompiled co
 data. **No game files ship with the mod.** Art and audio come from a resource pack each player
 builds from their own install (`tools/extract_wk_assets.py`).
 
-Status: 0.3.1-beta (climbing only; 0.3.0 was the first public release). See *Open issues* at the end.
+Status: 0.4.0-beta (climbing only; 0.3.0 was the first public release). See *Open issues* at the end.
 
 ## Setup
 
@@ -28,10 +28,11 @@ Status: 0.3.1-beta (climbing only; 0.3.0 was the first public release). See *Ope
 | `./gradlew build` | compile, run unit tests, build `build/libs/*.jar` (and install it, see above) |
 | `./gradlew test` | `ClimbSimTest`: headless checks of the ported physics against hand-derived numbers |
 | `./gradlew runClient` | dev client |
-| `./gradlew runClientGameTest` | real client + flat world; scripted checks of almost everything (~2.5 min). Set `WKCLIMB_TEST_PACK=<extracted pack folder>` to test with the real sprites and sounds. Screenshots: `build/run/clientGameTest/screenshots/` |
+| `./gradlew runClientGameTest` | real client + flat world; scripted checks of almost everything (~4 min). Set `WKCLIMB_TEST_PACK=<extracted pack folder>` to test with the real sprites and sounds, and `WKCLIMB_TEST_BUILD=1` to also run the in-game Build button for real (`AssetBuildGameTest`: needs White Knuckle and Python; clicks Continue at every step; add `XDG_DATA_HOME=<empty dir>` for a fresh private Python folder). Screenshots: `build/run/clientGameTest/screenshots/` |
 | `./gradlew betaZip` | release download: `build/beta/White-Knuckle-Climbing-<version>.zip` (jar, extractor, scripts, `beta/README.txt` = the player guide) |
 | `python tools/extract_wk_assets.py --out <dir> [--zip]` | build the "White Knuckle Assets" resource pack from your install (`--instance <prism instance> --enable` installs it) |
 | `python tools/dump_component.py <Class> [--file ...] [--keys ...]` | dump a game component's serialized values (for checking or porting numbers) |
+| `java -cp build/classes/java/main:build/classes/java/test dev.fizz.wkclimb.assets.PortalProbe read` (or `pick`) | check the portal client outside Minecraft: `read` reads one setting (no dialog), `pick` opens the real folder picker. Works inside a Flatpak too (`flatpak run --command=<its java> ...`) |
 
 ## Layout
 
@@ -47,25 +48,32 @@ src/main/java/dev/fizz/wkclimb/          common (both sides)
   net/                    ClimbStatePayload (C2S: hanging, throughBars, wkMode), FallGripPayload (S2C)
   mixin/                  rods without collision, no hunger/vanilla fall damage/peaceful regen,
                           heal-delay hook, anti-fly-kick accessor
+  assets/                 pure-Java parts of the in-game asset build: GameLocator (Steam libraries,
+                          chosen folders, Flatpak), ExtractorSetup (Python search, private venv, steps,
+                          PACK_VERSION), PortalFolderPicker + DBusWire (the desktop portal's folder picker)
 src/client/java/dev/fizz/wkclimb/client/   client only
   ClimbController.java    the adapter: input, hand catching (sphere cast vs ledge edges / rod outlines),
                           runs ClimbSim 2-3 steps per tick through Body (Minecraft collision), sounds, sync
   ClimbHands.java         first-person hand sprites (camera-rig placement, ViewSway); drawn by
                           shaders/core/hand.fsh (the game's stamina red + the damage look)
   HandSway.java           port of ViewSway + its parameter sets
-  ClimbHud.java           crosshair hand icons (and a drawn fallback without the pack)
+  ClimbHud.java           crosshair hand icons (only with the pack; nothing is drawn without it)
   ClimbCrosshair.java     the game's crosshair and focus ring, sized like its UI canvas
   ClimbCamera.java        head-bob, sprint roll, FOV, camera shake (replaces vanilla bobbing)
   ClimbDamage.java        blood splats, hit-direction glow; damage grade + hurt vignette (post shader)
   ClimbSounds.java / ClimbFootsteps.java   game sound sets, floor materials
   ClimbKeybinds.java      applies the game's default keys once
+  assets/                 the Build button: AssetPack (pack status, when to offer, switch on),
+                          AssetBuilder (the steps, each waiting for an OK), AssetSetupScreen,
+                          FolderPicker (portal or tinyfd, leaving fullscreen first)
   mixin/                  travel hook, input, camera, sounds, hide vanilla hand, post-pass access
 src/client/resources/assets/wkclimb/    lang, the damage post effect + shaders (our own files;
                                         the maths is in shaders/include/wk_damage.glsl)
 src/main/resources/data/wkclimb/tags/   block tags: handholds, grab_anywhere, bars, icy, slow, ...
 src/test/  src/gametest/                unit tests / in-game tests
-tools/                                  extractor, research dump tool, requirements
-beta/                                   tester readme + one-click extractor scripts
+tools/                                  extractor, research dump tool, requirements (the extractor
+                                        and requirements are also packed into the jar)
+beta/                                   tester readme + one-click extractor scripts (manual fallback)
 ```
 
 ### How a tick works (client)
@@ -98,6 +106,50 @@ joining. The server uses it to:
 
 The server sends `fall_grip` when a fall ends by catching a hold (grip penalty + blood).
 **The mod must be installed on servers.**
+
+### The in-game asset build
+The game's files never ship, so each player's pack is built from their own install, by the same
+Python extractor as before. The mod runs it for them, and asks first at every step:
+- `processClientResources` packs `tools/extract_wk_assets.py` and `requirements.txt` into the jar
+  under `wkclimb/extractor/`.
+- At the first title screen of a session, `AssetPack.tick` checks the loaded resources:
+  - no `wkclimb:textures/gui/hands/grab.png` means MISSING;
+  - `wkclimb:wk_pack_info.json` below `ExtractorSetup.PACK_VERSION` (or absent) means OUTDATED;
+  - if `asset_prompt` is on, it opens `AssetSetupScreen`. Nothing ever runs by itself.
+- `AssetBuilder` (background thread):
+  - finds the game and Python, as the scripts do;
+  - works out the steps (`ExtractorSetup.stepsNeeded`): CREATE_VENV and INSTALL_LIBRARIES (the private
+    venv in the scripts' folder, `%LOCALAPPDATA%\wkclimb-extractor` or
+    `$XDG_DATA_HOME/wkclimb-extractor`), then BUILD_PACK (the extractor with
+    `--out <resourcepacks>/White Knuckle Assets --game <dir>`) and ENABLE_PACK;
+  - before each step it waits in state CONFIRM until the screen calls `answer(true/false)`;
+  - logs to `logs/wkclimb-assets.log`.
+- The confirmation text (in `en_us.json`, filled in by `AssetSetupScreen.confirmText`) says, with the
+  real paths: what happens, the size, where things come from, and how to undo it. Installing Python
+  (Windows) and the folder picker get the same kind of page first.
+- **Choose its folder** (`FolderPicker`), when the game isn't found:
+  - Linux, including Flatpak: the desktop portal's FileChooser (`PortalFolderPicker`, a small
+    pure-Java D-Bus client over the session bus socket, wire format in `DBusWire`). In a Flatpak the
+    chosen folder comes back as a document-portal path (`/run/user/<uid>/doc/<id>/...`) the sandbox can
+    read, which is remembered across restarts;
+  - Windows, or Linux without a portal: LWJGL tinyfd (shipped with Minecraft);
+  - a fullscreen game is put in a window first (and back after), so the picker or the winget window
+    never takes the focus from fullscreen Minecraft.
+- **When the extractor adds or changes files, raise `PACK_CONTENT_VERSION` in the script and
+  `ExtractorSetup.PACK_VERSION` together.** A unit test checks they match. Players then get the offer
+  to rebuild.
+- **Updating the pinned libraries** (`tools/requirements.txt`, also used by the beta scripts):
+  1. in a fresh venv, `pip install` the top-level names (UnityPy, TypeTreeGeneratorAPI, soundfile,
+     numpy) and `pip freeze`;
+  2. check every Python 3.10 - 3.14 on Linux and Windows with `pip install --dry-run --ignore-installed
+     --only-binary=:all: --python-version 3.X --platform <tags> --target <tmp> -r <file> --report r.json`.
+     pip evaluates `python_version` markers against the Python running it, not `--python-version`, so
+     resolve the markers per version yourself first (`pip._vendor.packaging.requirements`; see MODLOG
+     2026-10-16);
+  3. add `python_version` markers where one version can't cover them all (numpy: 2.2.6 for 3.10,
+     2.4.6 for 3.11, 2.5.4 from 3.12);
+  4. update `ExtractorSetup.DOWNLOAD_MB_*` / `INSTALLED_MB` if the sizes move. A unit test fails on
+     any unpinned line.
 
 ## Where the numbers come from
 
@@ -190,6 +242,40 @@ Everything ported is commented with its source class/field. Sources:
     lower level" and the server crashes. It's the harness's packet accounting, not the mod; rerun.
   - The gametest framework restores default options at test start (re-apply keybinds in tests).
   - `/tick rate` makes the integrated server fall behind the client; don't use it in gametests.
+- **In-game asset build:**
+  - Flatpak launchers can't see `~/.local/share/Steam`. Their runtime's Python (Prism: KDE 6.10
+    runtime, Python 3.13) has `venv` and `ensurepip`, and `XDG_DATA_HOME` points inside
+    `~/.var/app/<id>/data`, so the venv works there.
+  - The sandbox's zenity is GTK3 3.44: its file dialog shows the sandbox's own view, so it can't reach
+    Steam. Only the portal can grant a folder. `gdbus call` can't wait for the portal's Response (the
+    request dies with the caller), hence the Java D-Bus client.
+  - **Never suggest `flatpak override --filesystem=~/.local/share/Steam`**: that also exposes Steam's
+    `config/` (login and settings) to every mod in the launcher. The fallback command is limited to
+    White Knuckle's folder.
+  - Leaving fullscreen Minecraft to run a command coincided with an NVIDIA driver crash (Xid 31) that
+    froze the window (MODLOG 2026-10-15). A test that minimized and restored fullscreen didn't
+    reproduce it, but the mod now leaves fullscreen itself before opening any other window.
+  - `Options.updateResourcePacks` only reloads when the selected list changes. On a rebuild of a
+    pack that's already on, call `reloadResourcePacks()` yourself (it joins a reload already running).
+  - The venv marker holds a hash of requirements.txt (the scripts write an empty file or "ok").
+    A different marker reruns `pip install -r` in the existing venv; no marker rebuilds the venv.
+  - Windows: no bare `python` candidate. It can be the Microsoft Store's Python, whose AppData writes
+    are redirected, so the venv lands where nothing finds it. The builder also checks the venv's
+    python exists after creating it.
+  - Python runs with `-I` (ignore the user's PYTHON* variables), `-u` (live output) and `-X utf8`
+    (Windows paths with any characters print fine).
+  - `wk_game_dir` is a .properties value, where `\` is an escape. `ClimbConfig` reads that line raw
+    (`gameDirFrom`), so typed Windows paths keep their backslashes. It writes the file by hand, not
+    with `Properties.store`, which would escape `C:` to `C\:`. On Windows, `wk_game_dir` is saved
+    with `/`.
+  - Steam's registry `SteamPath` is all lower case with `/` (`c:/program files (x86)/steam`), and
+    Windows paths compare case-insensitively, so the registry spelling wins the dedupe. A found folder
+    goes through `toRealPath()` (`GameLocator.asOnDisk`) before it's shown.
+  - `ClimbHands.haveTextures()` and `ClimbDamage.available()` cache their resource lookups, and a
+    client reload listener (`ResourceLoader.get(CLIENT_RESOURCES).registerReloader`, Fabric API's v1
+    loader) drops both caches. Without that, a pack switched on (by the Build button or Options)
+    showed up only up to 200 frames later. The Windows test found it: the asset gametest failed
+    after the climbing part had cached "no pack".
 - **Windows extractor:**
   - Use Python 3.10-3.14 (3.15 has no wheels for UnityPy/brotli/lz4 yet), and
     `--only-binary=:all:` so pip never tries to compile.
@@ -203,11 +289,17 @@ Everything ported is commented with its source class/field. Sources:
 
 ## Open issues / next steps
 
-1. **Windows extractor:** fixed in 0.2.1 (Python version picking, chunked Vorbis encoding, crash
-   detection). It worked for a Windows 10 tester with their local workaround. Since then, the
-   scripts have been checked on Linux with a 1 MB stack and under Wine's cmd, but not yet on a
-   real Windows PC; the same applies to the Steam library search (`libraryfolders.vdf`, registry
-   `SteamPath`), which was tested with a Windows-style vdf on Linux.
+1. **Windows: verified on Windows 11 for 0.4.0** (MODLOG 2026-10-16), by a Claude Code session on
+   the owner's Windows dual boot. Checked:
+   - the in-game Build button: the Python search with only the Store alias present, the winget
+     install (per user, no UAC prompt), and finding Python without a restart;
+   - the venv in `%LOCALAPPDATA%`, the pinned Windows wheels, and FMOD decoding;
+   - the registry `SteamPath` and `libraryfolders.vdf`;
+   - tinyfd's folder dialog (it opens in front of Minecraft), and fullscreen switching;
+   - the backup .bat (extracting with an existing venv).
+
+   Not run on Windows: the .bat's own venv setup and its "Install Python 3.13 now" branch, and
+   Steam libraries on other drives.
 2. **Approximations, not exact ports:**
    - damage look: the vignette image is a fitted curve (within 0.02 opacity); blood splats and
      hit-direction glows are blended the GUI way, not in linear light like the game;
