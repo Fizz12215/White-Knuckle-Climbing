@@ -352,4 +352,5 @@ Everything ported is commented with its source class/field. Sources:
      pre-releases, even for betas) with the `betaZip` file attached. 0.3.0-beta was the first.
    - Commits use the owner's no-reply address (set in the repo's local git config).
    - Always ask the owner before pushing or publishing.
-   - The knowledge-base note is in rehan-remade/universal-modder PR #302.
+   - The knowledge-base note: rehan-remade/universal-modder PR #302 (merged), then PR #318 (0.3.1,
+     0.4.0 and the 26.3 port, plus a 26.3 porting section in the Fabric 26.x technique note).
