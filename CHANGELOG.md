@@ -17,6 +17,8 @@
   ships the old one. It starts in Steam's game folder, as before.
 - **Choose its folder now starts in Steam's game folder in a Flatpak launcher too** (Prism from
   Flathub, Steam Deck), instead of your home folder.
+- Tested on **Linux** with both graphics engines, with and without the White Knuckle pack, including
+  the Build button. **Not yet tested on Windows** (it will be, with the next features).
 
 ## 0.4.0 beta: White Knuckle's hands and sounds from a button in the game
 - **White Knuckle's hands and sounds are built in the game:** at the title screen the mod finds your
