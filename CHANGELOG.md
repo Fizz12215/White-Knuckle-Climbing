@@ -11,7 +11,9 @@
 - The damage look now also shows together with Minecraft's own screen effects (for example a
   creeper's view while spectating one), instead of giving way to them. 26.3 can run several at once.
 - On Windows, **Choose its folder** now opens SDL3's folder picker, since Minecraft 26.3 no longer
-  ships the old one.
+  ships the old one. It starts in Steam's game folder, as before.
+- **Choose its folder now starts in Steam's game folder in a Flatpak launcher too** (Prism from
+  Flathub, Steam Deck), instead of your home folder.
 
 ## 0.4.0 beta: White Knuckle's hands and sounds from a button in the game
 - **White Knuckle's hands and sounds are built in the game:** at the title screen the mod finds your

@@ -675,5 +675,11 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   the maximum before laying out the text (0 tall). Fixed by laying it out first, as vanilla does.
   The test helper for the screen's pages also built its widgets twice (26.3 screens know
   `minecraft` from the start), which drew the title twice.
+- **Folder picker start (owner's request):** in a Flatpak the sandbox can't see Steam, so no start
+  folder was sent and the portal opened at home. It now suggests `~/.local/share/Steam/steamapps/common`
+  unchecked: xdg-desktop-portal 1.22.1 passes a plain `current_folder` on unchanged, and the KDE
+  (6.7.5) and GNOME backends open it (read in their sources). On Windows, SDL3 takes what follows
+  the last separator as a file name, so it opened `steamapps` with "common" typed in; the path now
+  ends with a separator, as tinyfd's did. Unit-tested; not yet seen on Windows or in the Flatpak.
 - **Not verified yet:** Windows (above all the SDL3 folder picker), a manual play in a real 26.3
   client, the Linux portal picker and fullscreen handling outside the test.

@@ -79,7 +79,11 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
      `minecraft` in the constructor. It built a zero-width set of widgets before the screen opened,
      and opening added a second set (the title showed twice). It now checks `layout != null`.
    - Re-checked in the OpenGL build run's screenshots: every page has its text and colours.
-8. **Folder picker robustness:** the SDL callback and the dialog call always answer, so an exception
+8. **Folder picker start folder** (owner's request, after the port): a Flatpak now suggests Steam's
+   usual `steamapps/common` unchecked (the portal backend opens it; the sandbox can't see it), and
+   SDL3 gets the path with a trailing separator (without one it opens the parent folder with
+   "common" typed in, on Windows). Not a 1.21.9 behaviour change on Windows: tinyfd got the separator.
+   **Folder picker robustness:** the SDL callback and the dialog call always answer, so an exception
    can't leave the picker waiting forever.
 9. **`installMod` guard:** an early port build had replaced 0.4.0-beta in the owner's 1.21.9 Prism
    instance (restored from the release zip). `installMod` now reads the instance's `mmc-pack.json`
