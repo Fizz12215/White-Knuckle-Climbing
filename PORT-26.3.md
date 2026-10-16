@@ -161,6 +161,12 @@ DEVELOPING.md and MODLOG.md when the port is done, then deleted.
 - A manual play in a 26.3 Prism instance.
 
 ## Next task
-A 26.3 Prism instance for a manual play (the owner decides how it's made), then the Windows test
-handoff through the private testing repo. After both: fold this file into DEVELOPING/MODLOG, merge
-to main and release 0.5.0-beta (each push only with the owner's OK).
+- The owner made the Prism instance `whiteKnuckle` (26.3, Fabric Loader 0.19.5, Fabric API
+  0.163.0+26.3); `installMod` copies the jar there. The 1.21.9 instance is now `WhiteKnucklelegacy`.
+  Next: a manual play there (the mod offers to rebuild the pack at the title screen).
+- **Windows testing waits** (owner, 2026-10-16) until new features are added on 26.3; that round
+  covers the port too, above all SDL3's folder dialog.
+- Knowledge base: the 26.3 lessons are in the Fabric 26.x technique note (*Porting a 1.21.x mod to
+  26.3*, Gotchas 8-12) and the White Knuckle note, committed locally on the PR #318 branch.
+- Later: fold this file into DEVELOPING/MODLOG, merge to main and release 0.5.0-beta (each push only
+  with the owner's OK).
