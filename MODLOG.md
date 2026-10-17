@@ -773,3 +773,15 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   fatigue loop (json 0.35) played about 3x too loud. Now `super.getVolume() * group`. Gametest checks
   the fatigue loop as heard (loudest 0.320, max 0.35), and low health at 2x capped at 1.25x
   (heartbeat 0.528, mortal wound 0.992). All checks passed with the pack (OpenGL).
+
+## 2026-10-17: volume slider look (owner's report, screenshot)
+- **Owner's report:** the Ice slider ended at 0% on the right (dragged to the middle it read -49%), and
+  the text sat under the handle, which rests in the middle.
+- **Owner's choices:** Ice has 0% in the middle like the others and its handle stops there; fix the
+  overlap. New `VolumeSlider` (an `AbstractSliderButton`, replacing the OptionInstance volume slider):
+  the name is drawn in the left half and the value in the right (`extractScrollingStringOverContents`
+  overridden), and `setValue` stops at the middle when the max is 1. Its message stays "Name: value"
+  for narration and the tests. "Jumps and landings" became "Movement" and "Hurt and death" "Hurt,
+  death" to fit half a slider.
+- Gametest: Ice dragged to the far right stays at 0% (setting 1.0), Grabbing reaches +100% (2.0), Low
+  health goes quieter. All checks passed with the pack (OpenGL).

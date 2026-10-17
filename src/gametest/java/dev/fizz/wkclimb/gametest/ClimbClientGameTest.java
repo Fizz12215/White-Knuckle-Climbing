@@ -753,6 +753,18 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				&& findWidget(mc.gui.screen(), "All mod sounds: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
 				&& findWidget(mc.gui.screen(), "Low health: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
 		ctx.takeScreenshot("wkclimb-settings-sounds");
+		clickInList(ctx, "Ice: 0%", 0.98);
+		clickInList(ctx, "Grabbing: 0%", 0.98);
+		clickInList(ctx, "Low health: 0%", 0.2);
+		ctx.takeScreenshot("wkclimb-settings-sounds-moved");
+		check(ctx, "settings: Ice stops at 0% (it can't get louder)", mc -> dev.fizz.wkclimb.ClimbConfig.iceVolume == 1.0
+				&& findWidget(mc.gui.screen(), "Ice: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
+		check(ctx, "settings: Grabbing goes to +100%", mc -> Math.abs(dev.fizz.wkclimb.ClimbConfig.grabbingVolume - 2.0) < 0.05);
+		check(ctx, "settings: Low health goes quieter", mc -> dev.fizz.wkclimb.ClimbConfig.lowHealthVolume < 0.7);
+		ctx.runOnClient(mc -> {
+			dev.fizz.wkclimb.ClimbConfig.grabbingVolume = 1.0;
+			dev.fizz.wkclimb.ClimbConfig.lowHealthVolume = 1.0;
+		});
 		ctx.runOnClient(mc -> mc.gui.screen().onClose());
 		check(ctx, "settings: Done on the sounds screen goes back", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSettingsScreen);
 		clickInList(ctx, "Build...");
@@ -780,6 +792,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 	 * clickScreenButton only finds the screen's top-level buttons, not the ones inside an options list.
 	 */
 	private static void clickInList(ClientGameTestContext ctx, String text) {
+		clickInList(ctx, text, 0.5);
+	}
+
+	/** across: where to click from the widget's left edge (0) to its right edge (1). */
+	private static void clickInList(ClientGameTestContext ctx, String text, double across) {
 		// Rows that haven't been drawn keep an old position, so scroll a step at a time until it's in view.
 		for (int step = 0; ; step++) {
 			boolean inView = ctx.computeOnClient(mc -> {
@@ -799,7 +816,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		double[] at = ctx.computeOnClient(mc -> {
 			var w = findWidget(mc.gui.screen(), text, null, new net.minecraft.client.gui.components.AbstractScrollArea[1]);
 			int scale = mc.getWindow().getGuiScale();
-			return new double[] {(w.getX() + w.getWidth() / 2.0) * scale, (w.getY() + w.getHeight() / 2.0) * scale};
+			return new double[] {(w.getX() + w.getWidth() * across) * scale, (w.getY() + w.getHeight() / 2.0) * scale};
 		});
 		ctx.getInput().setCursorPos(at[0], at[1]);
 		ctx.getInput().pressMouse(SDLMouse.SDL_BUTTON_LEFT);

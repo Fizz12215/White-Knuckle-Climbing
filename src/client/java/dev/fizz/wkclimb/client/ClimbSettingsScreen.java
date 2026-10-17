@@ -75,30 +75,17 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 	}
 
 	/** An on/off option; its label and tooltip come from wkclimb.settings.<name>(.tooltip). */
-	static OptionInstance<Boolean> toggle(String name, boolean value, java.util.function.Consumer<Boolean> set) {
+	private static OptionInstance<Boolean> toggle(String name, boolean value, java.util.function.Consumer<Boolean> set) {
 		String key = "wkclimb.settings." + name;
 		return OptionInstance.createBoolean(key, OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
 				value, set::accept);
 	}
 
 	/** A whole-number slider from min to max, shown with label and saved with set. */
-	static OptionInstance<Integer> slider(String name, int min, int max, int value, IntFunction<Component> label, IntConsumer set) {
+	private static OptionInstance<Integer> slider(String name, int min, int max, int value, IntFunction<Component> label, IntConsumer set) {
 		String key = "wkclimb.settings." + name;
 		return new OptionInstance<>(key, OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
 				(caption, v) -> Options.genericValueLabel(caption, label.apply(v)),
 				new OptionInstance.IntRange(min, max), Math.clamp(value, min, max), set::accept);
-	}
-
-	/**
-	 * A "plus or minus" volume slider: 0% in the middle is White Knuckle's volume, the left end is off,
-	 * and the right end is the most the sound can really get (max; with max 1 the slider ends at 0%).
-	 * The label is the real change in volume.
-	 */
-	static OptionInstance<Integer> volume(String name, double value, double max, java.util.function.DoubleConsumer set) {
-		return slider(name, -100, max > 1 ? 100 : 0, ClimbConfig.volumeToSlider(value, max), pos -> {
-			if (pos == -100) return Component.translatable("options.off");
-			long change = Math.round((ClimbConfig.sliderToVolume(pos, max) - 1) * 100);
-			return Component.literal((change > 0 ? "+" : "") + change + "%");
-		}, pos -> set.accept(ClimbConfig.sliderToVolume(pos, max)));
 	}
 }

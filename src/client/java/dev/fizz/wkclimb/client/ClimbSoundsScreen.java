@@ -6,7 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.network.chat.Component;
 
-import static dev.fizz.wkclimb.client.ClimbSettingsScreen.volume;
+import java.util.List;
 
 /**
  * The volume of the mod's sounds (ClimbSounds.Group), opened from the settings screen's Sounds... button.
@@ -19,16 +19,16 @@ public class ClimbSoundsScreen extends OptionsSubScreen {
 
 	@Override
 	protected void addOptions() {
-		list.addBig(volume("sound_volume", ClimbConfig.soundVolume, ClimbConfig.MAX_SOUND, v -> ClimbConfig.soundVolume = v));
-		list.addSmall(
-				volume("grabbing_volume", ClimbConfig.grabbingVolume, ClimbConfig.MAX_GRABBING, v -> ClimbConfig.grabbingVolume = v),
-				volume("landing_volume", ClimbConfig.landingVolume, ClimbConfig.MAX_LANDING, v -> ClimbConfig.landingVolume = v),
-				volume("footsteps_volume", ClimbConfig.footstepsVolume, ClimbConfig.MAX_FOOTSTEPS, v -> ClimbConfig.footstepsVolume = v),
-				volume("wind_volume", ClimbConfig.windVolume, ClimbConfig.MAX_WIND, v -> ClimbConfig.windVolume = v),
-				volume("hurt_volume", ClimbConfig.hurtVolume, ClimbConfig.MAX_HURT, v -> ClimbConfig.hurtVolume = v),
-				volume("low_health_volume", ClimbConfig.lowHealthVolume, ClimbConfig.MAX_LOW_HEALTH, v -> ClimbConfig.lowHealthVolume = v),
-				volume("fatigue_volume", ClimbConfig.fatigueVolume, ClimbConfig.MAX_FATIGUE, v -> ClimbConfig.fatigueVolume = v),
-				volume("ice_volume", ClimbConfig.iceVolume, ClimbConfig.MAX_ICE, v -> ClimbConfig.iceVolume = v));
+		list.addBig(new VolumeSlider("sound_volume", ClimbConfig.soundVolume, ClimbConfig.MAX_SOUND, v -> ClimbConfig.soundVolume = v));
+		list.addSmall(List.<net.minecraft.client.gui.components.AbstractWidget>of(
+				new VolumeSlider("grabbing_volume", ClimbConfig.grabbingVolume, ClimbConfig.MAX_GRABBING, v -> ClimbConfig.grabbingVolume = v),
+				new VolumeSlider("landing_volume", ClimbConfig.landingVolume, ClimbConfig.MAX_LANDING, v -> ClimbConfig.landingVolume = v),
+				new VolumeSlider("footsteps_volume", ClimbConfig.footstepsVolume, ClimbConfig.MAX_FOOTSTEPS, v -> ClimbConfig.footstepsVolume = v),
+				new VolumeSlider("wind_volume", ClimbConfig.windVolume, ClimbConfig.MAX_WIND, v -> ClimbConfig.windVolume = v),
+				new VolumeSlider("hurt_volume", ClimbConfig.hurtVolume, ClimbConfig.MAX_HURT, v -> ClimbConfig.hurtVolume = v),
+				new VolumeSlider("low_health_volume", ClimbConfig.lowHealthVolume, ClimbConfig.MAX_LOW_HEALTH, v -> ClimbConfig.lowHealthVolume = v),
+				new VolumeSlider("fatigue_volume", ClimbConfig.fatigueVolume, ClimbConfig.MAX_FATIGUE, v -> ClimbConfig.fatigueVolume = v),
+				new VolumeSlider("ice_volume", ClimbConfig.iceVolume, ClimbConfig.MAX_ICE, v -> ClimbConfig.iceVolume = v)));
 	}
 
 	@Override
