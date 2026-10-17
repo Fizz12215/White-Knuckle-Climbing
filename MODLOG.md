@@ -758,3 +758,18 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   1.0. The owner's Prism instance had already run a dev build, so its line was set to 1.0 by hand.
 - Gametest: heartbeat 0.422, mortal wound 0.794 at 2% health (WK 0.423, 0.797). All checks passed
   with the pack on OpenGL (sound and text changes only, so no Vulkan run).
+
+## 2026-10-17: honest "plus or minus" volume sliders; fatigue loop fix (owner's choices)
+- **Owner's choice:** each slider has 0% (the game's volume) in the middle, Off at the left, and on the
+  right only as much louder as is really possible; no pack normalization, no going past the cap.
+- Minecraft clamps instance volume x sounds.json volume to 1. Measured (test pack): json volumes
+  0.05-0.65 except wind, heartbeat, mortal wound, icy 1.0; clip peaks 0.38-0.91. Loop levels: health
+  loops up to 0.8, wind 0.77 on a 60-block fall. So `ClimbConfig.MAX_*`: grabbing, landing,
+  footsteps, hurt 2x; fatigue 1.5x (slip-off 0.65); wind, low health 1.25x; ice 1x. `Group.volume()`
+  is min(group x master, max); master goes to 2x.
+- `sliderToVolume`/`volumeToSlider` (unit tested): -100..0 = off..1, 0..100 = 1..max; the label is
+  the real change (`+13%` at half of +25%).
+- **Bug fixed:** `Loop.getVolume()` from the Sounds-menu change dropped the sounds.json volume, so the
+  fatigue loop (json 0.35) played about 3x too loud. Now `super.getVolume() * group`. Gametest checks
+  the fatigue loop as heard (loudest 0.320, max 0.35), and low health at 2x capped at 1.25x
+  (heartbeat 0.528, mortal wound 0.992). All checks passed with the pack (OpenGL).

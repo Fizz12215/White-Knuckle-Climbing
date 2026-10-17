@@ -48,6 +48,15 @@ public final class ClimbConfig {
 	public static double lowHealthVolume = 1.0;
 	public static double fatigueVolume = 1.0;
 	public static double iceVolume = 1.0;
+	/**
+	 * How much louder than the game each group can really get: Minecraft caps every sound at full volume
+	 * (instance volume x sounds.json volume), so the max is 1 / the loudest it plays at normally, up to 2x.
+	 * Grabbing (json 0.2 at most), landings (0.5), footsteps (0.3), hurt (0.5): 2x. Fatigue: the slip-off
+	 * is 0.65, so 1.5x. Wind (about 0.8 on long falls) and the low-health loops (0.8 at 0 health): 1.25x.
+	 * Ice: json 1.0, so it can only go quieter.
+	 */
+	public static final double MAX_SOUND = 2.0, MAX_GRABBING = 2.0, MAX_LANDING = 2.0, MAX_FOOTSTEPS = 2.0,
+			MAX_WIND = 1.25, MAX_HURT = 2.0, MAX_LOW_HEALTH = 1.25, MAX_FATIGUE = 1.5, MAX_ICE = 1.0;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
 	public static boolean wkKeybindsApplied = false;
 	/** Offer to build White Knuckle's hands and sounds when the pack is missing or out of date (each step is confirmed). */
@@ -77,17 +86,17 @@ public final class ClimbConfig {
 		hideWkHands = Boolean.parseBoolean(p.getProperty("hide_wk_hands", Boolean.toString(hideWkHands)));
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
-		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume);
+		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume, MAX_LOW_HEALTH);
 		// 0.5.0 halved the low-health loops by default; back to the game's level (the owner's call)
 		if (p.getProperty("sound_volume") == null && lowHealthVolume == 0.5) lowHealthVolume = 1.0;
-		soundVolume = volumeFrom(p.getProperty("sound_volume"), soundVolume);
-		grabbingVolume = volumeFrom(p.getProperty("grabbing_volume"), grabbingVolume);
-		landingVolume = volumeFrom(p.getProperty("landing_volume"), landingVolume);
-		footstepsVolume = volumeFrom(p.getProperty("footsteps_volume"), footstepsVolume);
-		windVolume = volumeFrom(p.getProperty("wind_volume"), windVolume);
-		hurtVolume = volumeFrom(p.getProperty("hurt_volume"), hurtVolume);
-		fatigueVolume = volumeFrom(p.getProperty("fatigue_volume"), fatigueVolume);
-		iceVolume = volumeFrom(p.getProperty("ice_volume"), iceVolume);
+		soundVolume = volumeFrom(p.getProperty("sound_volume"), soundVolume, MAX_SOUND);
+		grabbingVolume = volumeFrom(p.getProperty("grabbing_volume"), grabbingVolume, MAX_GRABBING);
+		landingVolume = volumeFrom(p.getProperty("landing_volume"), landingVolume, MAX_LANDING);
+		footstepsVolume = volumeFrom(p.getProperty("footsteps_volume"), footstepsVolume, MAX_FOOTSTEPS);
+		windVolume = volumeFrom(p.getProperty("wind_volume"), windVolume, MAX_WIND);
+		hurtVolume = volumeFrom(p.getProperty("hurt_volume"), hurtVolume, MAX_HURT);
+		fatigueVolume = volumeFrom(p.getProperty("fatigue_volume"), fatigueVolume, MAX_FATIGUE);
+		iceVolume = volumeFrom(p.getProperty("ice_volume"), iceVolume, MAX_ICE);
 		wkKeybindsApplied = Boolean.parseBoolean(p.getProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied)));
 		assetPrompt = Boolean.parseBoolean(p.getProperty("asset_prompt", Boolean.toString(assetPrompt)));
 		wkGameDir = gameDirFrom(text, p.getProperty("wk_game_dir", wkGameDir)).strip();
@@ -139,15 +148,28 @@ public final class ClimbConfig {
 		}
 	}
 
-	/** A volume setting: a number from 0 to 2 (clamped); def if missing or not a number. */
-	static double volumeFrom(String raw, double def) {
+	/** A volume setting: a number from 0 to max (clamped); def if missing or not a number. */
+	static double volumeFrom(String raw, double def, double max) {
 		if (raw == null) return def;
 		try {
 			double v = Double.parseDouble(raw.strip());
-			return Double.isNaN(v) ? def : Math.clamp(v, 0.0, 2.0);
+			return Double.isNaN(v) ? def : Math.clamp(v, 0.0, max);
 		} catch (NumberFormatException e) {
 			return def;
 		}
+	}
+
+	/**
+	 * The Sounds menu's "plus or minus" slider, from -100 (off) through 0 (the game's volume) to 100 (max),
+	 * or to 0 when max is 1 (it can only go quieter). Left half: off to normal; right half: normal to max.
+	 */
+	public static double sliderToVolume(int pos, double max) {
+		return pos <= 0 ? 1 + pos / 100.0 : 1 + pos / 100.0 * (max - 1);
+	}
+
+	public static int volumeToSlider(double volume, double max) {
+		if (volume <= 1 || max <= 1) return (int) Math.round((Math.min(volume, 1) - 1) * 100);
+		return (int) Math.round(Math.min((volume - 1) / (max - 1), 1) * 100);
 	}
 
 	private static double parse(Properties p, String key, double def) {

@@ -153,7 +153,8 @@ more than before. In plain words:
 
 ## Settings
 With [Mod Menu](https://modrinth.com/mod/modmenu) installed (optional), change them in game: **Mods >
-White Knuckle Climbing > Config**. Hover over a setting for what it does. Without it,
+White Knuckle Climbing > Config**. Hover over a setting for what it does. Volume sliders start at 0% (White Knuckle's volume) in the
+middle and go up only as far as Minecraft lets each sound get louder. Without it,
 edit `config/wkclimb.properties` (created on first launch):
 
 | Setting | Default | Meaning |
@@ -166,8 +167,11 @@ edit `config/wkclimb.properties` (created on first launch):
 | `hide_wk_hands` | `false` | `true`: hide White Knuckle's hands and show Minecraft's arm and held item instead |
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
 | `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
-| `sound_volume` | `1.0` | volume of all the mod's sounds: `1` is White Knuckle's, `0` off, up to `2` twice as loud (50% / 0% / 100% on the in-game slider). Sounds the game already plays at full volume (wind, ice, low health) can't get louder. The ones below apply on top of it |
-| `grabbing_volume`, `landing_volume`, `footsteps_volume`, `wind_volume`, `hurt_volume`, `low_health_volume`, `fatigue_volume`, `ice_volume` | `1.0` | each kind of sound, the same way: grabbing and letting go; jumps, climbing up and landings; footsteps; falling wind; hurt and death; the low-health heartbeat; grip fatigue; icy handholds |
+| `sound_volume` | `1.0` | volume of all the mod's sounds: `1` is White Knuckle's, `0` off, up to `2` (in the game: 0% in the middle, Off, +100%). Each kind below still stops at its own max |
+| `grabbing_volume`, `landing_volume`, `footsteps_volume`, `hurt_volume` | `1.0` | grabbing and letting go; jumps, climbing up and landings; footsteps; hurt and death. `0` to `2` (twice as loud) |
+| `fatigue_volume` | `1.0` | grip fatigue, `0` to `1.5` |
+| `wind_volume`, `low_health_volume` | `1.0` | falling wind; the low-health heartbeat. `0` to `1.25` |
+| `ice_volume` | `1.0` | icy handholds, `0` to `1`: the game already plays them at full volume |
 | `wk_keybinds_applied` | `false` → `true` | set back to `false` to apply White Knuckle's keys again |
 | `asset_prompt` | `true` | offer to build White Knuckle's hands and sounds when the pack is missing or out of date (`false` after "Don't ask again") |
 | `wk_game_dir` | empty | White Knuckle's folder, set when you press **Choose its folder**, or by hand, for example `D:\SteamLibrary\steamapps\common\White Knuckle` |

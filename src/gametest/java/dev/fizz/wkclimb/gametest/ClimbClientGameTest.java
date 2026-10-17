@@ -197,9 +197,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.waitTicks(3);
 			check(ctx, "left hand hanging alone", mc -> hand(0).isHanging() && !hand(1).isHanging());
 			int ticks = 0;
+			float maxFatigue = -1;
 			while (hand(0).isHanging() && ticks < 200) {
 				ctx.waitTick();
 				ticks++;
+				maxFatigue = Math.max(maxFatigue, ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest()[3]));
 				if (ticks == 20) ctx.takeScreenshot("wkclimb-05-grip-half");
 				if (ticks == 45) ctx.takeScreenshot("wkclimb-06-grip-low");
 			}
@@ -207,6 +209,9 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			ctx.getInput().releaseMouse(SDLMouse.SDL_BUTTON_LEFT);
 			if (ticks < 45 || ticks > 65) throw new AssertionError("fatigue after " + ticks + " ticks");
 			if (hand(0).grabWait() < 0.8) throw new AssertionError("no fatigue cooldown");
+			// the strain loop as heard: its level (up to 1 as the grip empties) times its sounds.json 0.35
+			LOG.info("[wkclimb] fatigue loop loudest {} (WK: level x 0.35)", maxFatigue);
+			if (withPack && (maxFatigue < 0.1f || maxFatigue > 0.36f)) throw new AssertionError("fatigue loop volume off: " + maxFatigue);
 
 			// --- Icy ledge: CL_Handhold_Icy slips after 2 s ---
 			server.runCommand("tp @a 0.5 -60 9.0 0 -55");
@@ -399,6 +404,12 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 						float[] half = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest());
 						ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.soundVolume = 1.0);
 						if (Math.abs(half[1] - loops[1] * 0.5f) > 0.05f * setting) throw new AssertionError("All mod sounds 50%: heartbeat " + half[1] + " vs " + loops[1]);
+						// louder stops where Minecraft's volume limit would: low health at 2x plays at its max, 1.25x
+						ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.lowHealthVolume = 2.0);
+						float[] loud = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest());
+						ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.lowHealthVolume = setting);
+						LOG.info("[wkclimb] low health at 2x: heartbeat {}, mortal wound {} (max 1.25x)", loud[1], loud[2]);
+						if (Math.abs(loud[1] - loops[1] * 1.25f) > 0.02f || loud[2] > 1.0f) throw new AssertionError("low health past its max: " + loud[1] + ", " + loud[2]);
 					}
 				}
 			}
@@ -739,8 +750,8 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		check(ctx, "settings: Hide WK hands toggled on", mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands);
 		clickInList(ctx, "Sounds...");
 		check(ctx, "settings: Sounds... opens the sounds screen", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSoundsScreen
-				&& findWidget(mc.gui.screen(), "All mod sounds: 50%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
-				&& findWidget(mc.gui.screen(), "Low health: 50%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
+				&& findWidget(mc.gui.screen(), "All mod sounds: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
+				&& findWidget(mc.gui.screen(), "Low health: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
 		ctx.takeScreenshot("wkclimb-settings-sounds");
 		ctx.runOnClient(mc -> mc.gui.screen().onClose());
 		check(ctx, "settings: Done on the sounds screen goes back", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSettingsScreen);

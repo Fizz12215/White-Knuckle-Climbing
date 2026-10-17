@@ -19,16 +19,16 @@ public class ClimbSoundsScreen extends OptionsSubScreen {
 
 	@Override
 	protected void addOptions() {
-		list.addBig(volume("sound_volume", ClimbConfig.soundVolume, v -> ClimbConfig.soundVolume = v));
+		list.addBig(volume("sound_volume", ClimbConfig.soundVolume, ClimbConfig.MAX_SOUND, v -> ClimbConfig.soundVolume = v));
 		list.addSmall(
-				volume("grabbing_volume", ClimbConfig.grabbingVolume, v -> ClimbConfig.grabbingVolume = v),
-				volume("landing_volume", ClimbConfig.landingVolume, v -> ClimbConfig.landingVolume = v),
-				volume("footsteps_volume", ClimbConfig.footstepsVolume, v -> ClimbConfig.footstepsVolume = v),
-				volume("wind_volume", ClimbConfig.windVolume, v -> ClimbConfig.windVolume = v),
-				volume("hurt_volume", ClimbConfig.hurtVolume, v -> ClimbConfig.hurtVolume = v),
-				volume("low_health_volume", ClimbConfig.lowHealthVolume, v -> ClimbConfig.lowHealthVolume = v),
-				volume("fatigue_volume", ClimbConfig.fatigueVolume, v -> ClimbConfig.fatigueVolume = v),
-				volume("ice_volume", ClimbConfig.iceVolume, v -> ClimbConfig.iceVolume = v));
+				volume("grabbing_volume", ClimbConfig.grabbingVolume, ClimbConfig.MAX_GRABBING, v -> ClimbConfig.grabbingVolume = v),
+				volume("landing_volume", ClimbConfig.landingVolume, ClimbConfig.MAX_LANDING, v -> ClimbConfig.landingVolume = v),
+				volume("footsteps_volume", ClimbConfig.footstepsVolume, ClimbConfig.MAX_FOOTSTEPS, v -> ClimbConfig.footstepsVolume = v),
+				volume("wind_volume", ClimbConfig.windVolume, ClimbConfig.MAX_WIND, v -> ClimbConfig.windVolume = v),
+				volume("hurt_volume", ClimbConfig.hurtVolume, ClimbConfig.MAX_HURT, v -> ClimbConfig.hurtVolume = v),
+				volume("low_health_volume", ClimbConfig.lowHealthVolume, ClimbConfig.MAX_LOW_HEALTH, v -> ClimbConfig.lowHealthVolume = v),
+				volume("fatigue_volume", ClimbConfig.fatigueVolume, ClimbConfig.MAX_FATIGUE, v -> ClimbConfig.fatigueVolume = v),
+				volume("ice_volume", ClimbConfig.iceVolume, ClimbConfig.MAX_ICE, v -> ClimbConfig.iceVolume = v));
 	}
 
 	@Override

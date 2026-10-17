@@ -29,6 +29,7 @@ public final class ClimbSounds {
 	public enum Group {
 		GRABBING, LANDING, FOOTSTEPS, WIND, HURT, LOW_HEALTH, FATIGUE, ICE;
 
+		/** The group's setting times "All mod sounds", up to the most it can really get (ClimbConfig.MAX_*). */
 		public float volume() {
 			double v = switch (this) {
 				case GRABBING -> ClimbConfig.grabbingVolume;
@@ -40,7 +41,20 @@ public final class ClimbSounds {
 				case FATIGUE -> ClimbConfig.fatigueVolume;
 				case ICE -> ClimbConfig.iceVolume;
 			};
-			return (float) (v * ClimbConfig.soundVolume);
+			return (float) Math.min(v * ClimbConfig.soundVolume, max());
+		}
+
+		public double max() {
+			return switch (this) {
+				case GRABBING -> ClimbConfig.MAX_GRABBING;
+				case LANDING -> ClimbConfig.MAX_LANDING;
+				case FOOTSTEPS -> ClimbConfig.MAX_FOOTSTEPS;
+				case WIND -> ClimbConfig.MAX_WIND;
+				case HURT -> ClimbConfig.MAX_HURT;
+				case LOW_HEALTH -> ClimbConfig.MAX_LOW_HEALTH;
+				case FATIGUE -> ClimbConfig.MAX_FATIGUE;
+				case ICE -> ClimbConfig.MAX_ICE;
+			};
 		}
 	}
 
@@ -94,9 +108,9 @@ public final class ClimbSounds {
 		return lastPlayed;
 	}
 
-	/** Test support: volumes of the wind, heartbeat and mortal-wound loops, as heard (-1 when not playing). */
+	/** Test support: volumes of the wind, heartbeat, mortal-wound and fatigue loops, as heard (-1 when not playing). */
 	public static float[] loopVolumesForTest() {
-		return new float[] { loopVolume(wind), loopVolume(heartbeat), loopVolume(mortalWound) };
+		return new float[] { loopVolume(wind), loopVolume(heartbeat), loopVolume(mortalWound), loopVolume(fatigue) };
 	}
 
 	private static float loopVolume(Loop loop) {
@@ -224,10 +238,13 @@ public final class ClimbSounds {
 			return volume < 0.005f;
 		}
 
-		/** The game's volume times the Sounds menu's (read every frame, so a slider applies at once). */
+		/**
+		 * The game's volume (this loop's level times its sounds.json volume) times the Sounds menu's,
+		 * read every tick, so a slider applies at once.
+		 */
 		@Override
 		public float getVolume() {
-			return volume * group.volume();
+			return super.getVolume() * group.volume();
 		}
 
 		void end() {

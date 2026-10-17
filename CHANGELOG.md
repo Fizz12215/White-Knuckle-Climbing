@@ -8,9 +8,10 @@
   time, to rebuild the pack or pick the game's folder.
 - **Sounds menu** (Sounds... in the settings): one slider for all the mod's sounds, and one for each
   kind: grabbing, jumps and landings, footsteps, falling wind, hurt and death, low health, grip
-  fatigue, ice. They apply at once, also to sounds already playing. Each starts at **50%, White
-  Knuckle's volume**, so it can go quieter or up to twice as loud (sounds the game already plays at
-  full volume, like the wind, can't get louder: Minecraft caps every sound there).
+  fatigue, ice. They apply at once, also to sounds already playing. Each starts at **0%, White
+  Knuckle's volume**, in the middle: left is quieter (to Off), right is louder, but only as far as
+  Minecraft's volume limit lets that sound go (+100% for most, +50% grip fatigue, +25% wind and low
+  health; ice can only go quieter).
 - **The low-health heartbeat is back to White Knuckle's level** (0.5.0 halved it). If you hadn't
   changed `low_health_volume`, it moves up by itself.
 - The R key is now called **Toggle climbing mode** in Controls (was "Toggle climbing hands"), so it's

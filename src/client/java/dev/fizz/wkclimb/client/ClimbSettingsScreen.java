@@ -90,11 +90,15 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 	}
 
 	/**
-	 * A 0-100% volume slider ("Off" at 0) for a setting from 0 to 2: the middle, 50%, is White Knuckle's
-	 * volume (1), so it can go quieter or louder.
+	 * A "plus or minus" volume slider: 0% in the middle is White Knuckle's volume, the left end is off,
+	 * and the right end is the most the sound can really get (max; with max 1 the slider ends at 0%).
+	 * The label is the real change in volume.
 	 */
-	static OptionInstance<Integer> volume(String name, double value, java.util.function.DoubleConsumer set) {
-		return slider(name, 0, 100, (int) Math.round(value * 50),
-				v -> v == 0 ? Component.translatable("options.off") : Component.literal(v + "%"), v -> set.accept(v / 50.0));
+	static OptionInstance<Integer> volume(String name, double value, double max, java.util.function.DoubleConsumer set) {
+		return slider(name, -100, max > 1 ? 100 : 0, ClimbConfig.volumeToSlider(value, max), pos -> {
+			if (pos == -100) return Component.translatable("options.off");
+			long change = Math.round((ClimbConfig.sliderToVolume(pos, max) - 1) * 100);
+			return Component.literal((change > 0 ? "+" : "") + change + "%");
+		}, pos -> set.accept(ClimbConfig.sliderToVolume(pos, max)));
 	}
 }

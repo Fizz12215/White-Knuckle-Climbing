@@ -18,13 +18,27 @@ class ClimbConfigTest {
 
 	@Test
 	void volumeSetting() {
-		assertEquals(0.5, ClimbConfig.volumeFrom(null, 0.5));
-		assertEquals(0.25, ClimbConfig.volumeFrom(" 0.25 ", 0.5));
-		assertEquals(1.5, ClimbConfig.volumeFrom("1.5", 0.5));
-		assertEquals(2.0, ClimbConfig.volumeFrom("3", 0.5));
-		assertEquals(0.0, ClimbConfig.volumeFrom("-1", 0.5));
-		assertEquals(0.5, ClimbConfig.volumeFrom("loud", 0.5));
-		assertEquals(0.5, ClimbConfig.volumeFrom("NaN", 0.5));
+		assertEquals(0.5, ClimbConfig.volumeFrom(null, 0.5, 2.0));
+		assertEquals(0.25, ClimbConfig.volumeFrom(" 0.25 ", 0.5, 2.0));
+		assertEquals(1.5, ClimbConfig.volumeFrom("1.5", 0.5, 2.0));
+		assertEquals(2.0, ClimbConfig.volumeFrom("3", 0.5, 2.0));
+		assertEquals(0.0, ClimbConfig.volumeFrom("-1", 0.5, 2.0));
+		assertEquals(0.5, ClimbConfig.volumeFrom("loud", 0.5, 2.0));
+		assertEquals(0.5, ClimbConfig.volumeFrom("NaN", 0.5, 2.0));
+		assertEquals(1.25, ClimbConfig.volumeFrom("2.0", 0.5, ClimbConfig.MAX_LOW_HEALTH));
+	}
+
+	@Test
+	void plusOrMinusSlider() {
+		assertEquals(0.0, ClimbConfig.sliderToVolume(-100, 2.0));
+		assertEquals(0.6, ClimbConfig.sliderToVolume(-40, 1.25), 1e-9);
+		assertEquals(1.0, ClimbConfig.sliderToVolume(0, 1.25));
+		assertEquals(1.125, ClimbConfig.sliderToVolume(50, 1.25), 1e-9);
+		assertEquals(2.0, ClimbConfig.sliderToVolume(100, 2.0));
+		for (double max : new double[] {1.0, 1.25, 1.5, 2.0})
+			for (int pos = -100; pos <= (max > 1 ? 100 : 0); pos++)
+				assertEquals(pos, ClimbConfig.volumeToSlider(ClimbConfig.sliderToVolume(pos, max), max));
+		assertEquals(0, ClimbConfig.volumeToSlider(1.5, 1.0)); // ice: nothing above normal
 	}
 
 	@Test
