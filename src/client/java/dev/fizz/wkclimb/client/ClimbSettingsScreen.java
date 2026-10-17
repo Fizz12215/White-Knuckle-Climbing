@@ -44,14 +44,12 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 				slider("fov", FOV_VANILLA, 110, fov,
 						v -> v == FOV_VANILLA ? Component.translatable("wkclimb.settings.fov.vanilla") : Component.literal(Integer.toString(v)),
 						v -> ClimbConfig.fov = v == FOV_VANILLA ? 0 : v),
-				toggle("hide_vanilla_hand", ClimbConfig.hideVanillaHand, v -> ClimbConfig.hideVanillaHand = v),
+				toggle("hide_wk_hands", ClimbConfig.hideWkHands, v -> ClimbConfig.hideWkHands = v),
 				toggle("enabled_on_start", ClimbConfig.enabledOnStart, v -> ClimbConfig.enabledOnStart = v));
 
 		list.addHeader(Component.translatable("wkclimb.settings.sound"));
-		list.addSmall(
-				slider("low_health_volume", 0, 100, (int) Math.round(ClimbConfig.lowHealthVolume * 100),
-						v -> v == 0 ? Component.translatable("options.off") : Component.literal(v + "%"),
-						v -> ClimbConfig.lowHealthVolume = v / 100.0));
+		list.addBig(Button.builder(Component.translatable("wkclimb.settings.sounds"),
+				b -> minecraft.gui.setScreen(new ClimbSoundsScreen(this))).build());
 
 		list.addHeader(Component.translatable("wkclimb.settings.world"));
 		// 0.5 to 1.2 blocks per unit in steps of 0.05
@@ -77,17 +75,23 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 	}
 
 	/** An on/off option; its label and tooltip come from wkclimb.settings.<name>(.tooltip). */
-	private static OptionInstance<Boolean> toggle(String name, boolean value, java.util.function.Consumer<Boolean> set) {
+	static OptionInstance<Boolean> toggle(String name, boolean value, java.util.function.Consumer<Boolean> set) {
 		String key = "wkclimb.settings." + name;
 		return OptionInstance.createBoolean(key, OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
 				value, set::accept);
 	}
 
 	/** A whole-number slider from min to max, shown with label and saved with set. */
-	private static OptionInstance<Integer> slider(String name, int min, int max, int value, IntFunction<Component> label, IntConsumer set) {
+	static OptionInstance<Integer> slider(String name, int min, int max, int value, IntFunction<Component> label, IntConsumer set) {
 		String key = "wkclimb.settings." + name;
 		return new OptionInstance<>(key, OptionInstance.cachedConstantTooltip(Component.translatable(key + ".tooltip")),
 				(caption, v) -> Options.genericValueLabel(caption, label.apply(v)),
 				new OptionInstance.IntRange(min, max), Math.clamp(value, min, max), set::accept);
+	}
+
+	/** A 0-100% volume slider ("Off" at 0) for a setting from 0 to 1. */
+	static OptionInstance<Integer> volume(String name, double value, java.util.function.DoubleConsumer set) {
+		return slider(name, 0, 100, (int) Math.round(value * 100),
+				v -> v == 0 ? Component.translatable("options.off") : Component.literal(v + "%"), v -> set.accept(v / 100.0));
 	}
 }

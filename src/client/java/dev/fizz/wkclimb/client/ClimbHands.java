@@ -188,7 +188,7 @@ public final class ClimbHands {
 		ClimbController ctl = ClimbController.INSTANCE;
 		LocalPlayer player = mc.player;
 		if (!ctl.isEnabled() || player == null || mc.gui.hud.isHidden() || !mc.options.getCameraType().isFirstPerson()) return;
-		if (!haveTextures()) return;
+		if (!haveTextures() || ClimbConfig.hideWkHands) return;
 
 		long now = System.nanoTime();
 		float dt = lastNanos == 0 ? 0.016f : Math.min((now - lastNanos) / 1e9f, 0.1f);

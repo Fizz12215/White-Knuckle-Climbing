@@ -6,6 +6,11 @@
   are saved when you close it. `config/wkclimb.properties` still works as before.
 - The menu has a **Build...** button that opens the setup for White Knuckle's hands and sounds at any
   time, to rebuild the pack or pick the game's folder.
+- **Sounds menu** (Sounds... in the settings): one slider for all the mod's sounds, and one for each
+  kind: grabbing, jumps and landings, footsteps, falling wind, hurt and death, low health, grip
+  fatigue, ice. They apply at once, also to sounds already playing.
+- **`hide_vanilla_hand` is replaced by `hide_wk_hands`** ("Hide WK hands", off by default): on, it
+  hides White Knuckle's hands and shows Minecraft's arm and held item instead.
 
 ## 0.5.0 beta: Minecraft 26.3
 - **Now for Minecraft 26.3** (Fabric Loader 0.19.3 or newer, Fabric API for 26.3). **0.4.0 beta stays

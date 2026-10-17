@@ -28,8 +28,8 @@ public final class ClimbConfig {
 	public static boolean enabledOnStart = true;
 	/** Only the top edges of blocks (ledges) can be grabbed, not the sides. #wkclimb:grab_anywhere is exempt. */
 	public static boolean ledgesOnly = true;
-	/** Hide Minecraft's own arm and held item while climbing hands are on. */
-	public static boolean hideVanillaHand = true;
+	/** Hide White Knuckle's hands; Minecraft's own arm and held item show instead. Off: WK's hands replace Minecraft's. */
+	public static boolean hideWkHands = false;
 	/** Field of view while the hands are on: White Knuckle's default playerFOV (vertical, like Minecraft's). 0 = use Minecraft's setting. */
 	public static double fov = 90;
 	/** White Knuckle's 0.18-block step height in climbing mode (slabs and stairs must be jumped); else Minecraft's 0.6. */
@@ -39,6 +39,15 @@ public final class ClimbConfig {
 	 * by default: with no music or ambience under it, the game's level stands out in Minecraft.
 	 */
 	public static double lowHealthVolume = 0.5;
+	/** Volume of all the mod's sounds, then of each group (Sounds menu): 1 = White Knuckle's level, 0 = off. */
+	public static double soundVolume = 1.0;
+	public static double grabbingVolume = 1.0;
+	public static double landingVolume = 1.0;
+	public static double footstepsVolume = 1.0;
+	public static double windVolume = 1.0;
+	public static double hurtVolume = 1.0;
+	public static double fatigueVolume = 1.0;
+	public static double iceVolume = 1.0;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
 	public static boolean wkKeybindsApplied = false;
 	/** Offer to build White Knuckle's hands and sounds when the pack is missing or out of date (each step is confirmed). */
@@ -65,10 +74,18 @@ public final class ClimbConfig {
 		handholdsOnly = Boolean.parseBoolean(p.getProperty("handholds_only", Boolean.toString(handholdsOnly)));
 		enabledOnStart = Boolean.parseBoolean(p.getProperty("enabled_on_start", Boolean.toString(enabledOnStart)));
 		ledgesOnly = Boolean.parseBoolean(p.getProperty("ledges_only", Boolean.toString(ledgesOnly)));
-		hideVanillaHand = Boolean.parseBoolean(p.getProperty("hide_vanilla_hand", Boolean.toString(hideVanillaHand)));
+		hideWkHands = Boolean.parseBoolean(p.getProperty("hide_wk_hands", Boolean.toString(hideWkHands)));
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
 		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume);
+		soundVolume = volumeFrom(p.getProperty("sound_volume"), soundVolume);
+		grabbingVolume = volumeFrom(p.getProperty("grabbing_volume"), grabbingVolume);
+		landingVolume = volumeFrom(p.getProperty("landing_volume"), landingVolume);
+		footstepsVolume = volumeFrom(p.getProperty("footsteps_volume"), footstepsVolume);
+		windVolume = volumeFrom(p.getProperty("wind_volume"), windVolume);
+		hurtVolume = volumeFrom(p.getProperty("hurt_volume"), hurtVolume);
+		fatigueVolume = volumeFrom(p.getProperty("fatigue_volume"), fatigueVolume);
+		iceVolume = volumeFrom(p.getProperty("ice_volume"), iceVolume);
 		wkKeybindsApplied = Boolean.parseBoolean(p.getProperty("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied)));
 		assetPrompt = Boolean.parseBoolean(p.getProperty("asset_prompt", Boolean.toString(assetPrompt)));
 		wkGameDir = gameDirFrom(text, p.getProperty("wk_game_dir", wkGameDir)).strip();
@@ -97,10 +114,18 @@ public final class ClimbConfig {
 		values.put("handholds_only", Boolean.toString(handholdsOnly));
 		values.put("enabled_on_start", Boolean.toString(enabledOnStart));
 		values.put("ledges_only", Boolean.toString(ledgesOnly));
-		values.put("hide_vanilla_hand", Boolean.toString(hideVanillaHand));
+		values.put("hide_wk_hands", Boolean.toString(hideWkHands));
 		values.put("fov", Double.toString(fov));
 		values.put("exact_step_height", Boolean.toString(exactStepHeight));
+		values.put("sound_volume", Double.toString(soundVolume));
+		values.put("grabbing_volume", Double.toString(grabbingVolume));
+		values.put("landing_volume", Double.toString(landingVolume));
+		values.put("footsteps_volume", Double.toString(footstepsVolume));
+		values.put("wind_volume", Double.toString(windVolume));
+		values.put("hurt_volume", Double.toString(hurtVolume));
 		values.put("low_health_volume", Double.toString(lowHealthVolume));
+		values.put("fatigue_volume", Double.toString(fatigueVolume));
+		values.put("ice_volume", Double.toString(iceVolume));
 		values.put("wk_keybinds_applied", Boolean.toString(wkKeybindsApplied));
 		values.put("asset_prompt", Boolean.toString(assetPrompt));
 		values.put("wk_game_dir", GameLocator.isWindows() ? wkGameDir.replace('\\', '/') : wkGameDir);

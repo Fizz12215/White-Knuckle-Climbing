@@ -1,5 +1,6 @@
 package dev.fizz.wkclimb.client;
 
+import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.WKClimb;
 import dev.fizz.wkclimb.sim.ClimbSim;
 import dev.fizz.wkclimb.sim.WK;
@@ -22,39 +23,58 @@ import net.minecraft.util.RandomSource;
 public final class ClimbSounds {
 	private ClimbSounds() {}
 
-	public record Sound(SoundEvent event, float minPitch, float maxPitch, SoundEvent fallback, float fallbackVolume) {}
+	public record Sound(SoundEvent event, float minPitch, float maxPitch, SoundEvent fallback, float fallbackVolume, Group group) {}
 
-	public static final Sound HANDHOLD = sound("climbing.handhold", 1.0f, 1.1f, SoundEvents.STONE_HIT, 0.4f);
-	public static final Sound HANDHOLD_CHAIN = sound("climbing.handhold_chain", 1.0f, 1.1f, SoundEvents.CHAIN_HIT, 0.4f);
+	/** The Sounds menu's groups. A sound plays at its group's volume times "All mod sounds". */
+	public enum Group {
+		GRABBING, LANDING, FOOTSTEPS, WIND, HURT, LOW_HEALTH, FATIGUE, ICE;
+
+		public float volume() {
+			double v = switch (this) {
+				case GRABBING -> ClimbConfig.grabbingVolume;
+				case LANDING -> ClimbConfig.landingVolume;
+				case FOOTSTEPS -> ClimbConfig.footstepsVolume;
+				case WIND -> ClimbConfig.windVolume;
+				case HURT -> ClimbConfig.hurtVolume;
+				case LOW_HEALTH -> ClimbConfig.lowHealthVolume;
+				case FATIGUE -> ClimbConfig.fatigueVolume;
+				case ICE -> ClimbConfig.iceVolume;
+			};
+			return (float) (v * ClimbConfig.soundVolume);
+		}
+	}
+
+	public static final Sound HANDHOLD = sound("climbing.handhold", 1.0f, 1.1f, SoundEvents.STONE_HIT, 0.4f, Group.GRABBING);
+	public static final Sound HANDHOLD_CHAIN = sound("climbing.handhold_chain", 1.0f, 1.1f, SoundEvents.CHAIN_HIT, 0.4f, Group.GRABBING);
 	/** PlayHandholdSound("metafungus"): fungus growths. Falls back to HANDHOLD, as the game does without the set. */
-	public static final Sound HANDHOLD_METAFUNGUS = sound("climbing.handhold_metafungus", 1.0f, 1.1f, null, 0f);
-	public static final Sound DROP = sound("climbing.drop", 0.99f, 1.1f, SoundEvents.STONE_STEP, 0.2f);
-	public static final Sound FATIGUE_DROP = sound("fatigue.drop", 0.95f, 1.05f, SoundEvents.PLAYER_ATTACK_WEAK, 0.7f);
-	public static final Sound JUMP = sound("movement.jump", 0.95f, 1.03f, null, 0f);
-	public static final Sound MANTLE = sound("movement.mantle", 1.0f, 1.0f, null, 0f);
-	public static final Sound LAND_SOFT = sound("movement.land_soft", 0.96f, 1.03f, null, 0f);
-	public static final Sound LAND_MEDIUM = sound("movement.land_medium", 0.95f, 1.0f, null, 0f);
-	public static final Sound LAND_HEAVY = sound("movement.land_heavy", 0.95f, 1.0f, null, 0f);
-	public static final Sound ICY_SLIP = sound("icy.slip", 1.0f, 1.0f, SoundEvents.GLASS_STEP, 0.6f);
-	public static final Sound ICY_SHAKE = sound("icy.shake", 1.0f, 1.0f, SoundEvents.GLASS_HIT, 0.4f);
-	public static final Sound HURT = sound("player.hurt", 0.95f, 1.05f, null, 0f);
-	public static final Sound HURT_FALLING = sound("player.hurt_falling", 0.95f, 1.05f, null, 0f);
-	public static final Sound HURT_HEAT = sound("player.hurt_heat", 0.95f, 1.05f, null, 0f);
-	public static final Sound DEATH = sound("player.death", 0.99f, 1.0f, null, 0f);
-	public static final Sound FATIGUE_LEVEL = sound("fatigue.level", 0.98f, 1.0f, null, 0f);
+	public static final Sound HANDHOLD_METAFUNGUS = sound("climbing.handhold_metafungus", 1.0f, 1.1f, null, 0f, Group.GRABBING);
+	public static final Sound DROP = sound("climbing.drop", 0.99f, 1.1f, SoundEvents.STONE_STEP, 0.2f, Group.GRABBING);
+	public static final Sound FATIGUE_DROP = sound("fatigue.drop", 0.95f, 1.05f, SoundEvents.PLAYER_ATTACK_WEAK, 0.7f, Group.FATIGUE);
+	public static final Sound JUMP = sound("movement.jump", 0.95f, 1.03f, null, 0f, Group.LANDING);
+	public static final Sound MANTLE = sound("movement.mantle", 1.0f, 1.0f, null, 0f, Group.LANDING);
+	public static final Sound LAND_SOFT = sound("movement.land_soft", 0.96f, 1.03f, null, 0f, Group.LANDING);
+	public static final Sound LAND_MEDIUM = sound("movement.land_medium", 0.95f, 1.0f, null, 0f, Group.LANDING);
+	public static final Sound LAND_HEAVY = sound("movement.land_heavy", 0.95f, 1.0f, null, 0f, Group.LANDING);
+	public static final Sound ICY_SLIP = sound("icy.slip", 1.0f, 1.0f, SoundEvents.GLASS_STEP, 0.6f, Group.ICE);
+	public static final Sound ICY_SHAKE = sound("icy.shake", 1.0f, 1.0f, SoundEvents.GLASS_HIT, 0.4f, Group.ICE);
+	public static final Sound HURT = sound("player.hurt", 0.95f, 1.05f, null, 0f, Group.HURT);
+	public static final Sound HURT_FALLING = sound("player.hurt_falling", 0.95f, 1.05f, null, 0f, Group.HURT);
+	public static final Sound HURT_HEAT = sound("player.hurt_heat", 0.95f, 1.05f, null, 0f, Group.HURT);
+	public static final Sound DEATH = sound("player.death", 0.99f, 1.0f, null, 0f, Group.HURT);
+	public static final Sound FATIGUE_LEVEL = sound("fatigue.level", 0.98f, 1.0f, null, 0f, Group.FATIGUE);
 	/** ENT_Player's looping AudioSources: windAudio (pitch 1.2), damageAudio and dyingAudio (pitch 1). */
-	public static final Sound WIND = sound("movement.wind", 1.2f, 1.2f, null, 0f);
-	public static final Sound HEARTBEAT = sound("player.heartbeat", 1.0f, 1.0f, null, 0f);
-	public static final Sound MORTAL_WOUND = sound("player.mortal_wound", 1.0f, 1.0f, null, 0f);
+	public static final Sound WIND = sound("movement.wind", 1.2f, 1.2f, null, 0f, Group.WIND);
+	public static final Sound HEARTBEAT = sound("player.heartbeat", 1.0f, 1.0f, null, 0f, Group.LOW_HEALTH);
+	public static final Sound MORTAL_WOUND = sound("player.mortal_wound", 1.0f, 1.0f, null, 0f, Group.LOW_HEALTH);
 
-	private static Sound sound(String path, float minPitch, float maxPitch, SoundEvent fallback, float fallbackVolume) {
-		return new Sound(SoundEvent.createVariableRangeEvent(WKClimb.id(path)), minPitch, maxPitch, fallback, fallbackVolume);
+	private static Sound sound(String path, float minPitch, float maxPitch, SoundEvent fallback, float fallbackVolume, Group group) {
+		return new Sound(SoundEvent.createVariableRangeEvent(WKClimb.id(path)), minPitch, maxPitch, fallback, fallbackVolume, group);
 	}
 
 	/** FootstepAudio: one of the floor material's clips, at its volume (sounds.json) and pitch range. */
 	public static void footstep(LocalPlayer player, ClimbFootsteps.Material material) {
 		Sound s = new Sound(SoundEvent.createVariableRangeEvent(WKClimb.id("footstep." + material.footstep().name())),
-				material.minPitch(), material.maxPitch(), null, 0f);
+				material.minPitch(), material.maxPitch(), null, 0f, Group.FOOTSTEPS);
 		play(player, s);
 	}
 
@@ -74,13 +94,13 @@ public final class ClimbSounds {
 		return lastPlayed;
 	}
 
-	/** Test support: volumes of the wind, heartbeat and mortal-wound loops (-1 when not playing). */
+	/** Test support: volumes of the wind, heartbeat and mortal-wound loops, as heard (-1 when not playing). */
 	public static float[] loopVolumesForTest() {
 		return new float[] { loopVolume(wind), loopVolume(heartbeat), loopVolume(mortalWound) };
 	}
 
 	private static float loopVolume(Loop loop) {
-		return playing(loop) ? loop.rawVolume() : -1;
+		return playing(loop) ? loop.getVolume() : -1;
 	}
 
 	public static void play(LocalPlayer player, Sound s) {
@@ -93,6 +113,8 @@ public final class ClimbSounds {
 			event = s.fallback();
 			volume = s.fallbackVolume();
 		}
+		volume *= s.group().volume();
+		if (volume <= 0) return;
 		lastPlayed = event.location().toString();
 		Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(event, SoundSource.PLAYERS, volume, pitch,
 				random, player.getX(), player.getEyeY(), player.getZ()));
@@ -142,16 +164,15 @@ public final class ClimbSounds {
 
 	/**
 	 * ENT_Player.LateUpdate: the near-death loops follow health. damageAudio (heartbeat) eases toward
-	 * damageFXCurve(health) * 0.8, dyingAudio (mortal wound) toward dyingAudioCurve(health) * 0.8, both
-	 * times the low_health_volume setting (1 = the game's level).
+	 * damageFXCurve(health) * 0.8, dyingAudio (mortal wound) toward dyingAudioCurve(health) * 0.8 (the
+	 * low_health_volume setting applies on top, as their group's volume).
 	 * The two are layers of one piece, so they start and stop together and stay in step.
 	 */
 	public static void updateHealthLoops(LocalPlayer player, boolean enabled) {
 		if (!available(HEARTBEAT) || !available(MORTAL_WOUND)) return;
 		double health = player.getMaxHealth() > 0 ? player.getHealth() / player.getMaxHealth() : 1;
-		double setting = dev.fizz.wkclimb.ClimbConfig.lowHealthVolume;
-		float heartTarget = enabled ? (float) (ClimbDamage.damageFxCurve(health) * 0.8 * setting) : 0f;
-		float woundTarget = enabled ? (float) (ClimbDamage.dyingAudioCurve(health) * 0.8 * setting) : 0f;
+		float heartTarget = enabled ? (float) (ClimbDamage.damageFxCurve(health) * 0.8) : 0f;
+		float woundTarget = enabled ? (float) (ClimbDamage.dyingAudioCurve(health) * 0.8) : 0f;
 		if (!playing(heartbeat) || !playing(mortalWound)) {
 			if (heartTarget <= 0.001f && woundTarget <= 0.001f) return;
 			if (heartbeat != null) heartbeat.end();
@@ -180,6 +201,7 @@ public final class ClimbSounds {
 	/** A looping, listener-relative sound whose volume eases toward a target each tick. */
 	private static final class Loop extends AbstractTickableSoundInstance {
 		private final LocalPlayer player;
+		private final Group group;
 		private final float rate;
 		private final boolean stopWhenQuiet;
 		float target;
@@ -187,6 +209,7 @@ public final class ClimbSounds {
 		Loop(Sound sound, LocalPlayer player, float rate, boolean stopWhenQuiet) {
 			super(sound.event(), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
 			this.player = player;
+			this.group = sound.group();
 			this.rate = rate;
 			this.stopWhenQuiet = stopWhenQuiet;
 			this.looping = true;
@@ -201,8 +224,10 @@ public final class ClimbSounds {
 			return volume < 0.005f;
 		}
 
-		float rawVolume() {
-			return volume;
+		/** The game's volume times the Sounds menu's (read every frame, so a slider applies at once). */
+		@Override
+		public float getVolume() {
+			return volume * group.volume();
 		}
 
 		void end() {

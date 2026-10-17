@@ -9,11 +9,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** White Knuckle's hands replace Minecraft's arm and held item while climbing hands are on. */
+/** White Knuckle's hands replace Minecraft's arm and held item while climbing hands are on (unless hide_wk_hands). */
 @Mixin(GameRenderer.class)
 public abstract class HideVanillaHandMixin {
 	@Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
 	private void wkclimb$hideHand(CallbackInfo ci) {
-		if (ClimbConfig.hideVanillaHand && ClimbController.INSTANCE.isEnabled() && ClimbHands.isActive()) ci.cancel();
+		if (!ClimbConfig.hideWkHands && ClimbController.INSTANCE.isEnabled() && ClimbHands.isActive()) ci.cancel();
 	}
 }

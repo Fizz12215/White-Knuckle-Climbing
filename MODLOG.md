@@ -731,3 +731,17 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   "missing".
 - Gametest: opens the screen, clicks Ledges only (OFF), clicks Build... (setup screen opens), closes,
   checks `ledges_only=false` in the file, restores it. All checks passed with the pack on OpenGL and Vulkan.
+
+## 2026-10-17: Sounds menu, Hide WK hands (owner's choices)
+- **Owner's choices:** swap "Hide Minecraft's hand" for "Hide WK hands" (on: WK's hands hidden,
+  Minecraft's arm back); a separate Sounds menu with an "All mod sounds" slider plus groups.
+- `hide_vanilla_hand` is gone (an old line in the file is ignored); `hide_wk_hands` (default false)
+  stops `ClimbHands.render` and lets `HideVanillaHandMixin` through. The crosshair hand icons stay.
+- Every `ClimbSounds.Sound` has a `Group` (grabbing, landing, footsteps, wind, hurt, low health,
+  fatigue, ice); its volume is the group's setting times `sound_volume`. One-shots multiply it in
+  `play` (fallback sounds too); loops apply it in `Loop.getVolume()`, read every tick, so a slider
+  changes a sound already playing. `low_health_volume` is now the low-health group's slider instead
+  of being multiplied into the loop targets: the heard volume is the same.
+- Gametest: toggles Hide WK hands, opens the Sounds menu and back, checks the file; screenshot with
+  the WK hands hidden (Minecraft's arm shows); "All mod sounds" 50% halves the heartbeat as heard.
+  All checks passed with the pack on OpenGL and Vulkan.

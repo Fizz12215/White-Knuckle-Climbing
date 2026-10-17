@@ -86,6 +86,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.takeScreenshot("wkclimb-02-hands-at-rest");
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands = true);
+			ctx.waitTicks(2);
+			ctx.takeScreenshot("wkclimb-02z-wk-hands-hidden"); // Minecraft's arm instead
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands = false);
 			double y0 = playerY(ctx);
 			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
@@ -390,6 +394,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 						if (Math.abs(loops[1] - 0.423f * setting) > 0.05f * setting || Math.abs(loops[2] - 0.797f * setting) > 0.05f * setting) {
 							throw new AssertionError("near-death loop volumes off: " + loops[1] + ", " + loops[2] + " at setting " + setting);
 						}
+						// the Sounds menu's "All mod sounds" scales them as heard, at once
+						ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.soundVolume = 0.5);
+						float[] half = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbSounds.loopVolumesForTest());
+						ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.soundVolume = 1.0);
+						if (Math.abs(half[1] - loops[1] * 0.5f) > 0.05f * setting) throw new AssertionError("All mod sounds 50%: heartbeat " + half[1] + " vs " + loops[1]);
 					}
 				}
 			}
@@ -726,6 +735,15 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		ctx.takeScreenshot("wkclimb-settings");
 		clickInList(ctx, "Ledges only: ON");
 		check(ctx, "settings: Ledges only toggled off", mc -> !dev.fizz.wkclimb.ClimbConfig.ledgesOnly);
+		clickInList(ctx, "Hide WK hands: OFF");
+		check(ctx, "settings: Hide WK hands toggled on", mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands);
+		clickInList(ctx, "Sounds...");
+		check(ctx, "settings: Sounds... opens the sounds screen", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSoundsScreen
+				&& findWidget(mc.gui.screen(), "All mod sounds: 100%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
+				&& findWidget(mc.gui.screen(), "Low health: 50%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
+		ctx.takeScreenshot("wkclimb-settings-sounds");
+		ctx.runOnClient(mc -> mc.gui.screen().onClose());
+		check(ctx, "settings: Done on the sounds screen goes back", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSettingsScreen);
 		clickInList(ctx, "Build...");
 		check(ctx, "settings: Build... opens the setup screen",
 				mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.assets.AssetSetupScreen);
@@ -733,13 +751,15 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		Path file = ctx.computeOnClient(mc -> net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("wkclimb.properties"));
 		check(ctx, "settings: saved to wkclimb.properties", mc -> {
 			try {
-				return Files.readAllLines(file).contains("ledges_only=false");
+				List<String> lines = Files.readAllLines(file);
+				return lines.contains("ledges_only=false") && lines.contains("hide_wk_hands=true") && lines.contains("sound_volume=1.0");
 			} catch (IOException e) {
 				return false;
 			}
 		});
 		ctx.runOnClient(mc -> {
 			dev.fizz.wkclimb.ClimbConfig.ledgesOnly = true;
+			dev.fizz.wkclimb.ClimbConfig.hideWkHands = false;
 			dev.fizz.wkclimb.ClimbConfig.save();
 		});
 	}

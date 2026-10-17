@@ -163,10 +163,12 @@ edit `config/wkclimb.properties` (created on first launch):
 | `ledges_only` | `true` | only top edges can be grabbed; `false` lets you grab any face |
 | `handholds_only` | `false` | `true`: only blocks in the `#wkclimb:handholds` tag can be grabbed |
 | `enabled_on_start` | `true` | climbing mode on when the game starts |
-| `hide_vanilla_hand` | `true` | hide Minecraft's arm and held item while the climbing hands show |
+| `hide_wk_hands` | `false` | `true`: hide White Knuckle's hands and show Minecraft's arm and held item instead |
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
 | `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
 | `low_health_volume` | `0.5` | volume of the low-health heartbeat, from `0` (off) to `1` (White Knuckle's level). Half by default: without the game's music and ambience under it, it stands out in Minecraft |
+| `sound_volume` | `1.0` | volume of all the mod's sounds, from `0` (off) to `1`; the ones below apply on top of it |
+| `grabbing_volume`, `landing_volume`, `footsteps_volume`, `wind_volume`, `hurt_volume`, `fatigue_volume`, `ice_volume` | `1.0` | each kind of sound, from `0` to `1`: grabbing and letting go; jumps, climbing up and landings; footsteps; falling wind; hurt and death; grip fatigue; icy handholds |
 | `wk_keybinds_applied` | `false` → `true` | set back to `false` to apply White Knuckle's keys again |
 | `asset_prompt` | `true` | offer to build White Knuckle's hands and sounds when the pack is missing or out of date (`false` after "Don't ask again") |
 | `wk_game_dir` | empty | White Knuckle's folder, set when you press **Choose its folder**, or by hand, for example `D:\SteamLibrary\steamapps\common\White Knuckle` |

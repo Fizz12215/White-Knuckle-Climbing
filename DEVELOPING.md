@@ -69,7 +69,8 @@ src/client/java/dev/fizz/wkclimb/client/   client only
   ClimbSounds.java / ClimbFootsteps.java   game sound sets, floor materials
   ClimbKeybinds.java      applies the game's default keys once
   ClimbSettingsScreen.java   the settings in game (vanilla OptionsSubScreen); ModMenuIntegration opens
-                          it from Mod Menu's Config button (optional, compile-only dependency)
+                          it from Mod Menu's Config button (optional, compile-only dependency);
+                          ClimbSoundsScreen: the volume per ClimbSounds.Group
   assets/                 the Build button: AssetPack (pack status, when to offer, switch on),
                           AssetBuilder (the steps, each waiting for an OK), AssetSetupScreen,
                           FolderPicker (portal or SDL3, leaving fullscreen first)
