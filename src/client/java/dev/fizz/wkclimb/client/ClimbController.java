@@ -475,17 +475,37 @@ public final class ClimbController {
 		needResend = true;
 	}
 
+	/** The hold spots last sent (world positions; null = that hand isn't holding). */
+	private final Vec3[] lastSentHolds = new Vec3[2];
+
+	/** Where this hand holds on, in the world, or null when it isn't holding. */
+	public Vec3 holdSpot(int hand) {
+		ClimbSim.Hand h = sim.hands[hand];
+		return enabled && h.isHanging() ? toMc(h.holdPoint()) : null;
+	}
+
+	/** True when the hold spot moved enough (or grabbed / let go) that other players should be told. */
+	private static boolean moved(Vec3 now, Vec3 sent) {
+		if (now == null || sent == null) return now != sent;
+		return now.distanceToSqr(sent) > 0.05 * 0.05;
+	}
+
 	private void syncServer() {
 		boolean hanging = sim.anyHanging();
 		boolean through = WKClimb.clientThroughBars;
 		boolean wkMode = enabled;
 		WKClimb.clientWkMode = wkMode;
+		Vec3 left = holdSpot(0), right = holdSpot(1);
 		if (needResend || hanging != lastSentHanging || through != lastSentThrough || wkMode != lastSentWkMode
+				|| moved(left, lastSentHolds[0]) || moved(right, lastSentHolds[1])
 				|| ((hanging || through || wkMode) && --resendTimer <= 0)) {
 			if (ClientPlayNetworking.canSend(ClimbStatePayload.TYPE)) {
-				ClientPlayNetworking.send(new ClimbStatePayload(hanging, through, wkMode));
+				ClientPlayNetworking.send(new ClimbStatePayload(hanging, through, wkMode,
+						left != null, left != null ? left : Vec3.ZERO, right != null, right != null ? right : Vec3.ZERO));
 				needResend = false;
 			}
+			lastSentHolds[0] = left;
+			lastSentHolds[1] = right;
 			lastSentHanging = hanging;
 			lastSentThrough = through;
 			lastSentWkMode = wkMode;

@@ -17,6 +17,16 @@ class ClimbConfigTest {
 	}
 
 	@Test
+	void handsSetting() {
+		assertEquals(false, ClimbConfig.minecraftHandsFrom(null, null, false));
+		assertEquals(true, ClimbConfig.minecraftHandsFrom("minecraft", null, false));
+		assertEquals(false, ClimbConfig.minecraftHandsFrom("wk", "true", true));
+		// the old hide_wk_hands switch carries over until hands is saved
+		assertEquals(true, ClimbConfig.minecraftHandsFrom(null, "true", false));
+		assertEquals(false, ClimbConfig.minecraftHandsFrom(null, "false", true));
+	}
+
+	@Test
 	void volumeSetting() {
 		assertEquals(0.5, ClimbConfig.volumeFrom(null, 0.5, 2.0));
 		assertEquals(0.25, ClimbConfig.volumeFrom(" 0.25 ", 0.5, 2.0));

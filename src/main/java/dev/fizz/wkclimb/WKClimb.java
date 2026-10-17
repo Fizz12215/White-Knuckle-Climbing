@@ -1,10 +1,13 @@
 package dev.fizz.wkclimb;
 
 import dev.fizz.wkclimb.mixin.ServerGamePacketListenerImplAccessor;
+import dev.fizz.wkclimb.net.ClimbPosePayload;
 import dev.fizz.wkclimb.net.ClimbStatePayload;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.registries.Registries;
@@ -13,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +42,8 @@ public class WKClimb implements ModInitializer {
 	private static final Set<UUID> HANGING = ConcurrentHashMap.newKeySet();
 	private static final Set<UUID> THROUGH_BARS = ConcurrentHashMap.newKeySet();
 	private static final Set<UUID> WK_MODE = ConcurrentHashMap.newKeySet();
+	/** Each player's hands as last passed on to the players who can see them. */
+	private static final Map<UUID, ClimbPosePayload> POSES = new ConcurrentHashMap<>();
 	/** Set by the client while White Knuckle mode is on for the local player. */
 	public static volatile boolean clientWkMode;
 
@@ -75,6 +81,10 @@ public class WKClimb implements ModInitializer {
 		return THROUGH_BARS.contains(player.getUUID());
 	}
 
+	private static void sendPose(ServerPlayer watcher, ClimbPosePayload pose) {
+		if (ServerPlayNetworking.canSend(watcher, ClimbPosePayload.TYPE)) ServerPlayNetworking.send(watcher, pose);
+	}
+
 	public static Identifier id(String path) {
 		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
@@ -83,6 +93,7 @@ public class WKClimb implements ModInitializer {
 	public void onInitialize() {
 		PayloadTypeRegistry.serverboundPlay().register(ClimbStatePayload.TYPE, ClimbStatePayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(dev.fizz.wkclimb.net.FallGripPayload.TYPE, dev.fizz.wkclimb.net.FallGripPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(ClimbPosePayload.TYPE, ClimbPosePayload.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(ClimbStatePayload.TYPE, (payload, context) -> {
 			UUID id = context.player().getUUID();
 			if (payload.hanging()) HANGING.add(id);
@@ -94,6 +105,17 @@ public class WKClimb implements ModInitializer {
 				WK_MODE.remove(id);
 				WKHealth.forget(id);
 			}
+			ServerPlayer player = context.player();
+			ClimbPosePayload pose = new ClimbPosePayload(player.getId(),
+					payload.leftHolding(), payload.leftHold(), payload.rightHolding(), payload.rightHold());
+			if (!pose.equals(POSES.put(id, pose))) {
+				for (ServerPlayer watcher : PlayerLookup.tracking(player)) sendPose(watcher, pose);
+			}
+		});
+		// Someone who starts seeing a player gets that player's hands right away.
+		EntityTrackingEvents.START_TRACKING.register((entity, watcher) -> {
+			ClimbPosePayload pose = POSES.get(entity.getUUID());
+			if (pose != null && entity instanceof ServerPlayer) sendPose(watcher, pose);
 		});
 		// A respawn starts White Knuckle's health state fresh (breath, falls, heal timer).
 		net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AFTER_RESPAWN.register(
@@ -102,6 +124,7 @@ public class WKClimb implements ModInitializer {
 			HANGING.remove(handler.getPlayer().getUUID());
 			THROUGH_BARS.remove(handler.getPlayer().getUUID());
 			WK_MODE.remove(handler.getPlayer().getUUID());
+			POSES.remove(handler.getPlayer().getUUID());
 			WKHealth.forget(handler.getPlayer().getUUID());
 		});
 

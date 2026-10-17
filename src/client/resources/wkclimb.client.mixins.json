@@ -3,6 +3,6 @@
 	"package": "dev.fizz.wkclimb.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": ["LivingEntityTravelMixin", "MinecraftInputMixin", "GameRendererMixin", "HideVanillaHandMixin", "CameraFovMixin", "CameraInvoker",
-		"CameraMixin", "PlayerSoundsMixin", "HurtShakeMixin", "StepSoundMixin", "PostPassMixin", "PostPassAccessor", "PostChainAccessor", "StepHeightMixin", "EyeHeightMixin"],
+		"CameraMixin", "PlayerSoundsMixin", "HurtShakeMixin", "StepSoundMixin", "PostPassMixin", "PostPassAccessor", "PostChainAccessor", "StepHeightMixin", "EyeHeightMixin", "ClimbArmPoseMixin", "MinecraftHandsMixin"],
 	"injectors": { "defaultRequire": 1 }
 }

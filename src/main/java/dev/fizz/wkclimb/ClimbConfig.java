@@ -28,8 +28,13 @@ public final class ClimbConfig {
 	public static boolean enabledOnStart = true;
 	/** Only the top edges of blocks (ledges) can be grabbed, not the sides. #wkclimb:grab_anywhere is exempt. */
 	public static boolean ledgesOnly = true;
-	/** Hide White Knuckle's hands; Minecraft's own arm and held item show instead. Off: WK's hands replace Minecraft's. */
-	public static boolean hideWkHands = false;
+	/**
+	 * First-person hands: false = White Knuckle's (the pack's sprites), true = two Minecraft arms in your
+	 * skin, moving the same way. Saved as hands=wk|minecraft. Without the pack, Minecraft's are used anyway.
+	 */
+	public static boolean minecraftHands = false;
+	/** Set once the player has picked their hands in the first-time setup. */
+	public static boolean handsChosen = false;
 	/** Field of view while the hands are on: White Knuckle's default playerFOV (vertical, like Minecraft's). 0 = use Minecraft's setting. */
 	public static double fov = 90;
 	/** White Knuckle's 0.18-block step height in climbing mode (slabs and stairs must be jumped); else Minecraft's 0.6. */
@@ -83,7 +88,8 @@ public final class ClimbConfig {
 		handholdsOnly = Boolean.parseBoolean(p.getProperty("handholds_only", Boolean.toString(handholdsOnly)));
 		enabledOnStart = Boolean.parseBoolean(p.getProperty("enabled_on_start", Boolean.toString(enabledOnStart)));
 		ledgesOnly = Boolean.parseBoolean(p.getProperty("ledges_only", Boolean.toString(ledgesOnly)));
-		hideWkHands = Boolean.parseBoolean(p.getProperty("hide_wk_hands", Boolean.toString(hideWkHands)));
+		minecraftHands = minecraftHandsFrom(p.getProperty("hands"), p.getProperty("hide_wk_hands"), minecraftHands);
+		handsChosen = Boolean.parseBoolean(p.getProperty("hands_chosen", Boolean.toString(handsChosen)));
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
 		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume, MAX_LOW_HEALTH);
@@ -101,6 +107,13 @@ public final class ClimbConfig {
 		assetPrompt = Boolean.parseBoolean(p.getProperty("asset_prompt", Boolean.toString(assetPrompt)));
 		wkGameDir = gameDirFrom(text, p.getProperty("wk_game_dir", wkGameDir)).strip();
 		save();
+	}
+
+	/** hands=wk|minecraft; before it existed, hide_wk_hands=true showed Minecraft's arm, so it means Minecraft hands. */
+	static boolean minecraftHandsFrom(String hands, String hideWkHands, boolean current) {
+		if (hands != null) return hands.strip().equalsIgnoreCase("minecraft");
+		if (hideWkHands != null) return Boolean.parseBoolean(hideWkHands.strip());
+		return current;
 	}
 
 	/**
@@ -125,7 +138,8 @@ public final class ClimbConfig {
 		values.put("handholds_only", Boolean.toString(handholdsOnly));
 		values.put("enabled_on_start", Boolean.toString(enabledOnStart));
 		values.put("ledges_only", Boolean.toString(ledgesOnly));
-		values.put("hide_wk_hands", Boolean.toString(hideWkHands));
+		values.put("hands", minecraftHands ? "minecraft" : "wk");
+		values.put("hands_chosen", Boolean.toString(handsChosen));
 		values.put("fov", Double.toString(fov));
 		values.put("exact_step_height", Boolean.toString(exactStepHeight));
 		values.put("sound_volume", Double.toString(soundVolume));

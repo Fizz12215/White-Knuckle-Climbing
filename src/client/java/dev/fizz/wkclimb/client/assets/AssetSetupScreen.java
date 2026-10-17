@@ -1,6 +1,7 @@
 package dev.fizz.wkclimb.client.assets;
 
 import dev.fizz.wkclimb.ClimbConfig;
+import dev.fizz.wkclimb.WKClimb;
 import dev.fizz.wkclimb.assets.ExtractorSetup;
 import dev.fizz.wkclimb.assets.GameLocator;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,7 +30,7 @@ public class AssetSetupScreen extends Screen {
 	private static final String WINGET_PYTHON = "winget install -e --id Python.Python.3.13 --accept-package-agreements --accept-source-agreements";
 
 	/** What the screen shows: the build's state, or one of the screen's own pages. */
-	enum View { OFFER, NOT_FOUND, PICKER_INFO, PICKER_OPEN, PICKER_WRONG, PICKER_FAILED, PYTHON_INFO,
+	enum View { CHOOSE_HANDS, OFFER, NOT_FOUND, PICKER_INFO, PICKER_OPEN, PICKER_WRONG, PICKER_FAILED, PYTHON_INFO,
 		CHECKING, CONFIRM, RUNNING, NO_PYTHON, NO_VENV, FAILED }
 
 	private final Screen parent;
@@ -51,7 +52,13 @@ public class AssetSetupScreen extends Screen {
 	private MultiLineTextWidget liveLine;
 
 	public AssetSetupScreen(Screen parent, AssetPack.Status status) {
+		this(parent, status, false);
+	}
+
+	/** chooseHands: start with the first-time "Choose your hands" page. */
+	public AssetSetupScreen(Screen parent, AssetPack.Status status, boolean chooseHands) {
 		super(Component.translatable("wkclimb.assets.title"));
+		if (chooseHands) page = View.CHOOSE_HANDS;
 		this.parent = parent;
 		this.status = status;
 		this.game = GameLocator.find(ClimbConfig.wkGameDir);
@@ -81,7 +88,8 @@ public class AssetSetupScreen extends Screen {
 	protected void init() {
 		shownKey = viewKey();
 		liveLine = null;
-		layout = new HeaderAndFooterLayout(this, 33, 57);
+		// the hands page has its buttons in the page, under the pictures: no footer needed
+		layout = new HeaderAndFooterLayout(this, 33, view() == View.CHOOSE_HANDS ? 8 : 57);
 		layout.addTitleHeader(title, font);
 		body = LinearLayout.vertical().spacing(6);
 		// The column is always the full text width, so pages with only short lines are centred in it
@@ -94,11 +102,19 @@ public class AssetSetupScreen extends Screen {
 		boolean windows = GameLocator.isWindows();
 
 		switch (view()) {
+			case CHOOSE_HANDS -> {
+				text("wkclimb.assets.hands.title", YELLOW);
+				text("wkclimb.assets.hands.intro", WHITE);
+				int col = Math.min(160, (wrapWidth() - 12) / 2);
+				LinearLayout choices = body.addChild(LinearLayout.horizontal().spacing(12), s -> s.alignHorizontallyCenter());
+				handsChoice(choices, col, "wk", false);
+				handsChoice(choices, col, "minecraft", true);
+			}
 			case OFFER -> {
 				text(switch (status) {
 					case OUTDATED -> "wkclimb.assets.offer.outdated";
 					case OK -> "wkclimb.assets.offer.ok";
-					case MISSING -> "wkclimb.assets.offer.missing";
+					case MISSING -> ClimbConfig.minecraftHands ? "wkclimb.assets.offer.minecraft_hands" : "wkclimb.assets.offer.missing";
 				}, WHITE);
 				game.ifPresent(p -> path(p));
 				text("wkclimb.assets.offer.steps", WHITE);
@@ -277,6 +293,15 @@ public class AssetSetupScreen extends Screen {
 		rebuildWidgets();
 	}
 
+	/** The first-time choice; the pack's build offer follows when it's missing or out of date. */
+	private void chooseHands(boolean minecraft) {
+		ClimbConfig.minecraftHands = minecraft;
+		ClimbConfig.handsChosen = true;
+		ClimbConfig.save();
+		if (status == AssetPack.Status.OK || !ClimbConfig.assetPrompt) onClose();
+		else page(null);
+	}
+
 	private void never() {
 		ClimbConfig.assetPrompt = false;
 		ClimbConfig.save();
@@ -407,6 +432,47 @@ public class AssetSetupScreen extends Screen {
 
 	private static Component grey(String s) {
 		return Component.literal(s).withColor(GREY & 0xFFFFFF);
+	}
+
+	/** One choice on the hands page: its example picture, its button and what it means. */
+	private void handsChoice(LinearLayout row, int width, String which, boolean minecraft) {
+		LinearLayout col = row.addChild(LinearLayout.vertical().spacing(4));
+		col.defaultCellSetting().alignHorizontallyCenter();
+		col.addChild(new Picture(width, width * PICTURE_H / PICTURE_W, WKClimb.id("textures/gui/hands_choice/" + which + ".png"),
+				Component.translatable("wkclimb.assets.hands." + which + ".info")));
+		col.addChild(Button.builder(Component.translatable("wkclimb.assets.hands." + which), b -> chooseHands(minecraft)).width(width).build());
+		col.addChild(new MultiLineTextWidget(Component.translatable("wkclimb.assets.hands." + which + ".info").withColor(WHITE & 0xFFFFFF), font)
+				.setMaxWidth(width).setCentered(true));
+		// last, so both buttons line up under their pictures
+		if (!minecraft) {
+			col.addChild(new MultiLineTextWidget(Component.translatable("wkclimb.assets.hands.credit").withColor(GREY & 0xFFFFFF), font)
+					.setMaxWidth(width).setCentered(true));
+		}
+	}
+
+	/** The example pictures' size in the jar (textures/gui/hands_choice). */
+	private static final int PICTURE_W = 320, PICTURE_H = 120;
+
+	/** A picture scaled to the widget's size (ImageWidget draws its texture 1:1). */
+	private static final class Picture extends net.minecraft.client.gui.components.AbstractWidget {
+		private final net.minecraft.resources.Identifier texture;
+
+		Picture(int width, int height, net.minecraft.resources.Identifier texture, Component name) {
+			super(0, 0, width, height, name);
+			this.texture = texture;
+			this.active = false;
+		}
+
+		@Override
+		protected void extractWidgetRenderState(net.minecraft.client.gui.GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+			g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture, getX(), getY(), 0, 0, getWidth(), getHeight(),
+					PICTURE_W, PICTURE_H, PICTURE_W, PICTURE_H, 0xFFFFFFFF);
+		}
+
+		@Override
+		protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput output) {
+			defaultButtonNarrationText(output);
+		}
 	}
 
 	private void button(LinearLayout row, String key, Button.OnPress onPress) {

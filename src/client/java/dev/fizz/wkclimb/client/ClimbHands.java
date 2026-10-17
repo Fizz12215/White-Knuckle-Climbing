@@ -169,6 +169,29 @@ public final class ClimbHands {
 		return haveTextures();
 	}
 
+	/** Minecraft hands (two arms in the player's skin) instead of the sprites: chosen, or no pack built. */
+	public static boolean useMinecraftHands() {
+		return ClimbConfig.minecraftHands || !haveTextures();
+	}
+
+	/**
+	 * Where each hand is this frame, worked out by render() with White Knuckle's hand rig, for drawing
+	 * the Minecraft arms there (MinecraftHandsMixin). Camera space in rig units: x right, y up, z ahead.
+	 */
+	public static final class Frame {
+		public boolean visible;
+		public double x, y, z;
+		/** Roll on screen, degrees (counter-clockwise, like the sprite's). */
+		public double rot;
+		/** The hand model's scale (1 at rest). */
+		public double scale;
+		public String pose = POSES[0];
+		/** The world FOV the rig was laid out with (degrees). */
+		public double fov = 90;
+	}
+
+	public static final Frame[] frames = { new Frame(), new Frame() };
+
 	static boolean haveTextures() {
 		if (!texturesChecked || --checkCountdown <= 0) {
 			haveTextures = Minecraft.getInstance().getResourceManager().getResource(tex("grab")).isPresent();
@@ -187,8 +210,9 @@ public final class ClimbHands {
 		Minecraft mc = Minecraft.getInstance();
 		ClimbController ctl = ClimbController.INSTANCE;
 		LocalPlayer player = mc.player;
+		frames[0].visible = frames[1].visible = false;
 		if (!ctl.isEnabled() || player == null || mc.gui.hud.isHidden() || !mc.options.getCameraType().isFirstPerson()) return;
-		if (!haveTextures() || ClimbConfig.hideWkHands) return;
+		boolean sprites = !useMinecraftHands();
 
 		long now = System.nanoTime();
 		float dt = lastNanos == 0 ? 0.016f : Math.min((now - lastNanos) / 1e9f, 0.1f);
@@ -251,6 +275,16 @@ public final class ClimbHands {
 			float rot = (float) sway[i].rot;
 
 			String pose = pose(player, hand, held);
+			Frame f = frames[i];
+			f.visible = true;
+			f.x = cx;
+			f.y = cy;
+			f.z = cz;
+			f.rot = rot;
+			f.scale = rigScale * modelScale[i];
+			f.pose = pose;
+			f.fov = fov;
+			if (!sprites) continue;
 			int px = Math.round(size);
 			var pose2d = g.pose();
 			pose2d.pushMatrix();

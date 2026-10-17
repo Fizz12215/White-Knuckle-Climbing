@@ -71,7 +71,13 @@ public final class AssetPack {
 	 */
 	public static void offer(Minecraft mc) {
 		Status status = check(mc.getResourceManager());
-		if (status == Status.OK || !ClimbConfig.assetPrompt || AssetBuilder.INSTANCE.state().active()) return;
+		if (AssetBuilder.INSTANCE.state().active()) return;
+		// The hands choice is asked once, even if the pack is fine or "Don't ask again" was set before it existed.
+		if (!ClimbConfig.handsChosen) {
+			mc.gui.setScreen(new AssetSetupScreen(mc.gui.screen(), status, true));
+			return;
+		}
+		if (status == Status.OK || !ClimbConfig.assetPrompt) return;
 		mc.gui.setScreen(new AssetSetupScreen(mc.gui.screen(), status));
 	}
 

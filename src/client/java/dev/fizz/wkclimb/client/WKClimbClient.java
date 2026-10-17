@@ -88,9 +88,12 @@ public class WKClimbClient implements ClientModInitializer {
 			ClimbController.INSTANCE.onJoin();
 		});
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			ClimbPoses.clear();
 			if (!serverHasMod) ClimbController.INSTANCE.setEnabled(enabledBeforeUnsupported);
 			serverHasMod = true;
 		});
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
+				dev.fizz.wkclimb.net.ClimbPosePayload.TYPE, (payload, context) -> ClimbPoses.receive(payload));
 		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
 				dev.fizz.wkclimb.net.FallGripPayload.TYPE,
 				(payload, context) -> ClimbController.INSTANCE.onFallHurt(payload.grab(), payload.land()));

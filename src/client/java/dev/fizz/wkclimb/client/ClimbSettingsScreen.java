@@ -29,6 +29,14 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 
 	@Override
 	protected void addOptions() {
+		list.addHeader(Component.translatable("wkclimb.settings.hands_header"));
+		list.addBig(Button.builder(handsLabel(), b -> {
+			ClimbConfig.minecraftHands = !ClimbConfig.minecraftHands;
+			ClimbConfig.handsChosen = true;
+			b.setMessage(handsLabel());
+			b.setTooltip(handsTooltip());
+		}).tooltip(handsTooltip()).build());
+
 		list.addHeader(Component.translatable("wkclimb.settings.climbing"));
 		list.addSmall(
 				toggle("ledges_only", ClimbConfig.ledgesOnly, v -> ClimbConfig.ledgesOnly = v),
@@ -44,7 +52,6 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 				slider("fov", FOV_VANILLA, 110, fov,
 						v -> v == FOV_VANILLA ? Component.translatable("wkclimb.settings.fov.vanilla") : Component.literal(Integer.toString(v)),
 						v -> ClimbConfig.fov = v == FOV_VANILLA ? 0 : v),
-				toggle("hide_wk_hands", ClimbConfig.hideWkHands, v -> ClimbConfig.hideWkHands = v),
 				toggle("enabled_on_start", ClimbConfig.enabledOnStart, v -> ClimbConfig.enabledOnStart = v));
 
 		list.addHeader(Component.translatable("wkclimb.settings.sound"));
@@ -61,6 +68,17 @@ public class ClimbSettingsScreen extends OptionsSubScreen {
 				toggle("asset_prompt", ClimbConfig.assetPrompt, v -> ClimbConfig.assetPrompt = v).createButton(options),
 				Button.builder(Component.translatable("wkclimb.settings.build"), b -> openAssetSetup())
 						.tooltip(Tooltip.create(Component.translatable("wkclimb.settings.build.tooltip"))).build());
+	}
+
+	/** "Hands: White Knuckle" or "Hands: Minecraft (your skin)"; White Knuckle's need the pack. */
+	static Component handsLabel() {
+		String which = ClimbConfig.minecraftHands ? "minecraft" : ClimbHands.isActive() ? "wk" : "wk_no_pack";
+		return Component.translatable("wkclimb.settings.hands", Component.translatable("wkclimb.settings.hands." + which));
+	}
+
+	private static Tooltip handsTooltip() {
+		return Tooltip.create(Component.translatable(ClimbConfig.minecraftHands || ClimbHands.isActive()
+				? "wkclimb.settings.hands.tooltip" : "wkclimb.settings.hands.tooltip.no_pack"));
 	}
 
 	private void openAssetSetup() {

@@ -50,7 +50,8 @@ src/main/java/dev/fizz/wkclimb/          common (both sides)
   sim/V3.java             tiny vector type mirroring Unity's Vector3 helpers
   WKClimb.java            mod init, payload handling, tags, isRod(), per-player server flags
   WKHealth.java           White Knuckle health on the server (regen, falls, breath), x4 scale
-  net/                    ClimbStatePayload (C2S: hanging, throughBars, wkMode), FallGripPayload (S2C)
+  net/                    ClimbStatePayload (C2S: hanging, throughBars, wkMode, hold spots),
+                          ClimbPosePayload (S2C: another player's hold spots), FallGripPayload (S2C)
   mixin/                  rods without collision, no hunger/vanilla fall damage/peaceful regen,
                           heal-delay hook, anti-fly-kick accessor
   assets/                 pure-Java parts of the in-game asset build: GameLocator (Steam libraries,
@@ -114,6 +115,14 @@ joining. The server uses it to:
 - run `WKHealth` for players in White Knuckle mode.
 
 The server sends `fall_grip` when a fall ends by catching a hold (grip penalty + blood).
+
+`climb_state` also carries each hand's hold spot (world position); the client resends it when a hand
+grabs, lets go or its hold moves 0.05+ blocks. The server passes changes on as `climb_pose` to the
+players who can see the climber (`PlayerLookup.tracking`, and on `START_TRACKING`). The client keeps
+them in `ClimbPoses`; `ClimbArmPoseMixin` turns the player model's arms toward the holds (`ArmAim`).
+Checked by hand with `MultiplayerScene` (gametest, `WKCLIMB_TEST_MP=1`): it hosts a server on port
+25570 and waits for a second client (`./gradlew runClient --args="--username Viewer
+--quickPlayMultiplayer localhost:25570"`, `pauseOnLostFocus:false`) before climbing three times.
 **The mod must be installed on servers.**
 
 ### The in-game asset build
@@ -194,8 +203,21 @@ Everything ported is commented with its source class/field. Sources:
 - **Owner's choices for the menus** (2026-10-17): volume sliders are "plus or minus" with 0% (the
   game's volume) in the middle, Off on the left, and on the right only as much louder as is really
   possible (Ice can't go louder: its handle stops in the middle); slider text centred like
-  Minecraft's; the R mode is called "climbing mode" in all text; "Hide WK hands" (off by default)
-  swaps White Knuckle's hands for Minecraft's arm.
+  Minecraft's; the R mode is called "climbing mode" in all text.
+- **Hands** (owner, 2026-10-17): two choices, White Knuckle hands or Minecraft hands (`hands=wk|minecraft`,
+  replacing `hide_wk_hands`), shown prominently: the first section of the settings, a first-time
+  "Choose your hands" page (`AssetSetupScreen` `CHOOSE_HANDS`, until `hands_chosen`), and the README.
+  Without the pack, Minecraft hands are used whatever the setting. Picking Minecraft hands still offers
+  the pack (sounds, crosshair, blood). No red grip tint on Minecraft hands; no held items in either.
+  How it's drawn: `ClimbHands.render` lays out White Knuckle's hand rig every frame into
+  `ClimbHands.frames` and draws sprites only in WK mode; `MinecraftHandsMixin` (on
+  `submitHandsWithItems`) draws each skin arm with its hand at that frame's spot, coming up from a fixed
+  anchor below the screen, scaled across from the world FOV to the hand pass's HUD FOV. The anchor,
+  `FIST` and `ARM_SCALE` were tuned from screenshots.
+  The choice page shows `textures/gui/hands_choice/{wk,minecraft}.png` (320x120, from the gametest's
+  "at rest" shots; the Minecraft one from a no-pack run). `wk.png` is the only White Knuckle art in the
+  jar: the owner's call, credited on the page ("White Knuckle's hands © Dark Machine Games"). Keep these
+  out of `textures/gui/hands/`: `AssetPack.check` looks there for the built pack.
 
 ## Gotchas (each cost real time)
 

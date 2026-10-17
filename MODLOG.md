@@ -787,3 +787,29 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   health goes quieter. All checks passed with the pack (OpenGL).
 - Then (owner's request): the text is centred again, as in Minecraft's sliders (the split-text drawing
   was removed); the shorter names and the Ice stop stay. All checks passed (OpenGL).
+
+## 2026-10-17: multiplayer review, climbing pose for others, Minecraft hands
+- **Multiplayer review (owner's request):** the server runs WK health and takes the client's hanging
+  flag on trust (known); vanilla clients and anti-cheat don't matter: the mod is for friends and
+  singleplayer (owner). Open: server knockback is probably ignored while WK movement drives the
+  player (the sim only reads velocity when it takes over); matters once enemies come.
+- **Real 2-client test:** `MultiplayerScene` (gametest, `WKCLIMB_TEST_MP=1`) hosts a dedicated server
+  on port 25570 (`whitelist off`, `max-players` 4 via `createServer(Properties)`), waits for a second
+  `runClient --username Viewer --quickPlayMultiplayer localhost:25570` client, and climbs 3 times.
+  The viewer saved screenshots through a temporary tick hook (removed). No kicks, no "moved wrongly".
+  Seen from the viewer: a climber was a standing Steve sliding up the wall.
+- **Climbing pose for others:** `climb_state` now carries each hand's hold spot; the server relays
+  changes as `climb_pose` to `PlayerLookup.tracking` (and on `START_TRACKING`); `ClimbArmPoseMixin`
+  aims the model's arms (`ArmAim`, unit tested). Checked from the viewer's screen and in F5.
+  `climb_state` changed, so 0.5.0 and this version can't play together.
+- **Minecraft hands (owner's design):** two skin arms on White Knuckle's hand rig. `ClimbHands.render`
+  now fills `ClimbHands.frames` every frame; `MinecraftHandsMixin` draws each arm (`renderPlayerHand`)
+  with its hand at the frame's spot, from an anchor below the screen, scaled from the world FOV to
+  the hand pass's HUD FOV (`CameraInvoker.calculateHudFov`). Tuned by screenshots (anchor 0.72/-1.35,
+  FIST 4 px, scale 1.0). Owner's choices: two choices (`hands=wk|minecraft`), Minecraft hands without a
+  pack, no red tint, still offer the pack, a first-time "Choose your hands" page with a picture of
+  each (the WK one is the jar's only WK art, credited "White Knuckle's hands © Dark Machine Games"),
+  the Hands button first in the settings, and a credited side-by-side in the README.
+- **Checked White Knuckle's terms:** no EULA text (Steam's link for app 3195790 is empty) and no fan
+  content policy; showing its art with credit is the owner's call.
+- All checks passed with and without the pack (OpenGL). Not rerun on Vulkan or Windows.

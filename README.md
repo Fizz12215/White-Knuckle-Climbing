@@ -15,6 +15,23 @@ but gets no more updates.
 > contains none of the game's files: if you own White Knuckle, a small tool builds its hands and
 > sounds into a resource pack from your own copy.
 
+## Two kinds of hands
+Pick the hands you climb with, the first time you start the game and any time after in the
+settings (**Hands: White Knuckle / Minecraft**):
+- **Minecraft hands:** two arms in **your own Minecraft skin**, out in front of you, moving exactly
+  like White Knuckle's: they rest, sway, reach out and grab the ledges you hold.
+- **White Knuckle hands:** the game's own hand pictures, which turn red as your grip runs out. They
+  come from the asset pack, built from your copy of White Knuckle (see [Install](#install)).
+
+Without the pack you get Minecraft hands automatically. Either way, other players see your arms
+reach up to your holds, and so do you in third person (F5).
+
+![White Knuckle hands (left) and Minecraft hands (right), at rest and holding a ledge](docs/images/hands-side-by-side.png)
+
+*White Knuckle's hand art, crosshair and hand icons in these screenshots are © Dark Machine Games.
+They come from the pack each player builds from their own copy of White Knuckle, and are not included
+with this mod.*
+
 ## What you get
 - **Two-handed grip climbing.** Left mouse is your left hand, right mouse your right. Hold a button
   while looking at a ledge (a block's top edge) to grab it; keep it held and the hand catches the
@@ -30,7 +47,8 @@ but gets no more updates.
 - **White Knuckle's health:** no hunger, healing 5 seconds after the last hit, falls that only hurt
   past about 40 blocks, and the game's damage look (the screen washes out, greys and reddens as you
   get hurt, with blood and hit-direction glows).
-- **With the asset pack:** the game's first-person hands, crosshair, hand icons, blood, and climbing,
+- **Your choice of hands:** [Minecraft hands or White Knuckle hands](#two-kinds-of-hands).
+- **With the asset pack:** White Knuckle's first-person hands, crosshair, hand icons, blood, and climbing,
   footstep, landing and voice sounds, the rushing wind of a long fall, and the heartbeat that fades in
   as you get close to death (at half the game's volume by default; see `low_health_volume`).
 
@@ -45,8 +63,11 @@ The download zip contains `README.txt` with the same steps in more detail, for *
    - Windows: `%APPDATA%\.minecraft\mods` (press Win+R and paste it)
    - Linux: `~/.minecraft/mods`
    - Prism: right-click the instance > Folder > `mods`
-3. **White Knuckle's hands and sounds (optional, needs White Knuckle on Steam):** start Minecraft.
-   The mod looks for your copy of White Knuckle and offers to build its hands and sounds from it.
+3. **Choose your hands:** start Minecraft. The first screen asks for **White Knuckle hands** or
+   **Minecraft hands** (your skin). You can switch any time in the settings.
+4. **White Knuckle's hands and sounds (optional, needs White Knuckle on Steam):** after the choice,
+   the mod looks for your copy of White Knuckle and offers to build its hands and sounds from it
+   (with Minecraft hands, the pack still adds the sounds, crosshair and blood).
    Press **Start**, and the screen walks you through up to four steps. **Each step says exactly what
    it will do on your computer, which folders it uses and how to undo it, and waits for you to press
    Continue** (you can Stop at any step):
@@ -164,7 +185,7 @@ edit `config/wkclimb.properties` (created on first launch):
 | `ledges_only` | `true` | only top edges can be grabbed; `false` lets you grab any face |
 | `handholds_only` | `false` | `true`: only blocks in the `#wkclimb:handholds` tag can be grabbed |
 | `enabled_on_start` | `true` | climbing mode on when the game starts |
-| `hide_wk_hands` | `false` | `true`: hide White Knuckle's hands and show Minecraft's arm and held item instead |
+| `hands` | `wk` | Your first-person hands: `wk` = White Knuckle's (needs the pack), `minecraft` = two arms in your skin. Without the pack, Minecraft hands are used |
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
 | `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
 | `sound_volume` | `1.0` | volume of all the mod's sounds: `1` is White Knuckle's, `0` off, up to `2` (in the game: 0% in the middle, Off, +100%). Each kind below still stops at its own max |
@@ -206,7 +227,8 @@ your held item even though the hotbar is hidden.
 - **AI disclosure:** this mod was written with Claude Code (Anthropic's Claude), working from the
   game's decompiled logic and data for reference only. No White Knuckle code or assets are
   included. Every mechanic was checked against the game or with automated in-game tests.
-- License: MIT for the mod's own code (see `LICENSE`). White Knuckle's art and audio belong to Dark Machine and are not included.
+- License: MIT for the mod's own code (see `LICENSE`). White Knuckle's art and audio belong to Dark Machine and are not included,
+  except one small screenshot of White Knuckle's hands on the "Choose your hands" page (credited there to Dark Machine Games).
 
 Developers: [DEVELOPING.md](DEVELOPING.md) has the build, the code layout, where every number comes
 from, and the test setup. [MODLOG.md](MODLOG.md) is the dated history of changes.

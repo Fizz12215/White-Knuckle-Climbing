@@ -6,6 +6,12 @@ out, swing from bars and chains, and move, sound and get hurt the way the game d
 
 This beta is the climbing part only. Items, the inventory and perks may come in later versions.
 
+TWO KINDS OF HANDS: the first time you start the game, choose
+  - Minecraft hands: two arms in your own Minecraft skin, moving like White Knuckle's.
+  - White Knuckle hands: the game's own hands, built from your copy of White Knuckle (step 3).
+Switch any time: Mods > White Knuckle Climbing > Config > "Hands" (needs Mod Menu), or set
+hands=wk or hands=minecraft in config/wkclimb.properties.
+
 An unofficial fan mod. It is not made or endorsed by Dark Machine (White Knuckle's developers),
 and it contains none of the game's files.
 
@@ -25,7 +31,7 @@ WHAT YOU NEED
   - Fabric API for 26.3                https://modrinth.com/mod/fabric-api
                                        (on its Versions tab, pick one marked 26.3)
   - Optional but recommended: White Knuckle on Steam. Without it the mod still works, with
-    Minecraft's own arm, crosshair and sounds.
+    Minecraft hands (your skin) and Minecraft's own crosshair and sounds.
 
 
 =====================================================================================

@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased
+- **Minecraft hands:** a new kind of first-person hands: two arms in your own Minecraft skin, moving
+  exactly like White Knuckle's (rest, sway, reach, grab). Choose between
+  **White Knuckle hands** and **Minecraft hands** the first time you start the game, or any time with
+  the **Hands** button at the top of the settings. The choice page shows a picture of each kind.
+  Without the White Knuckle pack, Minecraft hands are used automatically. The `hands` setting (`wk`
+  or `minecraft`) replaces `hide_vanilla_hand`; Minecraft's normal single arm is no longer an option.
+- **Other players see you climb:** in multiplayer, a climbing player's arms reach up to the spots their
+  hands hold, instead of hanging down while they slide up the wall. You see the same pose on yourself
+  in third person (F5). Everyone, including the server or LAN host, needs this version.
 - **Settings menu in the game:** with Mod Menu installed (optional), Mods > White Knuckle Climbing >
   Config shows the settings, with a description of each when you hover. Changes apply at once and
   are saved when you close it. `config/wkclimb.properties` still works as before.
@@ -16,8 +25,6 @@
   changed `low_health_volume`, it moves up by itself.
 - The R key is now called **Toggle climbing mode** in Controls (was "Toggle climbing hands"), so it's
   clear it switches climbing on and off, not only the look; its messages say "Climbing mode" too.
-- **`hide_vanilla_hand` is replaced by `hide_wk_hands`** ("Hide WK hands", off by default): on, it
-  hides White Knuckle's hands and shows Minecraft's arm and held item instead.
 
 ## 0.5.0 beta: Minecraft 26.3
 - **Now for Minecraft 26.3** (Fabric Loader 0.19.3 or newer, Fabric API for 26.3). **0.4.0 beta stays

@@ -37,6 +37,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 
 	@Override
 	public void runTest(ClientGameTestContext ctx) {
+		if (System.getenv("WKCLIMB_TEST_MP") != null) {
+			MultiplayerScene.run(ctx);
+			return;
+		}
 		boolean withPack = installPack(ctx);
 		settingsScreen(ctx);
 
@@ -86,10 +90,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			server.runCommand("tp @a 0.5 -60 0.0 180 -55");
 			ctx.waitTicks(10);
 			ctx.takeScreenshot("wkclimb-02-hands-at-rest");
-			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands = true);
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands = true);
 			ctx.waitTicks(2);
-			ctx.takeScreenshot("wkclimb-02z-wk-hands-hidden"); // Minecraft's arm instead
-			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands = false);
+			ctx.takeScreenshot("wkclimb-02z-minecraft-hands"); // two arms in the player's skin
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands = false);
 			double y0 = playerY(ctx);
 			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_LEFT);
 			ctx.getInput().holdMouse(SDLMouse.SDL_BUTTON_RIGHT);
@@ -100,6 +104,10 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			if (Math.abs(holdY - -57.0) > 1e-6) throw new AssertionError("hold not snapped to the ledge: " + holdY);
 			ctx.waitTicks(10);
 			ctx.takeScreenshot("wkclimb-03-grabbed-ledge");
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands = true);
+			ctx.waitTicks(2);
+			ctx.takeScreenshot("wkclimb-03z-grabbed-ledge-minecraft-hands");
+			ctx.runOnClient(mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands = false);
 
 			// --- Grip drains while hanging off the ground ---
 			double g0 = hand(0).grip();
@@ -746,8 +754,11 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		ctx.takeScreenshot("wkclimb-settings");
 		clickInList(ctx, "Ledges only: ON");
 		check(ctx, "settings: Ledges only toggled off", mc -> !dev.fizz.wkclimb.ClimbConfig.ledgesOnly);
-		clickInList(ctx, "Hide WK hands: OFF");
-		check(ctx, "settings: Hide WK hands toggled on", mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands);
+		String wkHands = ctx.computeOnClient(mc -> dev.fizz.wkclimb.client.ClimbHands.isActive())
+				? "Hands: White Knuckle" : "Hands: White Knuckle (needs the pack)";
+		clickInList(ctx, wkHands);
+		check(ctx, "settings: Hands switched to Minecraft", mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands
+				&& findWidget(mc.gui.screen(), "Hands: Minecraft (your skin)", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
 		clickInList(ctx, "Sounds...");
 		check(ctx, "settings: Sounds... opens the sounds screen", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSoundsScreen
 				&& findWidget(mc.gui.screen(), "All mod sounds: 0%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
@@ -775,16 +786,30 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		check(ctx, "settings: saved to wkclimb.properties", mc -> {
 			try {
 				List<String> lines = Files.readAllLines(file);
-				return lines.contains("ledges_only=false") && lines.contains("hide_wk_hands=true") && lines.contains("sound_volume=1.0");
+				return lines.contains("ledges_only=false") && lines.contains("hands=minecraft") && lines.contains("sound_volume=1.0");
 			} catch (IOException e) {
 				return false;
 			}
 		});
 		ctx.runOnClient(mc -> {
 			dev.fizz.wkclimb.ClimbConfig.ledgesOnly = true;
-			dev.fizz.wkclimb.ClimbConfig.hideWkHands = false;
+			dev.fizz.wkclimb.ClimbConfig.minecraftHands = false;
 			dev.fizz.wkclimb.ClimbConfig.save();
 		});
+
+		// The first-time "Choose your hands" page: picking one sets it and moves on.
+		ctx.setScreen(() -> new dev.fizz.wkclimb.client.assets.AssetSetupScreen(null,
+				dev.fizz.wkclimb.client.assets.AssetPack.Status.OK, true));
+		ctx.waitTicks(2);
+		ctx.takeScreenshot("wkclimb-choose-hands");
+		clickInList(ctx, "Minecraft hands");
+		check(ctx, "setup: choosing Minecraft hands sets it and closes (the pack is OK)", mc -> dev.fizz.wkclimb.ClimbConfig.minecraftHands
+				&& dev.fizz.wkclimb.ClimbConfig.handsChosen && !(mc.gui.screen() instanceof dev.fizz.wkclimb.client.assets.AssetSetupScreen));
+		ctx.runOnClient(mc -> {
+			dev.fizz.wkclimb.ClimbConfig.minecraftHands = false;
+			dev.fizz.wkclimb.ClimbConfig.save();
+		});
+		ctx.setScreen(() -> null);
 	}
 
 	/**
