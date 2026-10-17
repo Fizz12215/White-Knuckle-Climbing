@@ -15,7 +15,12 @@ import net.minecraft.world.phys.Vec3;
  */
 public record ClimbStatePayload(boolean hanging, boolean throughBars, boolean wkMode,
 		boolean leftHolding, Vec3 leftHold, boolean rightHolding, Vec3 rightHold) implements CustomPacketPayload {
-	public static final Type<ClimbStatePayload> TYPE = new Type<>(WKClimb.id("climb_state"));
+	/**
+	 * v2: the hold spots were added after 0.5.0. A new name, so a client and server of different versions
+	 * see that the other side lacks it (WKClimbClient's join check turns climbing off with a message)
+	 * instead of failing to read each other's packets and disconnecting.
+	 */
+	public static final Type<ClimbStatePayload> TYPE = new Type<>(WKClimb.id("climb_state_v2"));
 	public static final StreamCodec<ByteBuf, ClimbStatePayload> CODEC = StreamCodec.composite(
 			ByteBufCodecs.BOOL, ClimbStatePayload::hanging,
 			ByteBufCodecs.BOOL, ClimbStatePayload::throughBars,

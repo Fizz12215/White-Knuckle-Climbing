@@ -9,7 +9,8 @@
   or `minecraft`) replaces `hide_vanilla_hand`; Minecraft's normal single arm is no longer an option.
 - **Other players see you climb:** in multiplayer, a climbing player's arms reach up to the spots their
   hands hold, instead of hanging down while they slide up the wall. You see the same pose on yourself
-  in third person (F5). Everyone, including the server or LAN host, needs this version.
+  in third person (F5). Everyone, including the server or LAN host, needs this version; with a
+  different version, climbing switches itself off with a message instead of disconnecting.
 - **Settings menu in the game:** with Mod Menu installed (optional), Mods > White Knuckle Climbing >
   Config shows the settings, with a description of each when you hover. Changes apply at once and
   are saved when you close it. `config/wkclimb.properties` still works as before.

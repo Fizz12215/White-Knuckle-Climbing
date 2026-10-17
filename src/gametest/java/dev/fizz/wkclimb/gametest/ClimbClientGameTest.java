@@ -728,6 +728,13 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 				check(ctx, "both hands hang on a ledge on the dedicated server", mc -> hand(0).isHanging() && hand(1).isHanging());
 				boolean wkMode = ds.computeOnServer(server -> dev.fizz.wkclimb.WKClimb.isWkMode(server.getPlayerList().getPlayers().get(0)));
 				if (!wkMode) throw new AssertionError("the dedicated server doesn't know the player is in White Knuckle mode");
+				// The hold spots reach the server, which keeps them to pass on to other players (ClimbPosePayload).
+				String pose = ds.computeOnServer(server -> {
+					var p = dev.fizz.wkclimb.WKClimb.pose(server.getPlayerList().getPlayers().get(0).getUUID());
+					return p == null ? "none" : p.leftHolding() + " " + p.leftHold().y + " " + p.rightHolding() + " " + p.rightHold().y;
+				});
+				LOG.info("[wkclimb] dedicated server: pose kept for other players: {} (ledge top -57)", pose);
+				if (!pose.equals("true -57.0 true -57.0")) throw new AssertionError("the server didn't keep both hands on the ledge: " + pose);
 				for (int t = 0; t < 100; t++) {
 					ctx.waitTick();
 					if (ctx.computeOnClient(mc -> mc.getConnection() == null || mc.level == null)) {

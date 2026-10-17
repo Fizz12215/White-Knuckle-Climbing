@@ -117,8 +117,10 @@ joining. The server uses it to:
 The server sends `fall_grip` when a fall ends by catching a hold (grip penalty + blood).
 
 `climb_state` also carries each hand's hold spot (world position); the client resends it when a hand
-grabs, lets go or its hold moves 0.05+ blocks. The server passes changes on as `climb_pose` to the
-players who can see the climber (`PlayerLookup.tracking`, and on `START_TRACKING`). The client keeps
+grabs, lets go or its hold moves 0.05+ blocks. Since the hold spots it's named `climb_state_v2`, so a
+0.5.0 client or server sees the other side lacks it (join check: climbing off, with a message) instead of
+both failing to read each other's packets. The server only passes on spots that are real numbers within
+10 blocks of the player (`WKClimb.withinReach`), as `climb_pose` to the players who can see the climber (`PlayerLookup.tracking`, and on `START_TRACKING`). The client keeps
 them in `ClimbPoses`; `ClimbArmPoseMixin` turns the player model's arms toward the holds (`ArmAim`).
 Checked by hand with `MultiplayerScene` (gametest, `WKCLIMB_TEST_MP=1`): it hosts a server on port
 25570 and waits for a second client (`./gradlew runClient --args="--username Viewer

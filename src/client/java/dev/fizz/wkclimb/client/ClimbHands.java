@@ -164,7 +164,7 @@ public final class ClimbHands {
 		return WKClimb.id("textures/gui/hands/" + name + ".png");
 	}
 
-	/** True when the extracted sprites are loaded, so these hands replace the vanilla arm. */
+	/** True when the extracted sprites are loaded (the pack is built), so White Knuckle's hands can be shown. */
 	public static boolean isActive() {
 		return haveTextures();
 	}

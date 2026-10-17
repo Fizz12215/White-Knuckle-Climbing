@@ -813,3 +813,9 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
 - **Checked White Knuckle's terms:** no EULA text (Steam's link for app 3195790 is empty) and no fan
   content policy; showing its art with credit is the owner's call.
 - All checks passed with and without the pack (OpenGL). Not rerun on Vulkan or Windows.
+- **Review fixes (same day):** `climb_state` renamed `climb_state_v2`, so mixed versions get the "this
+  server doesn't have this version of the mod" message instead of a packet error; the server drops hold
+  spots that aren't finite or are over 10 blocks away (unit test `HoldReachTest`); the gametest checks
+  the server keeps both hands at the ledge (y -57) while hanging on the dedicated server;
+  `MinecraftHandsMixin` undoes Minecraft's 0.1 rad first-person arm tilt and guards a zero-length
+  vector. All checks passed with the pack (OpenGL).

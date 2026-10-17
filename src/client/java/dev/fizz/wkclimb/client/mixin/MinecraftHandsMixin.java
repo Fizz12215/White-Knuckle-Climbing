@@ -1,6 +1,7 @@
 package dev.fizz.wkclimb.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.fizz.wkclimb.ClimbConfig;
 import dev.fizz.wkclimb.client.ClimbController;
 import dev.fizz.wkclimb.client.ClimbHands;
@@ -34,6 +35,8 @@ public abstract class MinecraftHandsMixin {
 	private static final float ARM_SCALE = 1.0f;
 	/** Each pose's turn of the arm about its length (degrees, for the right arm). */
 	private static final float OPEN_TWIST = -25, GRAB_TWIST = 20;
+	/** AvatarRenderer.renderHand's outward tilt of the right arm (the left arm's is the opposite). */
+	private static final float ARM_TILT = 0.1f;
 
 	@Shadow
 	private void renderPlayerHand(PoseStack poseStack, SubmitNodeCollector collector, int light, HumanoidArm arm, PlayerRenderState state) {}
@@ -61,7 +64,9 @@ public abstract class MinecraftHandsMixin {
 			Vector3f dir = new Vector3f(hand).sub(side * ANCHOR_X, ANCHOR_Y, ANCHOR_Z).normalize();
 			// The arm's front faces back toward the camera, rolled with the hand and turned by the pose.
 			Vector3f toCamera = new Vector3f(0, 0, 1);
-			Vector3f front = toCamera.sub(new Vector3f(dir).mul(toCamera.dot(dir))).normalize();
+			Vector3f front = toCamera.sub(new Vector3f(dir).mul(toCamera.dot(dir)));
+			if (front.lengthSquared() < 1e-6f) front.set(0, 1, 0); // arm pointing straight into the screen
+			front.normalize();
 			float twist = switch (f.pose) {
 				case "open" -> OPEN_TWIST;
 				case "grab" -> GRAB_TWIST;
@@ -83,6 +88,9 @@ public abstract class MinecraftHandsMixin {
 			poseStack.translate(shoulder.x, shoulder.y, shoulder.z);
 			poseStack.mulPose(turn);
 			poseStack.scale(scale, scale, scale);
+			// Minecraft tilts each first-person arm outward (zRot +/-0.1 rad, about its pivot): undo that,
+			// so the fist lands on the hand spot
+			poseStack.rotateDegrees(Axis.ZP, (float) Math.toDegrees(-side * ARM_TILT));
 			// the arm part moves itself to its shoulder pivot (x -/+5, y 2 pixels): undo that
 			poseStack.translate(side * 5 / 16f, -2 / 16f, 0);
 			renderPlayerHand(poseStack, collector, light, right ? HumanoidArm.RIGHT : HumanoidArm.LEFT, state);

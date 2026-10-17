@@ -15,6 +15,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.Set;
@@ -81,6 +82,23 @@ public class WKClimb implements ModInitializer {
 		return THROUGH_BARS.contains(player.getUUID());
 	}
 
+	/**
+	 * Hold spots further than this from the player's feet aren't passed on. The longest reach is 6 blocks
+	 * from the eye (2.5 WK units x reach_multiplier 2 x blocks_per_unit 1.2), the eye 1.4 above the feet.
+	 */
+	private static final double MAX_HOLD_DISTANCE = 10;
+
+	/** A real position near the player: a broken or modified client's nonsense isn't passed on to others. */
+	static boolean withinReach(Vec3 feet, Vec3 hold) {
+		return Double.isFinite(hold.x) && Double.isFinite(hold.y) && Double.isFinite(hold.z)
+				&& hold.distanceToSqr(feet) <= MAX_HOLD_DISTANCE * MAX_HOLD_DISTANCE;
+	}
+
+	/** The hands the server last passed on for this player, or null (for the tests). */
+	public static ClimbPosePayload pose(UUID id) {
+		return POSES.get(id);
+	}
+
 	private static void sendPose(ServerPlayer watcher, ClimbPosePayload pose) {
 		if (ServerPlayNetworking.canSend(watcher, ClimbPosePayload.TYPE)) ServerPlayNetworking.send(watcher, pose);
 	}
@@ -106,8 +124,10 @@ public class WKClimb implements ModInitializer {
 				WKHealth.forget(id);
 			}
 			ServerPlayer player = context.player();
+			boolean left = payload.leftHolding() && withinReach(player.position(), payload.leftHold());
+			boolean right = payload.rightHolding() && withinReach(player.position(), payload.rightHold());
 			ClimbPosePayload pose = new ClimbPosePayload(player.getId(),
-					payload.leftHolding(), payload.leftHold(), payload.rightHolding(), payload.rightHold());
+					left, left ? payload.leftHold() : Vec3.ZERO, right, right ? payload.rightHold() : Vec3.ZERO);
 			if (!pose.equals(POSES.put(id, pose))) {
 				for (ServerPlayer watcher : PlayerLookup.tracking(player)) sendPose(watcher, pose);
 			}
