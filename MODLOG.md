@@ -745,3 +745,16 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
 - Gametest: toggles Hide WK hands, opens the Sounds menu and back, checks the file; screenshot with
   the WK hands hidden (Minecraft's arm shows); "All mod sounds" 50% halves the heartbeat as heard.
   All checks passed with the pack on OpenGL and Vulkan.
+
+## 2026-10-17: volume sliders centred, low health back to the game's level (owner's choices)
+- **Owner's choices:** low-health loops at White Knuckle's level again; every volume slider starts at
+  50% so it can go quieter or louder; no separate controls menu, but the R key renamed "Toggle
+  climbing mode" (was "Toggle climbing hands"), and its messages say "Climbing mode".
+- Volumes are now multipliers 0-2 (`volumeFrom` clamps to 2), 1 = the game's; the slider shows
+  value x 50. Minecraft clamps each sound instance to 1 (`SoundEngine.calculateVolume`), so louder
+  only has room where the pack's sounds.json volume is below 1: most are 0.05-0.65, but wind,
+  heartbeat, mortal wound and the icy sounds are 1.0.
+- `low_health_volume` default 1.0. A 0.5.0 file (no `sound_volume` line) with exactly 0.5 moves to
+  1.0. The owner's Prism instance had already run a dev build, so its line was set to 1.0 by hand.
+- Gametest: heartbeat 0.422, mortal wound 0.794 at 2% health (WK 0.423, 0.797). All checks passed
+  with the pack on OpenGL (sound and text changes only, so no Vulkan run).

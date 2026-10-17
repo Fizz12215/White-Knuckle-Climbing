@@ -8,7 +8,13 @@
   time, to rebuild the pack or pick the game's folder.
 - **Sounds menu** (Sounds... in the settings): one slider for all the mod's sounds, and one for each
   kind: grabbing, jumps and landings, footsteps, falling wind, hurt and death, low health, grip
-  fatigue, ice. They apply at once, also to sounds already playing.
+  fatigue, ice. They apply at once, also to sounds already playing. Each starts at **50%, White
+  Knuckle's volume**, so it can go quieter or up to twice as loud (sounds the game already plays at
+  full volume, like the wind, can't get louder: Minecraft caps every sound there).
+- **The low-health heartbeat is back to White Knuckle's level** (0.5.0 halved it). If you hadn't
+  changed `low_health_volume`, it moves up by itself.
+- The R key is now called **Toggle climbing mode** in Controls (was "Toggle climbing hands"), so it's
+  clear it switches climbing on and off, not only the look; its messages say "Climbing mode" too.
 - **`hide_vanilla_hand` is replaced by `hide_wk_hands`** ("Hide WK hands", off by default): on, it
   hides White Knuckle's hands and shows Minecraft's arm and held item instead.
 

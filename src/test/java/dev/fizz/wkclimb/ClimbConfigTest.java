@@ -20,7 +20,8 @@ class ClimbConfigTest {
 	void volumeSetting() {
 		assertEquals(0.5, ClimbConfig.volumeFrom(null, 0.5));
 		assertEquals(0.25, ClimbConfig.volumeFrom(" 0.25 ", 0.5));
-		assertEquals(1.0, ClimbConfig.volumeFrom("3", 0.5));
+		assertEquals(1.5, ClimbConfig.volumeFrom("1.5", 0.5));
+		assertEquals(2.0, ClimbConfig.volumeFrom("3", 0.5));
 		assertEquals(0.0, ClimbConfig.volumeFrom("-1", 0.5));
 		assertEquals(0.5, ClimbConfig.volumeFrom("loud", 0.5));
 		assertEquals(0.5, ClimbConfig.volumeFrom("NaN", 0.5));

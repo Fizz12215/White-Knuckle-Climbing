@@ -35,17 +35,17 @@ public final class ClimbConfig {
 	/** White Knuckle's 0.18-block step height in climbing mode (slabs and stairs must be jumped); else Minecraft's 0.6. */
 	public static boolean exactStepHeight = false;
 	/**
-	 * Volume of the low-health heartbeat and mortal-wound loops: 1 = White Knuckle's level, 0 = off. Half
-	 * by default: with no music or ambience under it, the game's level stands out in Minecraft.
+	 * Volume of all the mod's sounds, then of each group (Sounds menu): 1 = White Knuckle's level, 0 = off,
+	 * up to 2 = twice as loud (Minecraft caps each sound at full volume).
 	 */
-	public static double lowHealthVolume = 0.5;
-	/** Volume of all the mod's sounds, then of each group (Sounds menu): 1 = White Knuckle's level, 0 = off. */
 	public static double soundVolume = 1.0;
 	public static double grabbingVolume = 1.0;
 	public static double landingVolume = 1.0;
 	public static double footstepsVolume = 1.0;
 	public static double windVolume = 1.0;
 	public static double hurtVolume = 1.0;
+	/** The low-health heartbeat and mortal-wound loops. */
+	public static double lowHealthVolume = 1.0;
 	public static double fatigueVolume = 1.0;
 	public static double iceVolume = 1.0;
 	/** Set once White Knuckle's default key bindings have been applied (set false to apply them again). */
@@ -78,6 +78,8 @@ public final class ClimbConfig {
 		fov = parse(p, "fov", fov);
 		exactStepHeight = Boolean.parseBoolean(p.getProperty("exact_step_height", Boolean.toString(exactStepHeight)));
 		lowHealthVolume = volumeFrom(p.getProperty("low_health_volume"), lowHealthVolume);
+		// 0.5.0 halved the low-health loops by default; back to the game's level (the owner's call)
+		if (p.getProperty("sound_volume") == null && lowHealthVolume == 0.5) lowHealthVolume = 1.0;
 		soundVolume = volumeFrom(p.getProperty("sound_volume"), soundVolume);
 		grabbingVolume = volumeFrom(p.getProperty("grabbing_volume"), grabbingVolume);
 		landingVolume = volumeFrom(p.getProperty("landing_volume"), landingVolume);
@@ -137,12 +139,12 @@ public final class ClimbConfig {
 		}
 	}
 
-	/** A volume setting: a number from 0 to 1 (clamped); def if missing or not a number. */
+	/** A volume setting: a number from 0 to 2 (clamped); def if missing or not a number. */
 	static double volumeFrom(String raw, double def) {
 		if (raw == null) return def;
 		try {
 			double v = Double.parseDouble(raw.strip());
-			return Double.isNaN(v) ? def : Math.clamp(v, 0.0, 1.0);
+			return Double.isNaN(v) ? def : Math.clamp(v, 0.0, 2.0);
 		} catch (NumberFormatException e) {
 			return def;
 		}

@@ -134,7 +134,7 @@ more than before. In plain words:
 | Space | jump off the wall (costs grip) |
 | Left Ctrl | crouch; while hanging, brace against the wall |
 | Left Shift | sprint |
-| R | switch climbing mode on / off |
+| R | switch climbing mode on / off ("Toggle climbing mode" in Controls > Key Binds) |
 
 - On first launch the mod sets White Knuckle's default keys: **Sprint = Left Shift, Crouch = Left
   Ctrl, Inventory = Tab** (the player list loses Tab). Change them back in Options > Controls >
@@ -166,9 +166,8 @@ edit `config/wkclimb.properties` (created on first launch):
 | `hide_wk_hands` | `false` | `true`: hide White Knuckle's hands and show Minecraft's arm and held item instead |
 | `blocks_per_unit` | `0.8` | the world scale: Minecraft blocks per White Knuckle unit |
 | `exact_step_height` | `false` | `true`: White Knuckle's step height (0.18 blocks), so slabs and stairs must be jumped onto; `false`: Minecraft's 0.6 |
-| `low_health_volume` | `0.5` | volume of the low-health heartbeat, from `0` (off) to `1` (White Knuckle's level). Half by default: without the game's music and ambience under it, it stands out in Minecraft |
-| `sound_volume` | `1.0` | volume of all the mod's sounds, from `0` (off) to `1`; the ones below apply on top of it |
-| `grabbing_volume`, `landing_volume`, `footsteps_volume`, `wind_volume`, `hurt_volume`, `fatigue_volume`, `ice_volume` | `1.0` | each kind of sound, from `0` to `1`: grabbing and letting go; jumps, climbing up and landings; footsteps; falling wind; hurt and death; grip fatigue; icy handholds |
+| `sound_volume` | `1.0` | volume of all the mod's sounds: `1` is White Knuckle's, `0` off, up to `2` twice as loud (50% / 0% / 100% on the in-game slider). Sounds the game already plays at full volume (wind, ice, low health) can't get louder. The ones below apply on top of it |
+| `grabbing_volume`, `landing_volume`, `footsteps_volume`, `wind_volume`, `hurt_volume`, `low_health_volume`, `fatigue_volume`, `ice_volume` | `1.0` | each kind of sound, the same way: grabbing and letting go; jumps, climbing up and landings; footsteps; falling wind; hurt and death; the low-health heartbeat; grip fatigue; icy handholds |
 | `wk_keybinds_applied` | `false` → `true` | set back to `false` to apply White Knuckle's keys again |
 | `asset_prompt` | `true` | offer to build White Knuckle's hands and sounds when the pack is missing or out of date (`false` after "Don't ask again") |
 | `wk_game_dir` | empty | White Knuckle's folder, set when you press **Choose its folder**, or by hand, for example `D:\SteamLibrary\steamapps\common\White Knuckle` |

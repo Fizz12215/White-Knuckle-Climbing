@@ -739,7 +739,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 		check(ctx, "settings: Hide WK hands toggled on", mc -> dev.fizz.wkclimb.ClimbConfig.hideWkHands);
 		clickInList(ctx, "Sounds...");
 		check(ctx, "settings: Sounds... opens the sounds screen", mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.ClimbSoundsScreen
-				&& findWidget(mc.gui.screen(), "All mod sounds: 100%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
+				&& findWidget(mc.gui.screen(), "All mod sounds: 50%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null
 				&& findWidget(mc.gui.screen(), "Low health: 50%", null, new net.minecraft.client.gui.components.AbstractScrollArea[1]) != null);
 		ctx.takeScreenshot("wkclimb-settings-sounds");
 		ctx.runOnClient(mc -> mc.gui.screen().onClose());
