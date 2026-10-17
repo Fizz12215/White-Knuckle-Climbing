@@ -177,6 +177,26 @@ Everything ported is commented with its source class/field. Sources:
   `sharedassets1.assets`. Many prefab values differ from the C# field defaults (gravity -0.2 not
   -9.81, drag 8 not 0.1, interact distance 2.5, ...). Always check the data, not just the code.
 
+### Settings and sounds (how to add one)
+- **A setting:** a static field in `ClimbConfig` (default = White Knuckle's value; a change from the
+  game needs a setting or the owner's OK), a line in `load()` and `save()`, a row in the README
+  "Settings" table, and an option in `ClimbSettingsScreen` with `wkclimb.settings.<key>` and
+  `.tooltip` in `en_us.json` (the tooltip ends with "Default: ..."). Internal flags
+  (`wk_keybinds_applied`, `wk_game_dir`) stay out of the menu. A toggle's text is "Label: ON", which
+  is what the gametest clicks (`clickInList`).
+- **A sound:** every `ClimbSounds.Sound` has a `Group`; play it through `ClimbSounds.play` or a `Loop`
+  so the Sounds menu's volumes apply. A new group needs a `ClimbConfig` volume field, a `MAX_*`, the
+  two switches in `Group`, a `VolumeSlider` in `ClimbSoundsScreen` and lang lines.
+- **Volumes** are multipliers in the file (1 = the game's). Minecraft clamps `instance volume x
+  sounds.json volume` to 1 (`SoundEngine.calculateVolume`), so each group's `MAX_*` is 1 / the loudest
+  it plays at normally (capped at 2); measured values are in `ClimbConfig` and MODLOG 2026-10-17.
+  Recompute them if the extractor changes sounds.json volumes or a loop's level formula.
+- **Owner's choices for the menus** (2026-10-17): volume sliders are "plus or minus" with 0% (the
+  game's volume) in the middle, Off on the left, and on the right only as much louder as is really
+  possible (Ice can't go louder: its handle stops in the middle); slider text centred like
+  Minecraft's; the R mode is called "climbing mode" in all text; "Hide WK hands" (off by default)
+  swaps White Knuckle's hands for Minecraft's arm.
+
 ## Gotchas (each cost real time)
 
 - **Assets:**
@@ -233,6 +253,11 @@ Everything ported is commented with its source class/field. Sources:
   - Keep uniform blocks to plain floats: Minecraft's `Std140Builder` pads `vec3` to 16 bytes, but
     GLSL std140 packs a following float at offset 12, so the shader read padding.
 - **Minecraft and Fabric hooks:**
+  - A `SoundInstance` that overrides `getVolume()` must multiply `super.getVolume()`: that is where
+    the sounds.json volume comes in. Dropping it made the fatigue loop (json 0.35) about 3x too loud.
+  - `OptionInstance` captions are translation keys (`Component.translatable(key)`), and the Mod Menu
+    API is a `clientCompileOnly` dependency (26.x isn't remapped); the `modmenu` entrypoint only loads
+    when Mod Menu is installed, so nothing else may reference its classes.
   - Minecraft's move vector is normalised (W+D = 0.71, 0.71); White Knuckle's two axes aren't (1, 1).
     `ClimbController.input` builds the axes from the four keys (analog input keeps the vector).
   - `Player.maybeBackOffFromEdge` (the sneak edge guard) runs for `MoverType.SELF` *and* on the
