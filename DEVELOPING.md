@@ -71,7 +71,7 @@ src/client/java/dev/fizz/wkclimb/client/   client only
   ClimbSettingsScreen.java   the settings in game (vanilla OptionsSubScreen); ModMenuIntegration opens
                           it from Mod Menu's Config button (optional, compile-only dependency);
                           ClimbSoundsScreen: the volume per ClimbSounds.Group, with VolumeSlider
-                          (own slider: name left, value right, handle stops at 0% when max is 1)
+                          (own slider: its handle stops at 0% when max is 1)
   assets/                 the Build button: AssetPack (pack status, when to offer, switch on),
                           AssetBuilder (the steps, each waiting for an OK), AssetSetupScreen,
                           FolderPicker (portal or SDL3, leaving fullscreen first)

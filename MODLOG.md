@@ -785,3 +785,5 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   death" to fit half a slider.
 - Gametest: Ice dragged to the far right stays at 0% (setting 1.0), Grabbing reaches +100% (2.0), Low
   health goes quieter. All checks passed with the pack (OpenGL).
+- Then (owner's request): the text is centred again, as in Minecraft's sliders (the split-text drawing
+  was removed); the shorter names and the Ice stop stay. All checks passed (OpenGL).
