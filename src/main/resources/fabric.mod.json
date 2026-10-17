@@ -14,7 +14,8 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": ["dev.fizz.wkclimb.WKClimb"],
-		"client": ["dev.fizz.wkclimb.client.WKClimbClient"]
+		"client": ["dev.fizz.wkclimb.client.WKClimbClient"],
+		"modmenu": ["dev.fizz.wkclimb.client.ModMenuIntegration"]
 	},
 	"mixins": [
 		"wkclimb.mixins.json",
@@ -25,5 +26,8 @@
 		"minecraft": "~26.3",
 		"java": ">=25",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

@@ -718,3 +718,16 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   --renderDebugLabels`) and it reported nothing. The loader's debug output (`VK_LOADER_DEBUG=layer`)
   confirmed the layer was in for the whole run.
 - **Not done:** offline compiler warnings (no `glslc` installed).
+
+## 2026-10-17: in-game settings menu (owner's choices)
+- **Owner's choices:** open it from Mod Menu's Config button (Mod Menu 21.0.0, optional,
+  `clientCompileOnly`, `suggests` in fabric.mod.json); player settings only (not
+  `wk_keybinds_applied` or `wk_game_dir`); a Build... button to the asset setup screen.
+- `ClimbSettingsScreen` uses vanilla `OptionsSubScreen` + `OptionInstance` (no config library).
+  Sliders are whole-number `IntRange`s mapped to the settings: reach 0.5-2x and blocks per unit
+  0.5-1.2 in 0.05 steps, FOV 30-110 with the lowest step "Minecraft's" (saved as 0), low-health
+  volume 0-100%. Each tooltip gives the default (White Knuckle's value). Saved on close.
+- The setup screen opened with an up-to-date pack now says so (`wkclimb.assets.offer.ok`) instead of
+  "missing".
+- Gametest: opens the screen, clicks Ledges only (OFF), clicks Build... (setup screen opens), closes,
+  checks `ledges_only=false` in the file, restores it. All checks passed with the pack on OpenGL and Vulkan.

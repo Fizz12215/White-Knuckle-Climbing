@@ -152,7 +152,9 @@ more than before. In plain words:
   could misuse it.
 
 ## Settings
-`config/wkclimb.properties` (created on first launch):
+With [Mod Menu](https://modrinth.com/mod/modmenu) installed (optional), change them in game: **Mods >
+White Knuckle Climbing > Config**. Hover over a setting for what it does. Without it,
+edit `config/wkclimb.properties` (created on first launch):
 
 | Setting | Default | Meaning |
 |---|---|---|

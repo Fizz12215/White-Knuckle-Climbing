@@ -95,7 +95,11 @@ public class AssetSetupScreen extends Screen {
 
 		switch (view()) {
 			case OFFER -> {
-				text(status == AssetPack.Status.OUTDATED ? "wkclimb.assets.offer.outdated" : "wkclimb.assets.offer.missing", WHITE);
+				text(switch (status) {
+					case OUTDATED -> "wkclimb.assets.offer.outdated";
+					case OK -> "wkclimb.assets.offer.ok";
+					case MISSING -> "wkclimb.assets.offer.missing";
+				}, WHITE);
 				game.ifPresent(p -> path(p));
 				text("wkclimb.assets.offer.steps", WHITE);
 				text("wkclimb.assets.offer.safety", GREY);

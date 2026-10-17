@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+- **Settings menu in the game:** with Mod Menu installed (optional), Mods > White Knuckle Climbing >
+  Config shows the settings, with a description of each when you hover. Changes apply at once and
+  are saved when you close it. `config/wkclimb.properties` still works as before.
+- The menu has a **Build...** button that opens the setup for White Knuckle's hands and sounds at any
+  time, to rebuild the pack or pick the game's folder.
+
 ## 0.5.0 beta: Minecraft 26.3
 - **Now for Minecraft 26.3** (Fabric Loader 0.19.3 or newer, Fabric API for 26.3). **0.4.0 beta stays
   the version for Minecraft 1.21.9**; it gets no more updates.

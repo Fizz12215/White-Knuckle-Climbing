@@ -68,6 +68,8 @@ src/client/java/dev/fizz/wkclimb/client/   client only
   ClimbDamage.java        blood splats, hit-direction glow; damage grade + hurt vignette (post shader)
   ClimbSounds.java / ClimbFootsteps.java   game sound sets, floor materials
   ClimbKeybinds.java      applies the game's default keys once
+  ClimbSettingsScreen.java   the settings in game (vanilla OptionsSubScreen); ModMenuIntegration opens
+                          it from Mod Menu's Config button (optional, compile-only dependency)
   assets/                 the Build button: AssetPack (pack status, when to offer, switch on),
                           AssetBuilder (the steps, each waiting for an OK), AssetSetupScreen,
                           FolderPicker (portal or SDL3, leaving fullscreen first)
@@ -259,6 +261,10 @@ Everything ported is commented with its source class/field. Sources:
     lower level" and the server crashes. It's the harness's packet accounting, not the mod; rerun.
   - The gametest framework restores default options at test start (re-apply keybinds in tests).
   - `/tick rate` makes the integrated server fall behind the client; don't use it in gametests.
+  - `clickScreenButton` only finds a screen's top-level buttons, not the ones inside an options list,
+    and the resource reload screen (after turning a pack on) takes every click. The settings test
+    waits for `mc.gui.overlay() == null` and clicks list widgets with the mouse (`clickInList`),
+    scrolling a step at a time: rows not drawn yet report a stale position.
 - **In-game asset build:**
   - Flatpak launchers can't see `~/.local/share/Steam`. Their runtime's Python (Prism: KDE 6.10
     runtime, Python 3.13) has `venv` and `ensurepip`, and `XDG_DATA_HOME` points inside

@@ -43,10 +43,16 @@ if (System.getenv("WKCLIMB_TEST_VK_VALIDATION")) {
 	loom.runs.named("clientGameTest") { programArgs("--vulkanValidation", "--renderDebugLabels") }
 }
 
+repositories {
+	maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases/' }
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	// Optional: with Mod Menu installed, its Config button opens our settings screen (ModMenuIntegration)
+	clientCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
 
 	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"

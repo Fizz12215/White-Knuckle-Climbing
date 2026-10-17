@@ -38,6 +38,7 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 	@Override
 	public void runTest(ClientGameTestContext ctx) {
 		boolean withPack = installPack(ctx);
+		settingsScreen(ctx);
 
 		try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
 			ctx.waitTicks(60); // 26.3: no waitForChunksRender
@@ -715,6 +716,79 @@ public class ClimbClientGameTest implements FabricClientGameTest {
 			}
 		}
 		LOG.info("[wkclimb] ALL CHECKS PASSED (with WK asset pack: {})", withPack);
+	}
+
+	/** The settings screen (Mod Menu's Config button): a toggle changes the setting and is saved on close. */
+	private static void settingsScreen(ClientGameTestContext ctx) {
+		ctx.waitFor(mc -> mc.gui.overlay() == null); // the pack's reload screen takes the clicks
+		ctx.setScreen(() -> new dev.fizz.wkclimb.client.ClimbSettingsScreen(null));
+		ctx.waitTicks(2);
+		ctx.takeScreenshot("wkclimb-settings");
+		clickInList(ctx, "Ledges only: ON");
+		check(ctx, "settings: Ledges only toggled off", mc -> !dev.fizz.wkclimb.ClimbConfig.ledgesOnly);
+		clickInList(ctx, "Build...");
+		check(ctx, "settings: Build... opens the setup screen",
+				mc -> mc.gui.screen() instanceof dev.fizz.wkclimb.client.assets.AssetSetupScreen);
+		ctx.setScreen(() -> null);
+		Path file = ctx.computeOnClient(mc -> net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("wkclimb.properties"));
+		check(ctx, "settings: saved to wkclimb.properties", mc -> {
+			try {
+				return Files.readAllLines(file).contains("ledges_only=false");
+			} catch (IOException e) {
+				return false;
+			}
+		});
+		ctx.runOnClient(mc -> {
+			dev.fizz.wkclimb.ClimbConfig.ledgesOnly = true;
+			dev.fizz.wkclimb.ClimbConfig.save();
+		});
+	}
+
+	/**
+	 * Clicks the widget showing this text with the mouse, like a player, scrolling its list to it first.
+	 * clickScreenButton only finds the screen's top-level buttons, not the ones inside an options list.
+	 */
+	private static void clickInList(ClientGameTestContext ctx, String text) {
+		// Rows that haven't been drawn keep an old position, so scroll a step at a time until it's in view.
+		for (int step = 0; ; step++) {
+			boolean inView = ctx.computeOnClient(mc -> {
+				var area = new net.minecraft.client.gui.components.AbstractScrollArea[1];
+				var w = findWidget(mc.gui.screen(), text, null, area);
+				if (w == null) throw new AssertionError("no widget '" + text + "' on " + mc.gui.screen());
+				var a = area[0];
+				if (a == null || (w.getY() >= a.getY() && w.getBottom() <= a.getBottom())) return true;
+				if (a.scrollAmount() >= a.maxScrollAmount()) throw new AssertionError("can't scroll to '" + text + "'");
+				a.setScrollAmount(a.scrollAmount() + a.getHeight() / 2.0);
+				return false;
+			});
+			if (inView) break;
+			if (step > 20) throw new AssertionError("can't scroll to '" + text + "'");
+			ctx.waitTick();
+		}
+		double[] at = ctx.computeOnClient(mc -> {
+			var w = findWidget(mc.gui.screen(), text, null, new net.minecraft.client.gui.components.AbstractScrollArea[1]);
+			int scale = mc.getWindow().getGuiScale();
+			return new double[] {(w.getX() + w.getWidth() / 2.0) * scale, (w.getY() + w.getHeight() / 2.0) * scale};
+		});
+		ctx.getInput().setCursorPos(at[0], at[1]);
+		ctx.getInput().pressMouse(SDLMouse.SDL_BUTTON_LEFT);
+		ctx.waitTick();
+	}
+
+	/** The widget showing text under parent; area[0] gets the scrolling list it's in, if any. */
+	private static net.minecraft.client.gui.components.AbstractWidget findWidget(Object parent, String text,
+			net.minecraft.client.gui.components.AbstractScrollArea inArea, net.minecraft.client.gui.components.AbstractScrollArea[] area) {
+		if (!(parent instanceof net.minecraft.client.gui.components.events.ContainerEventHandler c)) return null;
+		if (parent instanceof net.minecraft.client.gui.components.AbstractScrollArea a) inArea = a;
+		for (var child : c.children()) {
+			if (child instanceof net.minecraft.client.gui.components.AbstractWidget w && w.getMessage().getString().equals(text)) {
+				area[0] = inArea;
+				return w;
+			}
+			var found = findWidget(child, text, inArea, area);
+			if (found != null) return found;
+		}
+		return null;
 	}
 
 	/** Copies the extracted pack into this client's resourcepacks folder and turns it on. */
