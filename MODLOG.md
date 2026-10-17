@@ -819,3 +819,6 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
   the server keeps both hands at the ledge (y -57) while hanging on the dedicated server;
   `MinecraftHandsMixin` undoes Minecraft's 0.1 rad first-person arm tilt and guards a zero-length
   vector. All checks passed with the pack (OpenGL).
+- **Owner's test of the whole first-time setup** (Prism Flatpak, no Mod Menu, after moving the old
+  pack, settings and Python folder to `~/wkclimb-setup-backup/`): hands choice, build offer, folder
+  picker, Python folder, libraries, build, pack on. Works.
