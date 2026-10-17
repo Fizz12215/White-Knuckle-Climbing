@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 beta: Minecraft hands
 - **Minecraft hands:** a new kind of first-person hands: two arms in your own Minecraft skin, moving
   exactly like White Knuckle's (rest, sway, reach, grab). Choose between
   **White Knuckle hands** and **Minecraft hands** the first time you start the game, or any time with

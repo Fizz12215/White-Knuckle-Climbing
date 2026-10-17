@@ -1,4 +1,4 @@
-WHITE KNUCKLE CLIMBING  -  0.5.0 beta  -  for Minecraft Java Edition 26.3 (Fabric)
+WHITE KNUCKLE CLIMBING  -  0.6.0 beta  -  for Minecraft Java Edition 26.3 (Fabric)
 =====================================================================================
 (On Minecraft 1.21.9, use 0.4.0 beta instead: it's the last version for 1.21.9.)
 Climb Minecraft like the White Knuckle climber: grab ledges with each hand, watch your grip run
@@ -18,7 +18,7 @@ and it contains none of the game's files.
 
 WHAT'S IN THIS ZIP
 ------------------
-  mods/white-knuckle-climbing-0.5.0-beta.jar   the mod
+  mods/white-knuckle-climbing-0.6.0-beta.jar   the mod
   asset-extractor/                             only if the in-game Build button can't run: builds
                                                White Knuckle's hands and sounds by hand (step 3)
   README.txt                                   this guide
@@ -54,7 +54,7 @@ STEP 2 - PUT THE MODS IN
 =====================================================================================
 Copy TWO files into your mods folder:
   - the Fabric API .jar you downloaded
-  - mods/white-knuckle-climbing-0.5.0-beta.jar from this zip
+  - mods/white-knuckle-climbing-0.6.0-beta.jar from this zip
 
 Where the mods folder is:
   Windows, official launcher:  press Win+R, type  %APPDATA%\.minecraft\mods  and press Enter

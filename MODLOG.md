@@ -822,3 +822,10 @@ landings, hand sway (every ViewSway set: bobSwayOffset 0, impulseRecoveryMult 1)
 - **Owner's test of the whole first-time setup** (Prism Flatpak, no Mod Menu, after moving the old
   pack, settings and Python folder to `~/wkclimb-setup-backup/`): hands choice, build offer, folder
   picker, Python folder, libraries, build, pack on. Works.
+
+## 2026-10-17: 0.6.0-beta released
+- Version 0.6.0-beta (README, beta/README.txt, CHANGELOG heading "0.6.0 beta: Minecraft hands").
+  Pack format unchanged (PACK_VERSION 2), so 0.5.0 packs still work. README's stale "heartbeat at half
+  volume" line fixed.
+- Checks: full gametest with the pack on OpenGL and Vulkan; `um publish check` on the unpacked zip and
+  jar: PASS (126 files). GitHub release v0.6.0-beta, Latest, with the betaZip attached.

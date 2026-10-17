@@ -5,7 +5,7 @@ out, swing from bars and chains, and move, sound and get hurt the way the game d
 climbing, movement and health rules are rebuilt from White Knuckle's own code and data, and checked
 against the game.
 
-Minecraft Java Edition **26.3**, **Fabric**. Version **0.5.0 beta**: climbing only. Items, the
+Minecraft Java Edition **26.3**, **Fabric**. Version **0.6.0 beta**: climbing only. Items, the
 inventory and perks may come later. Works with both of 26.3's graphics engines, OpenGL and Vulkan.
 All new versions are for 26.3. Minecraft 1.21.9 is legacy:
 [0.4.0 beta](https://github.com/Fizz12215/White-Knuckle-Climbing/releases/tag/v0.4.0-beta) stays available for it,
@@ -50,7 +50,7 @@ with this mod.*
 - **Your choice of hands:** [Minecraft hands or White Knuckle hands](#two-kinds-of-hands).
 - **With the asset pack:** White Knuckle's first-person hands, crosshair, hand icons, blood, and climbing,
   footstep, landing and voice sounds, the rushing wind of a long fall, and the heartbeat that fades in
-  as you get close to death (at half the game's volume by default; see `low_health_volume`).
+  as you get close to death. Each kind of sound has its own volume in the Sounds menu.
 
 ## Install
 The download zip contains `README.txt` with the same steps in more detail, for **Windows** and
@@ -59,7 +59,7 @@ The download zip contains `README.txt` with the same steps in more detail, for *
 1. **Fabric:** install [Fabric Loader](https://fabricmc.net/use/installer/) for 26.3 (or, in Prism
    Launcher, make a 26.3 instance and add Fabric under Edit > Version > Install Loader).
 2. **Mods:** put [Fabric API](https://modrinth.com/mod/fabric-api) for 26.3 and
-   `white-knuckle-climbing-0.5.0-beta.jar` in your `mods` folder:
+   `white-knuckle-climbing-0.6.0-beta.jar` in your `mods` folder:
    - Windows: `%APPDATA%\.minecraft\mods` (press Win+R and paste it)
    - Linux: `~/.minecraft/mods`
    - Prism: right-click the instance > Folder > `mods`
